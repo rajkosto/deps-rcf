@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -80,6 +80,7 @@ namespace RCF {
 
     class SchannelFilterFactory;
 
+    class Certificate;
     class Win32Certificate;
     typedef boost::shared_ptr<Win32Certificate> Win32CertificatePtr;
     
@@ -100,7 +101,7 @@ namespace RCF {
 
         typedef SspiImpersonator Impersonator;
 
-        typedef boost::function1<bool, SspiFilter &> CertValidationCallback;
+        typedef boost::function<bool(Certificate *)> CertificateValidationCb;
 
         Win32CertificatePtr getPeerCertificate();
 
@@ -250,9 +251,9 @@ namespace RCF {
         std::size_t                             mMaxMessageLength;
  
         // Schannel-specific members.
-        Win32CertificatePtr                     mLocalCert;
-        Win32CertificatePtr                     mRemoteCert;
-        CertValidationCallback                  mCertValidationCallback;
+        Win32CertificatePtr                     mLocalCertPtr;
+        Win32CertificatePtr                     mRemoteCertPtr;
+        CertificateValidationCb                 mCertValidationCallback;
         DWORD                                   mEnabledProtocols;
         tstring                                 mAutoCertValidation;
         const std::size_t                       mReadAheadChunkSize;
@@ -288,56 +289,56 @@ namespace RCF {
         void handleHandshakeEvent();
     };
 
-    class RCF_EXPORT NtlmServerFilter : public SspiServerFilter
+    class NtlmServerFilter : public SspiServerFilter
     {
     public:
         NtlmServerFilter();
-        const FilterDescription & getFilterDescription() const;
+        int getFilterId() const;
     };
 
-    class RCF_EXPORT KerberosServerFilter : public SspiServerFilter
+    class KerberosServerFilter : public SspiServerFilter
     {
     public:
         KerberosServerFilter();
-        const FilterDescription & getFilterDescription() const;
+        int getFilterId() const;
     };
 
-    class RCF_EXPORT NegotiateServerFilter : public SspiServerFilter
+    class NegotiateServerFilter : public SspiServerFilter
     {
     public:
         NegotiateServerFilter(const tstring &packageList);
-        const FilterDescription & getFilterDescription() const;
+        int getFilterId() const;
     };
 
     // filter factories
 
-    class RCF_EXPORT NtlmFilterFactory : public FilterFactory
+    class NtlmFilterFactory : public FilterFactory
     {
     public:
         FilterPtr createFilter(RcfServer & server);
-        const FilterDescription & getFilterDescription();
+        int getFilterId();
     };
 
-    class RCF_EXPORT KerberosFilterFactory : public FilterFactory
+    class KerberosFilterFactory : public FilterFactory
     {
     public:
         FilterPtr createFilter(RcfServer & server);
-        const FilterDescription & getFilterDescription();
+        int getFilterId();
     };
 
-    class RCF_EXPORT NegotiateFilterFactory : public FilterFactory
+    class NegotiateFilterFactory : public FilterFactory
     {
     public:
         NegotiateFilterFactory(const tstring &packageList = RCF_T("Kerberos, NTLM"));
         FilterPtr createFilter(RcfServer & server);
-        const FilterDescription & getFilterDescription();
+        int getFilterId();
     private:
         tstring mPackageList;
     };
 
     // client filters
 
-    class RCF_EXPORT SspiClientFilter : public SspiFilter
+    class SspiClientFilter : public SspiFilter
     {
     public:
         SspiClientFilter(
@@ -378,7 +379,7 @@ namespace RCF {
         void handleHandshakeEvent();
     };
 
-    class RCF_EXPORT NtlmClientFilter : public SspiClientFilter
+    class NtlmClientFilter : public SspiClientFilter
     {
     public:
         NtlmClientFilter(
@@ -387,10 +388,10 @@ namespace RCF {
             ULONG                   contextRequirements 
                                         = DefaultSspiContextRequirements);
 
-        const FilterDescription &   getFilterDescription() const;
+        int getFilterId() const;
     };
 
-    class RCF_EXPORT KerberosClientFilter : public SspiClientFilter
+    class KerberosClientFilter : public SspiClientFilter
     {
     public:
         KerberosClientFilter(
@@ -399,10 +400,10 @@ namespace RCF {
             ULONG                   contextRequirements 
                                         = DefaultSspiContextRequirements);
 
-        const FilterDescription &           getFilterDescription() const;
+        int getFilterId() const;
     };
 
-    class RCF_EXPORT NegotiateClientFilter : public SspiClientFilter
+    class NegotiateClientFilter : public SspiClientFilter
     {
     public:
         NegotiateClientFilter(
@@ -412,7 +413,7 @@ namespace RCF {
                                         = DefaultSspiContextRequirements);
 
 
-        const FilterDescription &           getFilterDescription() const;
+        int getFilterId() const;
     };
 
     typedef NtlmClientFilter            NtlmFilter;

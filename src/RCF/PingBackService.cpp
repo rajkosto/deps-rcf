@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -110,7 +110,14 @@ namespace RCF {
 
     PingBackService::Entry PingBackService::registerSession(RcfSessionPtr rcfSessionPtr)
     {
-        RCF_ASSERT( rcfSessionPtr->getPingBackIntervalMs() );
+        boost::uint32_t pingBackIntervalMs = rcfSessionPtr->getPingBackIntervalMs();
+
+        RCF_ASSERT( pingBackIntervalMs );
+
+        if (pingBackIntervalMs < 1000)
+        {
+            RCF_THROW( Exception(_RcfError_PingBackInterval(pingBackIntervalMs, 1000) ) );
+        }
 
         {
             Lock lock(mMutex);
@@ -121,12 +128,13 @@ namespace RCF {
             }
         }
 
-        // First pingback is sent right away.
-        rcfSessionPtr->sendPingBack();
+        // We don't send a pingback right away, because it would interfere with
+        // remote calls that complete quickly. Inserting a ping back in the response
+        // stream will fragment it and ruin network performance.
 
         // Schedule next pingback.
         Lock lock(mMutex);
-        boost::uint32_t nextFireMs = RCF::getCurrentTimeMs() + rcfSessionPtr->getPingBackIntervalMs();
+        boost::uint32_t nextFireMs = RCF::getCurrentTimeMs() + pingBackIntervalMs;
         Entry entry(nextFireMs, rcfSessionPtr);
         mTimerHeap.add(entry);
         mCondition.notify_all(lock);

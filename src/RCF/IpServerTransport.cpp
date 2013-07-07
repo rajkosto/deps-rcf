@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -20,14 +20,14 @@
 
 namespace RCF {
 
-    I_IpServerTransport::I_IpServerTransport() :
+    IpServerTransport::IpServerTransport() :
         mReadWriteMutex(WriterPriority)
     {}
 
-    I_IpServerTransport::~I_IpServerTransport() 
+    IpServerTransport::~IpServerTransport() 
     {}
 
-    void I_IpServerTransport::setAllowIps(
+    void IpServerTransport::setAllowIps(
         const std::vector<IpRule> &allowedIps)
     {
         WriteLock writeLock(mReadWriteMutex);
@@ -40,7 +40,7 @@ namespace RCF {
         }
     }
 
-    void I_IpServerTransport::setDenyIps(
+    void IpServerTransport::setDenyIps(
         const std::vector<IpRule> &disallowedIps)
     {
         WriteLock writeLock(mReadWriteMutex);
@@ -53,19 +53,19 @@ namespace RCF {
         }
     }
 
-    std::vector<IpRule> I_IpServerTransport::getAllowIps() const
+    std::vector<IpRule> IpServerTransport::getAllowIps() const
     {
         ReadLock readLock(mReadWriteMutex);
         return mAllowedIps;
     }
 
-    std::vector<IpRule> I_IpServerTransport::getDenyIps() const
+    std::vector<IpRule> IpServerTransport::getDenyIps() const
     {
         ReadLock readLock(mReadWriteMutex);
         return mDisallowedIps;
     }
 
-    bool I_IpServerTransport::isIpAllowed(const IpAddress &ip) const
+    bool IpServerTransport::isIpAllowed(const IpAddress &ip) const
     {
         ReadLock readLock(mReadWriteMutex);
 

@@ -41,10 +41,10 @@
 </p>
 <pre class="programlisting"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">RcfServer</span> <span class="identifier">server</span><span class="special">;</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_ServerTransport</span> <span class="special">&amp;</span> <span class="identifier">serverTransportTcp</span> <span class="special">=</span> <span class="identifier">server</span><span class="special">.</span><span class="identifier">addEndpoint</span><span class="special">(</span> 
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ServerTransport</span> <span class="special">&amp;</span> <span class="identifier">serverTransportTcp</span> <span class="special">=</span> <span class="identifier">server</span><span class="special">.</span><span class="identifier">addEndpoint</span><span class="special">(</span> 
     <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="number">50001</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_ServerTransport</span> <span class="special">&amp;</span> <span class="identifier">serverTransportUdp</span> <span class="special">=</span> <span class="identifier">server</span><span class="special">.</span><span class="identifier">addEndpoint</span><span class="special">(</span> 
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ServerTransport</span> <span class="special">&amp;</span> <span class="identifier">serverTransportUdp</span> <span class="special">=</span> <span class="identifier">server</span><span class="special">.</span><span class="identifier">addEndpoint</span><span class="special">(</span> 
     <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">UdpEndpoint</span><span class="special">(</span><span class="number">50002</span><span class="special">)</span> <span class="special">);</span>
 
 <span class="identifier">server</span><span class="special">.</span><span class="identifier">start</span><span class="special">();</span>
@@ -59,7 +59,7 @@
         
 </p>
 <pre class="programlisting"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">RcfServer</span> <span class="identifier">server</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="number">50001</span><span class="special">)</span> <span class="special">);</span>
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_ServerTransport</span> <span class="special">&amp;</span> <span class="identifier">serverTransport</span> <span class="special">=</span> <span class="identifier">server</span><span class="special">.</span><span class="identifier">getServerTransport</span><span class="special">();</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ServerTransport</span> <span class="special">&amp;</span> <span class="identifier">serverTransport</span> <span class="special">=</span> <span class="identifier">server</span><span class="special">.</span><span class="identifier">getServerTransport</span><span class="special">();</span>
 </pre>
 <p>
       </p>
@@ -70,7 +70,7 @@
         
 </p>
 <pre class="programlisting"><span class="identifier">RcfClient</span><span class="special">&lt;</span><span class="identifier">I_Echo</span><span class="special">&gt;</span> <span class="identifier">client</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="number">50001</span><span class="special">)</span> <span class="special">);</span>
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_ClientTransport</span> <span class="special">&amp;</span> <span class="identifier">clientTransport</span> <span class="special">=</span> <span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">getTransport</span><span class="special">();</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ClientTransport</span> <span class="special">&amp;</span> <span class="identifier">clientTransport</span> <span class="special">=</span> <span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">getTransport</span><span class="special">();</span>
 </pre>
 <p>
       </p>
@@ -150,7 +150,7 @@
 <span class="identifier">client</span><span class="special">.</span><span class="identifier">Echo</span><span class="special">(</span><span class="string">"1234"</span><span class="special">);</span>
 
 <span class="comment">// Retrieve request and response size of the previous call.
-</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_ClientTransport</span> <span class="special">&amp;</span> <span class="identifier">transport</span> <span class="special">=</span> <span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">getTransport</span><span class="special">();</span>
+</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ClientTransport</span> <span class="special">&amp;</span> <span class="identifier">transport</span> <span class="special">=</span> <span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">getTransport</span><span class="special">();</span>
 
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">requestSize</span> <span class="special">=</span> <span class="identifier">transport</span><span class="special">.</span><span class="identifier">getLastRequestSize</span><span class="special">();</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">responseSize</span> <span class="special">=</span> <span class="identifier">transport</span><span class="special">.</span><span class="identifier">getLastResponseSize</span><span class="special">();</span>
@@ -221,8 +221,8 @@
 </p>
 <pre class="programlisting"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">RcfServer</span> <span class="identifier">server</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="number">0</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_IpServerTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
-    <span class="keyword">dynamic_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_IpServerTransport</span> <span class="special">&amp;&gt;(</span><span class="identifier">server</span><span class="special">.</span><span class="identifier">getServerTransport</span><span class="special">());</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpServerTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
+    <span class="keyword">dynamic_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpServerTransport</span> <span class="special">&amp;&gt;(</span><span class="identifier">server</span><span class="special">.</span><span class="identifier">getServerTransport</span><span class="special">());</span>
 
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpRule</span><span class="special">&gt;</span> <span class="identifier">rules</span><span class="special">;</span>
 
@@ -246,8 +246,8 @@
 </p>
 <pre class="programlisting"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">RcfServer</span> <span class="identifier">server</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="number">0</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_IpServerTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
-    <span class="keyword">dynamic_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_IpServerTransport</span> <span class="special">&amp;&gt;(</span><span class="identifier">server</span><span class="special">.</span><span class="identifier">getServerTransport</span><span class="special">());</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpServerTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
+    <span class="keyword">dynamic_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpServerTransport</span> <span class="special">&amp;&gt;(</span><span class="identifier">server</span><span class="special">.</span><span class="identifier">getServerTransport</span><span class="special">());</span>
 
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpRule</span><span class="special">&gt;</span> <span class="identifier">rules</span><span class="special">;</span>
 
@@ -378,7 +378,7 @@
 </p>
 <pre class="programlisting"><span class="identifier">RcfClient</span><span class="special">&lt;</span><span class="identifier">I_Echo</span><span class="special">&gt;</span> <span class="identifier">client</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="string">"127.0.0.1"</span><span class="special">,</span> <span class="number">50001</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_IpClientTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpClientTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
     <span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">getIpTransport</span><span class="special">();</span>
 
 <span class="comment">// Force client to bind to a particular local network interface (127.0.0.1).
@@ -398,7 +398,7 @@
 </p>
 <pre class="programlisting"><span class="identifier">RcfClient</span><span class="special">&lt;</span><span class="identifier">I_Echo</span><span class="special">&gt;</span> <span class="identifier">client</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="string">"127.0.0.1"</span><span class="special">,</span> <span class="number">50001</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_IpClientTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">IpClientTransport</span> <span class="special">&amp;</span> <span class="identifier">ipTransport</span> <span class="special">=</span> 
     <span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">getIpTransport</span><span class="special">();</span>
 
 <span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">connect</span><span class="special">();</span>
@@ -443,7 +443,7 @@
 </p>
 <pre class="programlisting"><span class="comment">// Server-side.
 </span>
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_SessionState</span> <span class="special">&amp;</span> <span class="identifier">sessionState</span> <span class="special">=</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">getCurrentRcfSession</span><span class="special">().</span><span class="identifier">getSessionState</span><span class="special">();</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">SessionState</span> <span class="special">&amp;</span> <span class="identifier">sessionState</span> <span class="special">=</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">getCurrentRcfSession</span><span class="special">().</span><span class="identifier">getSessionState</span><span class="special">();</span>
 
 <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpAsioSessionState</span> <span class="special">&amp;</span> <span class="identifier">tcpSessionState</span> <span class="special">=</span> 
     <span class="keyword">dynamic_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpAsioSessionState</span> <span class="special">&amp;&gt;(</span><span class="identifier">sessionState</span><span class="special">);</span>

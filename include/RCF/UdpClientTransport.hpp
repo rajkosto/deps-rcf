@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -31,8 +31,8 @@ namespace RCF {
     typedef boost::shared_ptr<UdpClientTransport> UdpClientTransportPtr;
    
     class RCF_EXPORT UdpClientTransport : 
-        public I_ClientTransport, 
-        public I_IpClientTransport
+        public ClientTransport, 
+        public IpClientTransport
     {
     private:
         IpAddress                                   mSrcIp;
@@ -56,18 +56,18 @@ namespace RCF {
         EndpointPtr     getEndpointPtr() const;
 
         void            connect(
-                            I_ClientTransportCallback &clientStub, 
+                            ClientTransportCallback &clientStub, 
                             unsigned int timeoutMs);
 
         void            disconnect(unsigned int timeoutMs);
 
         int             send(
-                            I_ClientTransportCallback &clientStub, 
+                            ClientTransportCallback &clientStub, 
                             const std::vector<ByteBuffer> &data, 
                             unsigned int timeoutMs);
 
         int             receive(
-                            I_ClientTransportCallback &clientStub, 
+                            ClientTransportCallback &clientStub, 
                             ByteBuffer &byteBuffer, 
                             unsigned int timeoutMs);
 
@@ -82,7 +82,7 @@ namespace RCF {
 
         int             getNativeHandle() const;
 
-        void            setTimer(boost::uint32_t timeoutMs, I_ClientTransportCallback *pClientStub);
+        void            setTimer(boost::uint32_t timeoutMs, ClientTransportCallback *pClientStub);
 
         bool            supportsTransportFilters()
         {

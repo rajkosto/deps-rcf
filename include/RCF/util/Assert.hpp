@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -64,7 +64,7 @@ namespace util {
             sprintf(szBuffer, "%s(%d): Assert failed. Expression: %s.\n", mFile, mLine, mExpr);
             OutputDebugStringA(szBuffer);
             std::cout << szBuffer;
-            int ret = _CrtDbgReport(_CRT_ASSERT, mFile, mLine, "", msg, mExpr, values.c_str(), mFunc);
+            int ret = _CrtDbgReport(_CRT_ASSERT, mFile, mLine, NULL, msg, mExpr, values.c_str(), mFunc);
             if (ret == 1)
             {
                 // __debugbreak() is more likely to give a proper call stack.

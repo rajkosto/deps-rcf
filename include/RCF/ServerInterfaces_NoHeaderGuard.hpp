@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -30,7 +30,7 @@
 #include <boost/serialization/string.hpp>
 #endif
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 #include <RCF/FileTransferService.hpp>
 #include <RCF/FileStream.hpp>
 #endif
@@ -167,8 +167,11 @@ namespace RCF {
                 RequestTransportFilters, 
                     const std::vector<boost::int32_t> &)
 
-        // Used to have QueryForTransportFilters() here.
-        //RCF_METHOD_PLACEHOLDER()
+        // No longer supported but still present to improve error message.
+        RCF_METHOD_R1(
+            boost::int32_t, 
+                QueryForTransportFilters, 
+                    const std::vector<boost::int32_t> &);
 
     RCF_END(I_RequestTransportFilters)
 
@@ -197,7 +200,7 @@ namespace RCF {
 
 } // namespace RCF
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 
 namespace RCF {
 
@@ -250,4 +253,4 @@ namespace RCF {
 
 } // namespace RCF
 
-#endif // RCF_USE_BOOST_FILESYSTEM
+#endif // RCF_FEATURE_FILETRANSFER

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -32,6 +32,7 @@
 #include <RCF/Filter.hpp>
 #include <RCF/ClientTransport.hpp>
 #include <RCF/Endpoint.hpp>
+#include <RCF/Enums.hpp>
 #include <RCF/Export.hpp>
 #include <RCF/GetInterfaceName.hpp>
 #include <RCF/MethodInvocation.hpp>
@@ -41,16 +42,7 @@
 #include <RCF/SerializationProtocol.hpp>
 #include <RCF/Token.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
-#include <SF/SfNew.hpp>
-#include <SF/shared_ptr.hpp>
-#endif
-
-#ifdef RCF_USE_BOOST_SERIALIZATION
-#include <boost/serialization/shared_ptr.hpp>
-#endif
-
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 #include <RCF/FileStream.hpp>
 #include <RCF/FileDownload.hpp>
 #include <RCF/FileUpload.hpp>
@@ -69,11 +61,11 @@ namespace RCF {
 
     class I_Parameters;
 
-    enum RemoteCallSemantics
-    {
-        Oneway,
-        Twoway
-    };
+    /// Sets the default SSL implementation to use (OpenSSL or Schannel). The default is OpenSSL.
+    RCF_EXPORT void                 setDefaultSslImplementation(SslImplementation sslImplementation);
+
+    /// Gets the default SSL implementation.
+    RCF_EXPORT SslImplementation    getDefaultSslImplementation();
 
     RCF_EXPORT void         setDefaultConnectTimeoutMs(unsigned int connectTimeoutMs);
     RCF_EXPORT unsigned int getDefaultConnectTimeoutMs();
@@ -93,14 +85,14 @@ namespace RCF {
     class ClientProgress;
     typedef boost::shared_ptr<ClientProgress> ClientProgressPtr;
 
-    class I_ClientTransport;
-    typedef std::auto_ptr<I_ClientTransport> ClientTransportAutoPtr;
+    class ClientTransport;
+    typedef std::auto_ptr<ClientTransport> ClientTransportAutoPtr;
 
     class I_RcfClient;
     typedef boost::shared_ptr<I_RcfClient> RcfClientPtr;
 
     class I_Future;
-    class I_IpClientTransport;
+    class IpClientTransport;
 
     template<typename T>
     class FutureImpl;
@@ -164,7 +156,7 @@ namespace RCF {
     };
 
     class RCF_EXPORT ClientStub : 
-        public I_ClientTransportCallback, 
+        public ClientTransportCallback, 
         public boost::enable_shared_from_this<ClientStub>
     {
     public:
@@ -175,7 +167,7 @@ namespace RCF {
 
         ClientStub &operator=(const ClientStub &rhs);
 
-        void                setEndpoint(const I_Endpoint &endpoint);
+        void                setEndpoint(const Endpoint &endpoint);
         void                setEndpoint(EndpointPtr endpointPtr);
         EndpointPtr         getEndpoint() const;
         Token               getTargetToken() const;
@@ -205,8 +197,8 @@ namespace RCF {
 
         void                    setTransport(ClientTransportAutoPtr transport);
 
-        I_ClientTransport&      getTransport();
-        I_IpClientTransport &   getIpTransport();
+        ClientTransport&      getTransport();
+        IpClientTransport &   getIpTransport();
 
         ClientTransportAutoPtr  releaseTransport();
 
@@ -277,10 +269,6 @@ namespace RCF {
         void        setUserData(boost::any userData);
         boost::any  getUserData();
 
-#ifdef RCF_USE_SF_SERIALIZATION
-        void serialize(SF::Archive & ar);
-#endif
-
         //**********************************************************************
         // These functions involve network calls.
 
@@ -292,7 +280,7 @@ namespace RCF {
         void createRemoteSessionObject(const std::string &objectName = "");
         void deleteRemoteSessionObject();
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
         void setFileProgressCallback(FileProgressCb fileProgressCb);
         void setFileProgressCallback() { setFileProgressCallback( FileProgressCb() ); }
 
@@ -555,7 +543,7 @@ namespace RCF {
         void                setResponseUserData(const std::string & userData);
         std::string         getResponseUserData();
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
         FileProgressCb              mFileProgressCb;
 
         std::vector<FileUpload>     mUploadStreams;
@@ -594,28 +582,24 @@ namespace RCF {
         void setEnableCompression(bool enableCompression);
         bool getEnableCompression();
 
-        void setSslCertificate(CertificatePtr certificatePtr);
-        CertificatePtr getSslCertificate();
+        void setCertificate(CertificatePtr certificatePtr);
+        CertificatePtr getCertificate();
 
-        void setSslCaCertificate(CertificatePtr certificatePtr);
-        CertificatePtr getSslCaCertificate();
-
-        typedef boost::function<bool(OpenSslEncryptionFilter &)> OpenSslCertificateValidationCb;
-        void setOpenSslCertificateValidationCb(OpenSslCertificateValidationCb certificateValidationCb);
-        const OpenSslCertificateValidationCb & getOpenSslCertificateValidationCb() const;
+        void setCaCertificate(CertificatePtr certificatePtr);
+        CertificatePtr getCaCertificate();
 
         void setOpenSslCipherSuite(const std::string & cipherSuite);
         std::string getOpenSslCipherSuite() const;
 
-        typedef boost::function<bool(SspiFilter &)> SchannelCertificateValidationCb;
-        void setSchannelCertificateValidationCb(SchannelCertificateValidationCb certificateValidationCb);
-        const SchannelCertificateValidationCb & getSchannelCertificateValidationCb() const;
+        void setEnableSchannelCertificateValidation(const tstring & peerName);
+        tstring getEnableSchannelCertificateValidation() const;
 
-        void setSchannelDefaultCertificateValidation(const tstring & peerName);
-        tstring getSchannelDefaultCertificateValidation() const;
+        typedef boost::function<bool(Certificate *)> CertificateValidationCb;
+        void setCertificateValidationCallback(CertificateValidationCb certificateValidationCb);
+        const CertificateValidationCb & getCertificateValidationCallback() const;
 
-        void setPreferSchannel(bool preferSchannel);
-        bool getPreferSchannel() const;
+        void setSslImplementation(SslImplementation sslImplementation);
+        SslImplementation getSslImplementation() const;
 
 #ifdef BOOST_WINDOWS
         void setWindowsImpersonationToken(HANDLE hToken);
@@ -634,15 +618,13 @@ namespace RCF {
         bool                                    mEnableCompression;
 
         CertificatePtr                          mCertificatePtr;
-
         CertificatePtr                          mCaCertificatePtr;
-        OpenSslCertificateValidationCb          mOpenSslCertificateValidationCb;
-        SchannelCertificateValidationCb         mSchannelCertificateValidationCb;
-        tstring                                 mSchannelAutoCertificateValidation;
+        CertificateValidationCb                 mCertificateValidationCb;
+        tstring                                 mSchannelCertificateValidation;
 
         std::string                             mOpenSslCipherSuite;
 
-        bool                                    mPreferSchannel;        
+        SslImplementation                       mSslImplementation;
     };
 
     class CallOptions
@@ -729,15 +711,5 @@ namespace RCF {
 
 
 } // namespace RCF
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-namespace SF {
-
-    SF_CTOR(RCF::ClientStub, RCF::ClientStub("", ""))
-
-} // namespace SF
-
-#endif
 
 #endif // ! INCLUDE_RCF_CLIENTSTUB_HPP

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -40,7 +40,7 @@ namespace RCF {
     typedef boost::shared_ptr<UdpServerTransport>   UdpServerTransportPtr;
     typedef boost::shared_ptr<UdpSessionState>      UdpSessionStatePtr;
 
-    class UdpSessionState : public I_SessionState
+    class UdpSessionState : public SessionState
     {
     public:
 
@@ -63,9 +63,9 @@ namespace RCF {
     private:
 
         // I_SessionState
-        const I_RemoteAddress & getRemoteAddress() const;
-        I_ServerTransport &     getServerTransport();
-        const I_RemoteAddress & getRemoteAddress();
+        const RemoteAddress & getRemoteAddress() const;
+        ServerTransport &     getServerTransport();
+        const RemoteAddress & getRemoteAddress();
 
         void                    setTransportFilters(
                                     const std::vector<FilterPtr> &filters);
@@ -79,12 +79,14 @@ namespace RCF {
         void                    postWrite(
                                     std::vector<ByteBuffer> &byteBuffers);
 
-        void                    postClose();        
+        void                    postClose();      
+
+        bool                    isConnected();
     };
 
     class RCF_EXPORT UdpServerTransport :
-        public I_ServerTransport,
-        public I_IpServerTransport,
+        public ServerTransport,
+        public IpServerTransport,
         public I_Service,
         boost::noncopyable
     {

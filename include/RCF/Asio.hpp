@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -41,6 +41,11 @@
 # endif // defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4913) // user defined binary operator ',' exists but no overload could convert all operands, default built-in binary operator ',' used
+#endif
+
 #ifdef RCF_USE_BOOST_ASIO
 #include <boost/asio.hpp>
 #else
@@ -59,6 +64,10 @@
 #endif
 
 #include <RCF/AsioDeadlineTimer.hpp>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 namespace RCF {
 

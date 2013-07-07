@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -38,7 +38,7 @@ namespace RCF {
 
         ~Win32NamedPipeSessionState();
 
-        const I_RemoteAddress & implGetRemoteAddress();
+        const RemoteAddress & implGetRemoteAddress();
 
         void implRead(char * buffer, std::size_t bufferLen);
 
@@ -56,7 +56,7 @@ namespace RCF {
 
         ClientTransportAutoPtr implCreateClientTransport();
 
-        void implTransferNativeFrom(I_ClientTransport & clientTransport);
+        void implTransferNativeFrom(ClientTransport & clientTransport);
 
         static void closeSocket(AsioPipeHandlePtr socketPtr);
 
@@ -86,7 +86,7 @@ namespace RCF {
         AsioSessionStatePtr implCreateSessionState();
         void implOpen();
         ClientTransportAutoPtr implCreateClientTransport(
-            const I_Endpoint &endpoint);
+            const Endpoint &endpoint);
 
         tstring getPipeName() const;
 

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -26,6 +26,7 @@
 #include <boost/weak_ptr.hpp>
 
 #include <RCF/Asio.hpp>
+#include <RCF/Enums.hpp>
 #include <RCF/Export.hpp>
 #include <RCF/IpAddress.hpp>
 #include <RCF/IpServerTransport.hpp>
@@ -43,25 +44,18 @@ namespace RCF {
     typedef boost::shared_ptr<AsioSessionState>         AsioSessionStatePtr;
     typedef boost::weak_ptr<AsioSessionState>           AsioSessionStateWeakPtr;
 
-    class I_AsioAcceptor
+    class AsioAcceptor
     {
     public:
-        virtual ~I_AsioAcceptor()
+        virtual ~AsioAcceptor()
         {}
     };
 
-    enum WireProtocol
-    {
-        Wp_None,
-        Wp_Http,
-        Wp_Https
-    };
-
-    typedef boost::scoped_ptr<I_AsioAcceptor>           AsioAcceptorPtr;
+    typedef boost::scoped_ptr<AsioAcceptor>           AsioAcceptorPtr;
 
     class RCF_EXPORT AsioServerTransport :
-        public I_ServerTransport,
-        public I_ServerTransportEx,
+        public ServerTransport,
+        public ServerTransportEx,
         public I_Service
     {
     private:
@@ -73,15 +67,12 @@ namespace RCF {
 
         AsioSessionStatePtr createSessionState();
 
-        void                closeSessionState(
-                                AsioSessionStateWeakPtr sessionStateWeakPtr);
-
         
 
         // I_ServerTransportEx implementation
         ClientTransportAutoPtr  
                             createClientTransport(
-                                const I_Endpoint &endpoint);
+                                const Endpoint &endpoint);
 
         SessionPtr          createServerSession(
                                 ClientTransportAutoPtr & clientTransportAutoPtr, 
@@ -95,8 +86,6 @@ namespace RCF {
         bool                reflect(
                                 const SessionPtr &sessionPtr1, 
                                 const SessionPtr &sessionPtr2);
-
-        bool                isConnected(const SessionPtr &sessionPtr);
 
         // I_Service implementation
         void                open();
@@ -147,20 +136,17 @@ namespace RCF {
         volatile bool                   mStopFlag;
         RcfServer *                     mpServer;
 
-        Mutex                               mSessionsMutex;
-        std::set<AsioSessionStateWeakPtr>   mSessions;
-
     private:
 
         virtual AsioSessionStatePtr     implCreateSessionState() = 0;
         virtual void                    implOpen() = 0;
 
         virtual ClientTransportAutoPtr  implCreateClientTransport(
-                                            const I_Endpoint &endpoint) = 0;
+                                            const Endpoint &endpoint) = 0;
 
     public:
 
-        I_AsioAcceptor &                getAcceptor();
+        AsioAcceptor &                getAcceptor();
 
         AsioIoService &                 getIoService();
     };
@@ -189,7 +175,7 @@ namespace RCF {
     void    asio_handler_deallocate(void * pointer, std::size_t size, WriteHandler * pHandler);
 
     class RCF_EXPORT AsioSessionState :
-        public I_SessionState,
+        public SessionState,
         boost::noncopyable
     {
     public:
@@ -210,9 +196,6 @@ namespace RCF {
         virtual ~AsioSessionState();
 
         AsioSessionStatePtr sharedFromThis();
-
-        void            setSessionPtr(SessionPtr sessionPtr);
-        SessionPtr      getSessionPtr();
 
         void            close();
 
@@ -288,7 +271,7 @@ namespace RCF {
         bool                        mIssueZeroByteRead;
         std::size_t                 mReadBufferRemaining;
         std::size_t                 mWriteBufferRemaining;
-        SessionPtr                  mSessionPtr;
+
         std::vector<FilterPtr>      mTransportFilters;
         std::vector<FilterPtr>      mWireFilters;        
 
@@ -325,12 +308,13 @@ namespace RCF {
         ByteBuffer              getReadByteBuffer();
         void                    postWrite(std::vector<ByteBuffer> &byteBuffers);
         void                    postClose();
-        I_ServerTransport &     getServerTransport();
-        const I_RemoteAddress & getRemoteAddress();
+        ServerTransport &     getServerTransport();
+        const RemoteAddress & getRemoteAddress();
+        bool                    isConnected();
 
     private:
 
-        virtual const I_RemoteAddress & implGetRemoteAddress() = 0;
+        virtual const RemoteAddress & implGetRemoteAddress() = 0;
         virtual void implRead(char * buffer, std::size_t bufferLen) = 0;
         virtual void implWrite(const std::vector<ByteBuffer> & buffers) = 0;
         virtual void implWrite(AsioSessionState &toBeNotified, const char * buffer, std::size_t bufferLen) = 0;
@@ -339,7 +323,7 @@ namespace RCF {
         virtual bool implIsConnected() = 0;
         virtual void implClose() = 0;
         virtual void implCloseAfterWrite() {}
-        virtual void implTransferNativeFrom(I_ClientTransport & clientTransport) = 0;
+        virtual void implTransferNativeFrom(ClientTransport & clientTransport) = 0;
         virtual ClientTransportAutoPtr implCreateClientTransport() = 0;
     };
 

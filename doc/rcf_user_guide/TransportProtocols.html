@@ -184,14 +184,21 @@
         Schannel package.
       </p>
 <p>
-        OpenSSL is used if <code class="computeroutput"><span class="identifier">RCF_USE_OPENSSL</span></code>
-        has been defined. If <code class="computeroutput"><span class="identifier">RCF_USE_OPENSSL</span></code>
-        has not been defined, SSL support is only available on Windows, and uses
-        the Schannel package.
+        OpenSSL support is only available if <code class="computeroutput"><span class="identifier">RCF_USE_OPENSSL</span></code>
+        has been defined. Schannel support is only available in Windows builds.
       </p>
 <p>
-        SSL uses certificates to authenticate servers to clients (and optionally
-        clients to servers). Certificate and certificate validation functionality
+        If you define <code class="computeroutput"><span class="identifier">RCF_USE_OPENSSL</span></code>
+        in a Windows build, RCF will use OpenSSL rather than Schannel. Should you
+        want to use Schannel, despite defining <code class="computeroutput"><span class="identifier">RCF_USE_OPENSSL</span></code>,
+        you can set the SSL implementation for individual servers and clients using
+        the <code class="computeroutput"><span class="identifier">RcfServer</span><span class="special">::</span><span class="identifier">setSslImplementation</span><span class="special">()</span></code>
+        and <code class="computeroutput"><span class="identifier">ClientStub</span><span class="special">::</span><span class="identifier">setSslImplementation</span><span class="special">()</span></code>
+        functions, or for the whole RCF runtime using the <code class="computeroutput"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">setSslImplementation</span><span class="special">()</span></code> function.
+      </p>
+<p>
+        The SSL protocol uses certificates to authenticate servers to clients (and
+        optionally clients to servers). Certificate and certificate validation functionality
         is handled differently by the two SSL transport protocol implemenations,
         as described below.
       </p>
@@ -212,7 +219,7 @@
     <span class="string">"password"</span><span class="special">,</span> 
     <span class="string">"CertificateName"</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">server</span><span class="special">.</span><span class="identifier">setSslCertificate</span><span class="special">(</span><span class="identifier">serverCertPtr</span><span class="special">);</span>
+<span class="identifier">server</span><span class="special">.</span><span class="identifier">setCertificate</span><span class="special">(</span><span class="identifier">serverCertPtr</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -224,11 +231,11 @@
           
 </p>
 <pre class="programlisting"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">CertificatePtr</span> <span class="identifier">serverCertPtr</span><span class="special">(</span> <span class="keyword">new</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">StoreCertificate</span><span class="special">(</span>
-    <span class="identifier">CERT_SYSTEM_STORE_LOCAL_MACHINE</span><span class="special">,</span> 
-    <span class="string">"MY"</span><span class="special">,</span>
+    <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">Cl_LocalMachine</span><span class="special">,</span>
+    <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">Cs_My</span><span class="special">,</span>
     <span class="string">"CertificateName"</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">server</span><span class="special">.</span><span class="identifier">setSslCertificate</span><span class="special">(</span><span class="identifier">serverCertPtr</span><span class="special">);</span>
+<span class="identifier">server</span><span class="special">.</span><span class="identifier">setCertificate</span><span class="special">(</span><span class="identifier">serverCertPtr</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -242,7 +249,7 @@
           
 </p>
 <pre class="programlisting"><span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setTransportProtocol</span><span class="special">(</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">Tp_Ssl</span><span class="special">);</span>
-<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setSchannelDefaultCertificateValidation</span><span class="special">(</span><span class="string">"CertificateName"</span><span class="special">);</span>
+<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setEnableSchannelCertificateValidation</span><span class="special">(</span><span class="string">"CertificateName"</span><span class="special">);</span>
 <span class="identifier">client</span><span class="special">.</span><span class="identifier">Print</span><span class="special">(</span><span class="string">"Hello World"</span><span class="special">);</span>
 </pre>
 <p>
@@ -259,7 +266,7 @@
     <span class="string">"password"</span><span class="special">,</span> 
     <span class="string">"CaCertificatename"</span><span class="special">));</span>
 
-<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setSslCaCertificate</span><span class="special">(</span><span class="identifier">caCertPtr</span><span class="special">);</span>
+<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setCaCertificate</span><span class="special">(</span><span class="identifier">caCertPtr</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -269,14 +276,22 @@
 <p>
           
 </p>
-<pre class="programlisting"><span class="keyword">bool</span> <span class="identifier">schannelValidateCert</span><span class="special">(</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">SspiFilter</span> <span class="special">&amp;</span> <span class="identifier">filter</span><span class="special">)</span>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="identifier">schannelValidateCert</span><span class="special">(</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">Certificate</span> <span class="special">*</span> <span class="identifier">pCert</span><span class="special">)</span>
 <span class="special">{</span>
-    <span class="identifier">PCCERT_CONTEXT</span> <span class="identifier">pCert</span> <span class="special">=</span> <span class="identifier">filter</span><span class="special">.</span><span class="identifier">getPeerCertificate</span><span class="special">()-&gt;</span><span class="identifier">getWin32Context</span><span class="special">();</span>
+    <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">Win32Certificate</span> <span class="special">*</span> <span class="identifier">pWin32Cert</span> <span class="special">=</span> <span class="keyword">static_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">Win32Certificate</span> <span class="special">*&gt;(</span><span class="identifier">pCert</span><span class="special">);</span>
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">pWin32Cert</span><span class="special">)</span>
+    <span class="special">{</span>
+        <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">tstring</span> <span class="identifier">certName</span> <span class="special">=</span> <span class="identifier">pWin32Cert</span><span class="special">-&gt;</span><span class="identifier">getCertificateName</span><span class="special">();</span>
+        <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">tstring</span> <span class="identifier">issuerName</span> <span class="special">=</span> <span class="identifier">pWin32Cert</span><span class="special">-&gt;</span><span class="identifier">getIssuerName</span><span class="special">();</span>
 
-    <span class="comment">// Custom code to inspect and validate pCert.
-</span>    <span class="comment">// ...
-</span>
-    <span class="comment">// Return true if valid, false if not.
+        <span class="identifier">PCCERT_CONTEXT</span> <span class="identifier">pContext</span> <span class="special">=</span> <span class="identifier">pWin32Cert</span><span class="special">-&gt;</span><span class="identifier">getWin32Context</span><span class="special">();</span>
+
+        <span class="comment">// Custom code to inspect and validate certificate.
+</span>        <span class="comment">// ...
+</span>    <span class="special">}</span>
+
+    <span class="comment">// Return true if the certificate is considered valid. Otherwise, return false,
+</span>    <span class="comment">// or throw an exception.
 </span>    <span class="keyword">return</span> <span class="keyword">true</span><span class="special">;</span>
 <span class="special">}</span>
 </pre>
@@ -285,7 +300,7 @@
 <p>
           
 </p>
-<pre class="programlisting"><span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setSchannelCertificateValidationCb</span><span class="special">(&amp;</span><span class="identifier">schannelValidateCert</span><span class="special">);</span>
+<pre class="programlisting"><span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setCertificateValidationCallback</span><span class="special">(&amp;</span><span class="identifier">schannelValidateCert</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -300,7 +315,7 @@
     <span class="string">"password"</span><span class="special">,</span> 
     <span class="string">"CertificateName"</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setSslCertificate</span><span class="special">(</span><span class="identifier">clientCertPtr</span><span class="special">);</span>
+<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setCertificate</span><span class="special">(</span><span class="identifier">clientCertPtr</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -325,7 +340,7 @@
     <span class="string">"C:\\serverCert.pem"</span><span class="special">,</span> 
     <span class="string">"password"</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">server</span><span class="special">.</span><span class="identifier">setSslCertificate</span><span class="special">(</span><span class="identifier">serverCertPtr</span><span class="special">);</span>
+<span class="identifier">server</span><span class="special">.</span><span class="identifier">setCertificate</span><span class="special">(</span><span class="identifier">serverCertPtr</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -340,7 +355,7 @@
     <span class="string">"C:\\clientCaCertificate.pem"</span><span class="special">,</span> 
     <span class="string">"password"</span><span class="special">));</span>
 
-<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setSslCaCertificate</span><span class="special">(</span><span class="identifier">caCertPtr</span><span class="special">);</span>
+<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setCaCertificate</span><span class="special">(</span><span class="identifier">caCertPtr</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -350,14 +365,21 @@
 <p>
           
 </p>
-<pre class="programlisting"><span class="keyword">bool</span> <span class="identifier">opensslValidateCert</span><span class="special">(</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">OpenSslEncryptionFilter</span> <span class="special">&amp;</span> <span class="identifier">filter</span><span class="special">)</span>
+<pre class="programlisting"><span class="keyword">bool</span> <span class="identifier">opensslValidateCert</span><span class="special">(</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">Certificate</span> <span class="special">*</span> <span class="identifier">pCert</span><span class="special">)</span>
 <span class="special">{</span>
-    <span class="identifier">SSL</span> <span class="special">*</span><span class="identifier">ssl</span> <span class="special">=</span> <span class="identifier">filter</span><span class="special">.</span><span class="identifier">getSSL</span><span class="special">();</span>
-    <span class="identifier">SSL_CTX</span> <span class="special">*</span><span class="identifier">ssl_ctx</span> <span class="special">=</span> <span class="identifier">filter</span><span class="special">.</span><span class="identifier">getCTX</span><span class="special">();</span>
+    <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">X509Certificate</span> <span class="special">*</span> <span class="identifier">pX509Cert</span> <span class="special">=</span> <span class="keyword">static_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">X509Certificate</span> <span class="special">*&gt;(</span><span class="identifier">pCert</span><span class="special">);</span>
 
-    <span class="comment">// Custom code to inspect and validate ssl and ssl_ctx.
-</span>    <span class="comment">// ...
-</span>
+    <span class="keyword">if</span> <span class="special">(</span><span class="identifier">pX509Cert</span><span class="special">)</span>
+    <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">certName</span> <span class="special">=</span> <span class="identifier">pX509Cert</span><span class="special">-&gt;</span><span class="identifier">getCertificateName</span><span class="special">();</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">issuerName</span> <span class="special">=</span> <span class="identifier">pX509Cert</span><span class="special">-&gt;</span><span class="identifier">getIssuerName</span><span class="special">();</span>
+
+        <span class="identifier">X509</span> <span class="special">*</span> <span class="identifier">pX509</span> <span class="special">=</span> <span class="identifier">pX509Cert</span><span class="special">-&gt;</span><span class="identifier">getX509</span><span class="special">();</span>
+
+        <span class="comment">// Custom code to inspect and validate certificate.
+</span>        <span class="comment">// ...
+</span>    <span class="special">}</span>
+
     <span class="comment">// Return true if valid, false if not.
 </span>    <span class="keyword">return</span> <span class="keyword">true</span><span class="special">;</span>
 <span class="special">}</span>
@@ -367,7 +389,7 @@
 <p>
           
 </p>
-<pre class="programlisting"><span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setOpenSslCertificateValidationCb</span><span class="special">(&amp;</span><span class="identifier">opensslValidateCert</span><span class="special">);</span>
+<pre class="programlisting"><span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setCertificateValidationCallback</span><span class="special">(&amp;</span><span class="identifier">opensslValidateCert</span><span class="special">);</span>
 </pre>
 <p>
         </p>
@@ -382,7 +404,7 @@
     <span class="string">"C:\\clientCert.pem"</span><span class="special">,</span> 
     <span class="string">"password"</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setSslCertificate</span><span class="special">(</span><span class="identifier">clientCertPtr</span><span class="special">);</span>
+<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setCertificate</span><span class="special">(</span><span class="identifier">clientCertPtr</span><span class="special">);</span>
 </pre>
 <p>
         </p>

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -36,7 +36,7 @@
 #include <boost/filesystem/../../libs/filesystem/v2/src/v2_operations.cpp>
 #include <boost/filesystem/../../libs/filesystem/v2/src/v2_portability.cpp>
 
-#else
+#elif BOOST_VERSION <= 104900
 
 #include <boost/filesystem/../../libs/filesystem/v3/src/codecvt_error_category.cpp>
 
@@ -64,5 +64,34 @@
 #include <boost/filesystem/../../libs/filesystem/v3/src/unique_path.cpp>
 #include <boost/filesystem/../../libs/filesystem/v3/src/utf8_codecvt_facet.cpp>
 #include <boost/filesystem/../../libs/filesystem/v3/src/windows_file_codecvt.cpp>
+
+#else // 1.50.0+
+
+#include <boost/filesystem/../../libs/filesystem/src/codecvt_error_category.cpp>
+
+#define dot dot_1
+#define dot_path dot_path_1
+#define dot_dot_path dot_dot_path_1
+
+#include <boost/filesystem/../../libs/filesystem/src/operations.cpp>
+
+#undef dot
+#undef dot_path
+#undef dot_dot_path
+
+#define dot dot_2
+#define dot_path dot_path_2
+#define dot_dot_path dot_dot_path_2
+
+#include <boost/filesystem/../../libs/filesystem/src/path.cpp>
+
+#define default_codecvt_buf_size default_codecvt_buf_size_2
+
+#include <boost/filesystem/../../libs/filesystem/src/path_traits.cpp>
+
+#include <boost/filesystem/../../libs/filesystem/src/portability.cpp>
+#include <boost/filesystem/../../libs/filesystem/src/unique_path.cpp>
+#include <boost/filesystem/../../libs/filesystem/src/utf8_codecvt_facet.cpp>
+#include <boost/filesystem/../../libs/filesystem/src/windows_file_codecvt.cpp>
 
 #endif

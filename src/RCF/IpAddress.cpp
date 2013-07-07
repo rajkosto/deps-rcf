@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -18,10 +18,8 @@
 
 #include <RCF/IpAddress.hpp>
 
+#include <RCF/ByteOrdering.hpp>
 #include <RCF/Exception.hpp>
-
-#include <SF/Archive.hpp>
-#include <SF/string.hpp>
 
 #include <sstream>
 
@@ -292,7 +290,7 @@ namespace RCF {
         return gDefaultResolveTo;
     }
 
-#ifdef RCF_USE_IPV6
+#if RCF_FEATURE_IPV6==1
 
     void IpAddress::resolve(RCF::ExceptionPtr & e) const
     {
@@ -567,7 +565,7 @@ namespace RCF {
 
             return (ntohl(mAddrV4.sin_addr.s_addr) & 0xE0000000) == 0xE0000000;
 
-#ifdef RCF_USE_IPV6
+#if RCF_FEATURE_IPV6==1
         case V6:
             return mAddrV6.sin6_addr.s6_addr[15] == 0xFF;
 #endif
@@ -593,7 +591,7 @@ namespace RCF {
                 return *this == loopBackV4;
             }
 
-#ifdef RCF_USE_IPV6
+#if RCF_FEATURE_IPV6==1
         case V6:
 
             {
@@ -660,7 +658,7 @@ namespace RCF {
             }
             else if (mType == V6)
             {
-#ifdef RCF_USE_IPV6
+#if RCF_FEATURE_IPV6==1
                 SockAddrIn6 * pAddrV6 = (SockAddrIn6 *) pSockAddr;
                 SockAddrIn6 * pAddrRhsV6 = (SockAddrIn6 *) pSockAddrRhs;
 
@@ -744,15 +742,6 @@ namespace RCF {
 
         return false;
     }
-
-#ifdef RCF_USE_SF_SERIALIZATION
-    
-    void IpAddress::serialize(SF::Archive &ar)
-    {
-        ar & mType & mIp & mPort;
-    }
-
-#endif // RCF_USE_SF_SERIALIZATION
 
 } // namespace RCF
 

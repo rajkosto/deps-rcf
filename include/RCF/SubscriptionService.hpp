@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -37,16 +37,16 @@ namespace RCF {
 
     class RcfServer;
     class RcfSession;
-    class I_ClientTransport;
-    class I_ServerTransport;
-    class I_Endpoint;
+    class ClientTransport;
+    class ServerTransport;
+    class Endpoint;
     class I_RcfClient;
 
     typedef boost::shared_ptr<I_RcfClient>          RcfClientPtr;
-    typedef std::auto_ptr<I_ClientTransport>        ClientTransportAutoPtr;
+    typedef std::auto_ptr<ClientTransport>        ClientTransportAutoPtr;
     typedef boost::shared_ptr<RcfSession>           RcfSessionPtr;
     typedef boost::weak_ptr<RcfSession>             RcfSessionWeakPtr;
-    typedef boost::shared_ptr<I_ServerTransport>    ServerTransportPtr;
+    typedef boost::shared_ptr<ServerTransport>    ServerTransportPtr;
 
     template<typename T> class RcfClient;
     class I_RequestSubscription;
@@ -124,7 +124,7 @@ namespace RCF {
 
         void        setTopicName(const std::string & publisherName);
         std::string getTopicName() const;
-        void        setPublisherEndpoint(const I_Endpoint & publisherEp);
+        void        setPublisherEndpoint(const Endpoint & publisherEp);
         void        setPublisherEndpoint(I_RcfClient & rcfClient);
         void        setOnSubscriptionDisconnect(OnSubscriptionDisconnect onSubscriptionDisconnect);
         void        setOnAsyncSubscribeCompleted(OnAsyncSubscribeCompleted onAsyncSubscribeCompleted);
@@ -168,7 +168,7 @@ namespace RCF {
         template<typename Interface, typename T>
         SubscriptionPtr createSubscription(
             T & t, 
-            const RCF::I_Endpoint & publisherEp)
+            const RCF::Endpoint & publisherEp)
         {
             SubscriptionParms parms;
             parms.setPublisherEndpoint(publisherEp);

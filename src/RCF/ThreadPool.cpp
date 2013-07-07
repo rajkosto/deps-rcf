@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -279,7 +279,7 @@ namespace RCF {
         mThreadName = threadName;
     }
 
-    std::string ThreadPool::getThreadName()
+    std::string ThreadPool::getThreadName() const
     {
         Lock lock(mInitDeinitMutex);
         return mThreadName;
@@ -358,38 +358,71 @@ namespace RCF {
         mAsioIoServicePtr.reset();
     }
 
-    ThreadPool::ThreadPool(
-        std::size_t threadCount,
-        const std::string & threadName) :
-            mThreadName(threadName),
-            mStarted(),
-            mThreadTargetCount(threadCount),
-            mThreadMaxCount(threadCount),
-            mReserveLastThread(false),
-            mThreadIdleTimeoutMs(30*1000),
-            mStopFlag(false),
-            mBusyCount()
+    ThreadPool::ThreadPool(std::size_t fixedThreadCount) :
+        mThreadName(),
+        mStarted(false),
+        mThreadMinCount(fixedThreadCount),
+        mThreadMaxCount(fixedThreadCount),
+        mReserveLastThread(false),
+        mThreadIdleTimeoutMs(30*1000),
+        mStopFlag(false),
+        mBusyCount()
     {
     }
 
-    ThreadPool::ThreadPool(
-        std::size_t threadTargetCount,
-        std::size_t threadMaxCount,
-        const std::string & threadName,
-        boost::uint32_t threadIdleTimeoutMs,
-        bool reserveLastThread) :
-            mThreadName(threadName),
-            mStarted(),
-            mThreadTargetCount(threadTargetCount),
-            mThreadMaxCount(threadMaxCount),
-            mReserveLastThread(reserveLastThread),
-            mThreadIdleTimeoutMs(threadIdleTimeoutMs),
-            mStopFlag(false),
-            mBusyCount()
+    ThreadPool::ThreadPool(std::size_t threadMinCount, std::size_t threadMaxCount) :
+        mThreadName(),
+        mStarted(false),
+        mThreadMinCount(threadMinCount),
+        mThreadMaxCount(threadMaxCount),
+        mReserveLastThread(false),
+        mThreadIdleTimeoutMs(30*1000),
+        mStopFlag(false),
+        mBusyCount()
     {
-        RCF_ASSERT(
-            0 < mThreadTargetCount && mThreadTargetCount <= mThreadMaxCount)
-            (mThreadTargetCount)(mThreadMaxCount);
+        RCF_ASSERT( 1 <= threadMinCount && threadMinCount <= threadMaxCount );
+    }
+
+    void ThreadPool::setThreadMinCount(std::size_t threadMinCount)
+    {
+        RCF_ASSERT( 0 <= threadMinCount && threadMinCount <= mThreadMaxCount );
+        mThreadMinCount = threadMinCount;
+    }
+
+    std::size_t ThreadPool::getThreadMinCount() const
+    {
+        return mThreadMinCount;
+    }
+
+    void ThreadPool::setThreadMaxCount(std::size_t threadMaxCount)
+    {
+        RCF_ASSERT( threadMaxCount >= mThreadMinCount );
+        mThreadMaxCount = threadMaxCount;
+    }
+
+    std::size_t ThreadPool::getThreadMaxCount() const
+    {
+        return mThreadMaxCount;
+    }
+
+    void ThreadPool::setThreadIdleTimeoutMs(boost::uint32_t threadIdleTimeoutMs)
+    {
+        mThreadIdleTimeoutMs = threadIdleTimeoutMs;
+    }
+
+    boost::uint32_t ThreadPool::getThreadIdleTimeoutMs() const
+    {
+        return mThreadIdleTimeoutMs;
+    }
+
+    void ThreadPool::setReserveLastThread(bool reserveLastThread)
+    {
+        mReserveLastThread = reserveLastThread;
+    }
+
+    bool ThreadPool::getReserveLastThread() const
+    {
+        return mReserveLastThread;
     }
 
     ThreadPool::~ThreadPool()
@@ -493,7 +526,7 @@ namespace RCF {
 
             Lock lock(mThreadsMutex);
 
-            if (    mThreads.size() > mThreadTargetCount 
+            if (    mThreads.size() > mThreadMinCount 
                 &&  mBusyCount < mThreads.size() - 1)
             {                
                 threadInfoPtr->mStopFlag = true; 
@@ -601,7 +634,7 @@ namespace RCF {
                 mBusyCount = 0;
             }
 
-            bool ok = launchThread(mThreadTargetCount);
+            bool ok = launchThread(mThreadMinCount);
             RCF_ASSERT(ok);
             mStarted = true;
         }

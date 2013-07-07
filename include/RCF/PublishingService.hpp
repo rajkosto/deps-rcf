@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -37,9 +37,9 @@ namespace RCF {
     class                                           RcfServer;
     class                                           I_RcfClient;
     class                                           RcfSession;
-    class                                           I_ClientTransport;
+    class                                           ClientTransport;
     typedef boost::shared_ptr<I_RcfClient>          RcfClientPtr;
-    typedef boost::shared_ptr<I_ClientTransport>    ClientTransportPtr;
+    typedef boost::shared_ptr<ClientTransport>    ClientTransportPtr;
 
     class                                           PublisherBase;
     typedef boost::shared_ptr<PublisherBase>        PublisherPtr;
@@ -201,32 +201,6 @@ namespace RCF {
     };
 
     typedef boost::shared_ptr<PublishingService> PublishingServicePtr;
-
-    class I_CreateCallbackConnection;
-    template<typename T> class RcfClient;
-
-    class CallbackConnectionService : public I_Service, boost::noncopyable
-    {
-    public:
-
-        CallbackConnectionService();
-
-        typedef boost::function2<void, RcfSessionPtr, ClientTransportAutoPtr> OnCallbackConnectionCreated;
-
-    private:
-
-        void onServiceAdded(RcfServer & server);
-        void onServiceRemoved(RcfServer & server);
-        void onServerStart(RcfServer & server);
-
-        friend class RcfClient<I_CreateCallbackConnection>;
-        void CreateCallbackConnection();
-
-        RcfServer * mpServer;
-        OnCallbackConnectionCreated mOnCallbackConnectionCreated;
-    };
-
-    typedef boost::shared_ptr<CallbackConnectionService> CallbackConnectionServicePtr;
 
 } // namespace RCF
 

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -57,10 +57,11 @@
 #endif
 
 // Test custom allocation support, if applicable.
-#if defined(RCF_USE_CUSTOM_ALLOCATOR) && defined(_MSC_VER) && !defined(NDEBUG)
+#if RCF_FEATURE_CUSTOM_ALLOCATOR==1
+#if defined(_MSC_VER) && !defined(NDEBUG)
 #include <RCF/test/AllocationHookCRT.hpp>
 #endif
-
+#endif
 
 int test_main(int argc, char **argv);
 
@@ -250,6 +251,44 @@ int main(int argc, char **argv)
     checkNoCycles();
 
     return ret + static_cast<int>(failCount);
+}
+
+namespace RCF {
+    std::string getFilterName(int filterId)
+    {
+        switch (filterId)
+        {
+        case RcfFilter_Unknown                      : return "Unknown";
+        case RcfFilter_Identity                     : return "Identity";
+        case RcfFilter_OpenSsl                      : return "OpenSSL";
+        case RcfFilter_ZlibCompressionStateless     : return "Zlib stateless";
+        case RcfFilter_ZlibCompressionStateful      : return "Zlib stateful";
+        case RcfFilter_SspiNtlm                     : return "NTLM";
+        case RcfFilter_SspiKerberos                 : return "Kerberos";
+        case RcfFilter_SspiNegotiate                : return "Negotiate";
+        case RcfFilter_SspiSchannel                 : return "Schannel";
+        case RcfFilter_Xor                          : return "Xor";
+        default                                     : return "Unknown";
+        }
+    }
+
+    bool isFilterRemovable(int filterId)
+    {
+        switch (filterId)
+        {
+        case RcfFilter_Unknown                      : return true;
+        case RcfFilter_Identity                     : return true;
+        case RcfFilter_OpenSsl                      : return true;
+        case RcfFilter_ZlibCompressionStateless     : return false;
+        case RcfFilter_ZlibCompressionStateful      : return false;
+        case RcfFilter_SspiNtlm                     : return true;
+        case RcfFilter_SspiKerberos                 : return true;
+        case RcfFilter_SspiNegotiate                : return true;
+        case RcfFilter_SspiSchannel                 : return true;
+        case RcfFilter_Xor                          : return true;
+        default                                     : return true;
+        }
+    }
 }
 
 // Minidump creation code, for Visual C++ 2003 and later.

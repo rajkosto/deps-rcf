@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -73,10 +73,9 @@ namespace RCF {
             mSessionState.onAppReadWriteCompleted(bytesTransferred);
         }
 
-        const FilterDescription &getFilterDescription() const
+        int getFilterId() const
         {
-            RCF_ASSERT(0);
-            return * (const FilterDescription *) NULL;
+            return RcfFilter_Unknown;
         }
 
         AsioSessionState &mSessionState;
@@ -211,15 +210,20 @@ namespace RCF {
         close();
     }
 
-    I_ServerTransport & AsioSessionState::getServerTransport()
+    ServerTransport & AsioSessionState::getServerTransport()
     {
         return mTransport;
     }
 
-    const I_RemoteAddress &
+    const RemoteAddress &
         AsioSessionState::getRemoteAddress()
     {
         return implGetRemoteAddress();
+    }
+
+    bool AsioSessionState::isConnected()
+    {
+        return implIsConnected();
     }
 
     // SessionState
@@ -244,17 +248,18 @@ namespace RCF {
     {
         if (transport.mWireProtocol == Wp_Http || transport.mWireProtocol == Wp_Https)
         {
+#if RCF_FEATURE_HTTP==1
             mWireFilters.clear();
             mWireFilters.push_back( FilterPtr(new HttpFrameFilter()) );
+#else
+            RCF_ASSERT(0 && "This RCF build does not support HTTP tunneling.");
+#endif
         }
 
         if (transport.mWireProtocol == Wp_Https)
         {
             FilterPtr sslFilterPtr;
-            
-#if defined(BOOST_WINDOWS) && defined(RCF_USE_OPENSSL)
-
-            if (transport.mpServer->getPreferSchannel())
+            if (transport.mpServer->getSslImplementation() == Si_Schannel)
             {
                 sslFilterPtr = transport.mpServer->createFilter(RcfFilter_SspiSchannel);
             }
@@ -262,17 +267,6 @@ namespace RCF {
             {
                 sslFilterPtr = transport.mpServer->createFilter(RcfFilter_OpenSsl);
             }
-            
-#elif defined(BOOST_WINDOWS)
-
-            sslFilterPtr = transport.mpServer->createFilter(RcfFilter_SspiSchannel);
-
-#elif defined(RCF_USE_OPENSSL)
-
-            sslFilterPtr = transport.mpServer->createFilter(RcfFilter_OpenSsl);
-
-#endif
-
             if (!sslFilterPtr)
             {
                 RCF_THROW( Exception(_RcfError_SslNotSupported()) );
@@ -896,18 +890,19 @@ namespace RCF {
     AsioSessionStatePtr AsioServerTransport::createSessionState()
     {
         AsioSessionStatePtr sessionStatePtr( implCreateSessionState() );
-        SessionPtr sessionPtr( getSessionManager().createSession() );
-        sessionPtr->setSessionState( *sessionStatePtr );
-        sessionStatePtr->setSessionPtr(sessionPtr);
+        sessionStatePtr->mSessionPtr = getSessionManager().createSession();
+        sessionStatePtr->mSessionPtr->setSessionState( *sessionStatePtr );
+
         sessionStatePtr->mWeakThisPtr = sessionStatePtr;
         registerSession(sessionStatePtr->mWeakThisPtr);
+
         return sessionStatePtr;
     }
 
     // I_ServerTransportEx implementation
 
     ClientTransportAutoPtr AsioServerTransport::createClientTransport(
-        const I_Endpoint &endpoint)
+        const Endpoint &endpoint)
     {
         return implCreateClientTransport(endpoint);
     }
@@ -931,7 +926,7 @@ namespace RCF {
         clientTransportAutoPtr.reset();
         if (keepClientConnection)
         {
-            clientTransportAutoPtr = createClientTransport(sessionPtr);
+            clientTransportAutoPtr.reset( createClientTransport(sessionPtr).release() );
         }
 
         sessionStatePtr->mState = AsioSessionState::WritingData;
@@ -985,16 +980,6 @@ namespace RCF {
         return true;
     }
 
-    bool AsioServerTransport::isConnected(const SessionPtr &sessionPtr)
-    {
-        AsioSessionState & sessionState = 
-            dynamic_cast<AsioSessionState &>(sessionPtr->getSessionState());
-
-        AsioSessionStatePtr sessionStatePtr = sessionState.sharedFromThis();
-
-        return sessionStatePtr.get() && sessionStatePtr->implIsConnected();
-    }
-
     // I_Service implementation
 
     void AsioServerTransport::open()
@@ -1003,16 +988,6 @@ namespace RCF {
         implOpen();
     }
 
-    void AsioSessionState::setSessionPtr(
-        SessionPtr sessionPtr)    
-    { 
-        mSessionPtr = sessionPtr; 
-    }
-    
-    SessionPtr AsioSessionState::getSessionPtr()
-    { 
-        return mSessionPtr; 
-    }
 
     void AsioSessionState::close()
     {
@@ -1186,24 +1161,21 @@ namespace RCF {
     {
         Lock lock(mSessionsMutex);
 
-        std::set<AsioSessionStateWeakPtr>::iterator iter;
+        std::set<SessionStateWeakPtr>::iterator iter;
         for (iter = mSessions.begin(); iter != mSessions.end(); ++iter)
         {
-            closeSessionState(*iter);
+            SessionStatePtr sessionStatePtr = iter->lock();
+            if (sessionStatePtr)
+            {
+                AsioSessionStatePtr asioSessionStatePtr = 
+                    boost::static_pointer_cast<AsioSessionState>(sessionStatePtr);
+
+                asioSessionStatePtr->close();
+            }
         }
     }
 
-    void AsioServerTransport::closeSessionState(
-        AsioSessionStateWeakPtr sessionStateWeakPtr)
-    {
-        AsioSessionStatePtr sessionStatePtr(sessionStateWeakPtr.lock());
-        if (sessionStatePtr)
-        {
-            sessionStatePtr->close();
-        }
-    }
-
-    I_AsioAcceptor & AsioServerTransport::getAcceptor()
+    AsioAcceptor & AsioServerTransport::getAcceptor()
     {
         return *mAcceptorPtr;
     }

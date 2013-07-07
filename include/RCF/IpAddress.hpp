@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -29,7 +29,7 @@
 
 namespace RCF {
 
-#ifdef RCF_USE_IPV6
+#if RCF_FEATURE_IPV6==1
 
     typedef in6_addr In6Addr;
     typedef sockaddr_in6 SockAddrIn6;
@@ -63,9 +63,20 @@ namespace RCF {
     class Exception;
     typedef boost::shared_ptr<Exception> ExceptionPtr;
 
-    class RCF_EXPORT IpAddress : public I_RemoteAddress
+    /// Represents an IP address (IPv4 or IPv6).
+    class RCF_EXPORT IpAddress : public RemoteAddress
     {
     public:
+
+        // *** SWIG BEGIN ***
+
+        /// Construct an IP address from a host name
+        explicit IpAddress(const std::string & ip);
+
+        /// Construct an IP address from a host name and port.
+        explicit IpAddress(const std::string & ip, int port);
+
+        // *** SWIG END ***
 
         enum Type { V4_or_V6, V4, V6 };
 
@@ -74,8 +85,6 @@ namespace RCF {
         
         IpAddress();
         explicit IpAddress(Type restrictTo);
-        explicit IpAddress(const std::string & ip);
-        explicit IpAddress(const std::string & ip, int port);
         explicit IpAddress(const std::string & ip, int port, Type restrictTo);
         explicit IpAddress(const sockaddr_in &addr);
         explicit IpAddress(const SockAddrIn6 &addr);
@@ -105,10 +114,6 @@ namespace RCF {
         bool            operator==(const IpAddress & rhs) const;
         bool            operator!=(const IpAddress & rhs) const;
         bool            operator<(const IpAddress &rhs) const;
-
-#ifdef RCF_USE_SF_SERIALIZATION
-        void            serialize(SF::Archive &ar);
-#endif // RCF_USE_SF_SERIALIZATION
 
     private:
 

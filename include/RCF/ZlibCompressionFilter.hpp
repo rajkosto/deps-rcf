@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -33,6 +33,7 @@ namespace RCF {
 
     class ZlibCompressionReadFilter;
     class ZlibCompressionWriteFilter;
+    class ZlibDll;
 
     class RCF_EXPORT ZlibCompressionFilterBase : 
         public Filter, 
@@ -42,6 +43,9 @@ namespace RCF {
         ZlibCompressionFilterBase(bool stateful, bool serverSide);
        
     private:
+
+        ZlibDll & mZlibDll;
+
         void resetState();
 
         void read(const ByteBuffer &byteBuffer, std::size_t bytesRequested);
@@ -84,11 +88,7 @@ namespace RCF {
                 ZlibCompressionFilterBase(false, false)
         {}        
 
-        static const FilterDescription & sGetFilterDescription();
-        const FilterDescription & getFilterDescription() const;
-
-        // TODO: should be private
-        static const FilterDescription *spFilterDescription;
+        int getFilterId() const;
     };
 
     class RCF_EXPORT ZlibStatefulCompressionFilter : 
@@ -107,31 +107,27 @@ namespace RCF {
                 ZlibCompressionFilterBase(true, false)
         {}
 
-        static const FilterDescription & sGetFilterDescription();
-        const FilterDescription & getFilterDescription() const;
-
-        // TODO: should be private
-        static const FilterDescription *spFilterDescription;
+        int getFilterId() const;
     };
    
-    class RCF_EXPORT ZlibStatelessCompressionFilterFactory : 
+    class ZlibStatelessCompressionFilterFactory : 
         public FilterFactory
     {
     public:
         ZlibStatelessCompressionFilterFactory();
 
         FilterPtr createFilter(RcfServer & server);
-        const FilterDescription & getFilterDescription();
+        int getFilterId();
     };
 
-    class RCF_EXPORT ZlibStatefulCompressionFilterFactory : 
+    class ZlibStatefulCompressionFilterFactory : 
         public FilterFactory
     {
     public:
         ZlibStatefulCompressionFilterFactory();
 
         FilterPtr createFilter(RcfServer & server);
-        const FilterDescription & getFilterDescription();
+        int getFilterId();
     };
 
     typedef ZlibStatefulCompressionFilter               ZlibCompressionFilter;

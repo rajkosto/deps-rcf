@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -33,7 +33,7 @@
 #include <RCF/ServerTransport.hpp>
 #include <RCF/StubEntry.hpp>
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 #include <RCF/FileDownload.hpp>
 #include <RCF/FileUpload.hpp>
 #endif
@@ -139,6 +139,8 @@ namespace RCF {
         typedef std::map<const std::type_info *, boost::any, TypeInfoCompare> SessionObjectMap;
         SessionObjectMap mSessionObjects;
 
+    private:
+
         template<typename T>
         T * getSessionObjectImpl(bool createIfDoesntExist)
         {
@@ -166,6 +168,8 @@ namespace RCF {
                 return NULL;
             }
         }
+
+    public:
 
         template<typename T>
         void deleteSessionObject()
@@ -226,7 +230,7 @@ namespace RCF {
 
         //*******************************
 
-        const I_RemoteAddress &
+        const RemoteAddress &
                         getClientAddress();
 
         RcfServer &     getRcfServer();
@@ -303,7 +307,7 @@ namespace RCF {
 
         void            cancelDownload();
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 
         void            addDownloadStream(
                             boost::uint32_t sessionLocalId, 
@@ -445,7 +449,7 @@ namespace RCF {
         friend class UdpSessionState;
         friend class FileStreamImpl;
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 
     private:
 
@@ -469,11 +473,11 @@ namespace RCF {
         StubEntryPtr                            mCachedStubEntryPtr;
 
     public:
-        I_SessionState & getSessionState() const;
-        void setSessionState(I_SessionState & sessionState);
+        SessionState & getSessionState() const;
+        void setSessionState(SessionState & sessionState);
 
     private:
-        I_SessionState * mpSessionState;
+        SessionState * mpSessionState;
 
     public:
         std::string mCurrentCallDesc;
@@ -509,6 +513,8 @@ namespace RCF {
         std::size_t getRemoteCallCount() const;
         boost::uint64_t getTotalBytesReceived() const;
         boost::uint64_t getTotalBytesSent() const;
+
+        bool isConnected() const;
 
     private:
 

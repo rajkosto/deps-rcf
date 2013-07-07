@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -22,15 +22,6 @@
 #include <RCF/util/Tchar.hpp>
 #include <RCF/Win32NamedPipeClientTransport.hpp>
 #include <RCF/Win32NamedPipeServerTransport.hpp>
-
-#ifdef RCF_USE_SF_SERIALIZATION
-#include <SF/Registry.hpp>
-#endif
-
-// missing stuff in mingw headers
-#if defined(__MINGW32__)
-#define FILE_FLAG_FIRST_PIPE_INSTANCE   0x00080000
-#endif
 
 namespace RCF {
 
@@ -121,21 +112,5 @@ namespace RCF {
     {
         return mPipeName;
     }
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-    void Win32NamedPipeEndpoint::serialize(SF::Archive &ar)
-    {
-        serializeParent( (I_Endpoint*) 0, ar, *this);
-        ar & mPipeName;
-    }
-
-    void initWin32NamedPipeEndpointSerialization()
-    {
-        SF::registerType( (Win32NamedPipeEndpoint *) 0, "RCF::Win32NamedPipeEndpoint");
-        SF::registerBaseAndDerived( (I_Endpoint *) 0, (Win32NamedPipeEndpoint *) 0);
-    }
-
-#endif
 
 } // namespace RCF

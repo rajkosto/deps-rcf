@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -263,6 +263,17 @@ namespace RCF {
     static const int RcfError_FileIndex                         = 140;
     static const int RcfError_ConcurrentCalls                   = 141;
     static const int RcfError_ParseJsonRpcRequest               = 142;
+    static const int RcfError_DllLoad                           = 143;
+    static const int RcfError_DllFuncLoad                       = 144;
+    static const int RcfError_UnixDllLoad                       = 145;
+    static const int RcfError_UnixDllFuncLoad                   = 146;
+    static const int RcfError_PingBackInterval                  = 147;
+    static const int RcfError_FileOpenWrite                     = 148;
+    static const int RcfError_CustomCertValidation              = 149;
+    static const int RcfError_SupportedOnWindowsOnly            = 150;
+    static const int RcfError_NotSupportedOnWindows             = 151;
+    static const int RcfError_NotSupportedInThisBuild           = 152;
+    static const int RcfError_NoLongerSupported                 = 153;
 
 
     static const int RcfError_User                              = 1001;
@@ -583,7 +594,8 @@ namespace RCF {
 
     inline Error _RcfError_SspiImpersonateNoSspi()          { return Error(RcfError_SspiImpersonateNoSspi); }
 
-    inline Error _RcfError_TransportProtocolNotSupported()  { return Error(RcfError_TransportProtocolNotSupported); }
+    inline Error _RcfError_TransportProtocolNotSupported(
+        const std::string& protocolName)                    { return Error(RcfError_TransportProtocolNotSupported, protocolName); }
 
     inline Error _RcfError_SslNotSupported()                { return Error(RcfError_SslNotSupported); }
 
@@ -600,6 +612,43 @@ namespace RCF {
 
     inline Error _RcfError_ParseJsonRpcRequest()            { return Error(RcfError_ParseJsonRpcRequest); }
 
+    inline Error _RcfError_DllLoad(
+        const std::string & dllName)                        { return Error(RcfError_DllLoad, dllName); }
+
+    inline Error _RcfError_DllFuncLoad(
+        const std::string & dllName,
+        const std::string & funcName)                       { return Error(RcfError_DllFuncLoad, dllName, funcName); }
+
+    inline Error _RcfError_UnixDllLoad(
+        const std::string & dllName,
+        const std::string & dlerr)                          { return Error(RcfError_UnixDllLoad, dllName, dlerr); }
+
+    inline Error _RcfError_UnixDllFuncLoad(
+        const std::string & dllName,
+        const std::string & funcName,
+        const std::string & dlerr)                          { return Error(RcfError_UnixDllFuncLoad, dllName, funcName, dlerr); }
+
+    inline Error _RcfError_PingBackInterval(
+        boost::uint32_t requestedIntervalMs,
+        boost::uint32_t minimumIntervalMs)                  { return Error(RcfError_PingBackInterval, numberToString(requestedIntervalMs), numberToString(minimumIntervalMs) ); }
+
+    inline Error _RcfError_FileOpenWrite(
+        const std::string & filePath)                       { return Error(RcfError_FileOpenWrite, filePath); }
+
+    inline Error _RcfError_CustomCertValidation(
+        const std::string & errorMsg)                       { return Error(RcfError_CustomCertValidation, errorMsg); }
+
+    inline Error _RcfError_SupportedOnWindowsOnly(
+        const std::string & className)                      { return Error(RcfError_SupportedOnWindowsOnly, className); }
+
+    inline Error _RcfError_NotSupportedOnWindows(
+        const std::string & className)                      { return Error(RcfError_NotSupportedOnWindows, className); }
+
+    inline Error _RcfError_NotSupportedInThisBuild(
+        const std::string & className)                      { return Error(RcfError_NotSupportedInThisBuild, className); }
+
+    inline Error _RcfError_NoLongerSupported(
+        const std::string & s)                              { return Error(RcfError_NoLongerSupported, s); }
 
 #ifdef _MSC_VER
 #pragma warning(pop)
@@ -651,6 +700,7 @@ namespace RCF {
 
         bool            good() const;
         bool            bad() const;
+        void            clear();
 
         const char *    what()                  const throw();
         const Error &   getError()              const;

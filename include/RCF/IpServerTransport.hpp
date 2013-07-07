@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -33,11 +33,11 @@ namespace RCF {
     // Ip and significant bits.
     typedef std::pair<IpAddress, std::size_t> IpRule;
 
-    class RCF_EXPORT I_IpServerTransport
+    class RCF_EXPORT IpServerTransport
     {
     public:
-                        I_IpServerTransport();
-        virtual         ~I_IpServerTransport();
+                        IpServerTransport();
+        virtual         ~IpServerTransport();
 
         bool            isIpAllowed(const IpAddress &ip) const;
 

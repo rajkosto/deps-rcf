@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -67,10 +67,10 @@ namespace RCF {
         mSessionPtr->invokeServant();
     }
 
-    std::auto_ptr<I_ClientTransport> InProcessTransport::clone() const
+    std::auto_ptr<ClientTransport> InProcessTransport::clone() const
     {
         RCF_ASSERT(0);
-        return std::auto_ptr<I_ClientTransport>();
+        return std::auto_ptr<ClientTransport>();
     }
 
     EndpointPtr InProcessTransport::getEndpointPtr() const
@@ -80,7 +80,7 @@ namespace RCF {
     }
 
     int InProcessTransport::send(
-        I_ClientTransportCallback &     clientStub, 
+        ClientTransportCallback &     clientStub, 
         const std::vector<ByteBuffer> & data, 
         unsigned int                    timeoutMs)
     {
@@ -92,7 +92,7 @@ namespace RCF {
     }
 
     int InProcessTransport::receive(
-        I_ClientTransportCallback &     clientStub, 
+        ClientTransportCallback &     clientStub, 
         ByteBuffer &                    byteBuffer, 
         unsigned int                    timeoutMs)
     {
@@ -110,7 +110,7 @@ namespace RCF {
     }
 
     void InProcessTransport::connect(
-        I_ClientTransportCallback &     clientStub, 
+        ClientTransportCallback &     clientStub, 
         unsigned int                    timeoutMs)
     {
         //RCF_ASSERT(0);
@@ -141,7 +141,7 @@ namespace RCF {
 
     void InProcessTransport::setTimer(
         boost::uint32_t timeoutMs,
-        I_ClientTransportCallback * pClientStub)
+        ClientTransportCallback * pClientStub)
     {
         RCF_ASSERT(0);
         RCF_UNUSED_VARIABLE(timeoutMs);
@@ -167,11 +167,11 @@ namespace RCF {
     {
         RCF_ASSERT(0);
     }
-    I_ServerTransport & InProcessTransport::getServerTransport()
+    ServerTransport & InProcessTransport::getServerTransport()
     {
         return *this;
     }
-    const I_RemoteAddress & InProcessTransport::getRemoteAddress()
+    const RemoteAddress & InProcessTransport::getRemoteAddress()
     {
         return mRemoteAddress;
     }
@@ -194,7 +194,7 @@ namespace RCF {
     // I_ServerTransportEx
     ClientTransportAutoPtr 
         InProcessTransport::createClientTransport(
-            const I_Endpoint &endpoint)
+            const Endpoint &endpoint)
     {
         const InProcessEndpoint & ep = 
             dynamic_cast<const InProcessEndpoint &>(endpoint);

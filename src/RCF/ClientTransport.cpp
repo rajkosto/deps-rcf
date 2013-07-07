@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -25,7 +25,7 @@
 
 namespace RCF {
 
-    I_ClientTransport::I_ClientTransport() :
+    ClientTransport::ClientTransport() :
         mMaxMessageLength(getDefaultMaxMessageLength()),
         mLastRequestSize(0),
         mLastResponseSize(0),
@@ -34,7 +34,7 @@ namespace RCF {
         mAsync(false)
     {}
 
-    I_ClientTransport::I_ClientTransport(const I_ClientTransport & rhs) :
+    ClientTransport::ClientTransport(const ClientTransport & rhs) :
         mMaxMessageLength(rhs.mMaxMessageLength),
         mLastRequestSize(),
         mLastResponseSize(0),
@@ -44,107 +44,107 @@ namespace RCF {
     {
     }
 
-    bool I_ClientTransport::isInProcess()
+    bool ClientTransport::isInProcess()
     {
         return false;
     }
 
-    void I_ClientTransport::doInProcessCall(ClientStub & clientStub)
+    void ClientTransport::doInProcessCall(ClientStub & clientStub)
     {
         RCF_UNUSED_VARIABLE(clientStub);
         RCF_ASSERT(0);
     }
 
-    bool I_ClientTransport::isConnected()
+    bool ClientTransport::isConnected()
     {
         return true;
     }
 
-    void I_ClientTransport::setMaxMessageLength(std::size_t maxMessageLength)
+    void ClientTransport::setMaxMessageLength(std::size_t maxMessageLength)
     {
         setMaxIncomingMessageLength(maxMessageLength);
     }
 
-    std::size_t I_ClientTransport::getMaxMessageLength() const
+    std::size_t ClientTransport::getMaxMessageLength() const
     {
         return getMaxIncomingMessageLength();
     }
 
-    void I_ClientTransport::setMaxIncomingMessageLength(
+    void ClientTransport::setMaxIncomingMessageLength(
         std::size_t maxMessageLength)
     {
         mMaxMessageLength = maxMessageLength;
     }
 
-    std::size_t I_ClientTransport::getMaxIncomingMessageLength() const
+    std::size_t ClientTransport::getMaxIncomingMessageLength() const
     {
         return mMaxMessageLength;
     }
 
-    RcfSessionWeakPtr I_ClientTransport::getRcfSession()
+    RcfSessionWeakPtr ClientTransport::getRcfSession()
     {
         return mRcfSessionWeakPtr;
     }
 
-    void I_ClientTransport::setRcfSession(RcfSessionWeakPtr rcfSessionWeakPtr)
+    void ClientTransport::setRcfSession(RcfSessionWeakPtr rcfSessionWeakPtr)
     {
         mRcfSessionWeakPtr = rcfSessionWeakPtr;
     }
 
-    std::size_t I_ClientTransport::getLastRequestSize()
+    std::size_t ClientTransport::getLastRequestSize()
     {
         return mLastRequestSize;
     }
 
-    std::size_t I_ClientTransport::getLastResponseSize()
+    std::size_t ClientTransport::getLastResponseSize()
     {
         return mLastResponseSize;
     }
 
-    boost::uint64_t I_ClientTransport::getRunningTotalBytesSent()
+    boost::uint64_t ClientTransport::getRunningTotalBytesSent()
     {
         return mRunningTotalBytesSent;
     }
 
-    boost::uint64_t I_ClientTransport::getRunningTotalBytesReceived()
+    boost::uint64_t ClientTransport::getRunningTotalBytesReceived()
     {
         return mRunningTotalBytesReceived;
     }
 
-    void I_ClientTransport::resetRunningTotals()
+    void ClientTransport::resetRunningTotals()
     {
         mRunningTotalBytesSent = 0;
         mRunningTotalBytesReceived = 0;
     }
 
-    void I_ClientTransportCallback::setAsyncDispatcher(RcfServer & server)
+    void ClientTransportCallback::setAsyncDispatcher(RcfServer & server)
     {
         RCF_ASSERT(!mpAsyncDispatcher);
         mpAsyncDispatcher = &server;
     }
 
-    RcfServer * I_ClientTransportCallback::getAsyncDispatcher()
+    RcfServer * ClientTransportCallback::getAsyncDispatcher()
     {
         return mpAsyncDispatcher;
     }
 
-    void I_ClientTransport::setAsync(bool async)
+    void ClientTransport::setAsync(bool async)
     {
         mAsync = async;
     }
 
-    void I_ClientTransport::associateWithIoService(AsioIoService & ioService)
+    void ClientTransport::associateWithIoService(AsioIoService & ioService)
     {
         RCF_UNUSED_VARIABLE(ioService);
         RCF_ASSERT(0 && "Asynchronous operations not implemented for this transport.");
     }
 
-    bool I_ClientTransport::isAssociatedWithIoService()
+    bool ClientTransport::isAssociatedWithIoService()
     {
         return false;
     }
 
-    void I_ClientTransport::cancel()
+    void ClientTransport::cancel()
     {
         RCF_ASSERT(0 && "cancel() not implemented for this transport");
     }

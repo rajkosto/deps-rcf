@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -45,7 +45,7 @@ namespace RCF {
 
         void onWriteCompleted(std::size_t bytesTransferred);
 
-        const FilterDescription &getFilterDescription() const;
+        int getFilterId() const;
 
     private:
 

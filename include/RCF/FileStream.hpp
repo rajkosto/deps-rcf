@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -21,8 +21,8 @@
 
 #include <RCF/Config.hpp>
 
-#ifndef RCF_USE_BOOST_FILESYSTEM
-#error RCF_USE_BOOST_FILESYSTEM must be defined
+#if RCF_FEATURE_FILETRANSFER==0
+#error RCF_FEATURE_FILETRANSFER=1 must be defined
 #endif
 
 #include <RCF/ByteBuffer.hpp>

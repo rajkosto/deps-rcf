@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -20,7 +20,7 @@
 
 #include <RCF/util/UnusedVariable.hpp>
 
-#ifdef RCF_USE_CUSTOM_ALLOCATOR
+#if RCF_FEATURE_CUSTOM_ALLOCATOR==1
 #include <RCF/CustomAllocator.hpp>
 #endif
 
@@ -40,7 +40,7 @@ namespace RCF {
         resize(0);
     }
 
-#ifdef RCF_USE_CUSTOM_ALLOCATOR
+#if RCF_FEATURE_CUSTOM_ALLOCATOR==1
 
     ReallocBuffer::~ReallocBuffer()
     {

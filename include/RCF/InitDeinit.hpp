@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -21,19 +21,27 @@
 
 #include <RCF/Export.hpp>
 
+#include <RCF/Config.hpp>
+
+#include <boost/mpl/int.hpp>
+#include <boost/mpl/list.hpp>
+
 namespace RCF {
 
-    // Ref-counted initialization of RCF framework.
-    RCF_EXPORT bool init();
+    /// Reference-counted initialization of RCF framework. May be called multiple
+    /// times (see deinit()).
+    RCF_EXPORT bool init(RcfConfigT * = NULL);
 
-    // Ref-counted deinitialization of RCF framework.
+    /// Reference-counted deinitialization of RCF framework. For actual deinitialization
+    /// to take place, deinit() must be called as many times as init() has been
+    /// called.
     RCF_EXPORT bool deinit();
 
     // Initialization sentry. Ctor calls RCF::init(), dtor calls RCF::deinit().
     class RCF_EXPORT RcfInitDeinit
     {
     public:
-        RcfInitDeinit();
+        RcfInitDeinit(RcfConfigT * = NULL);
         ~RcfInitDeinit();
 
         // Returns true if this instance initialized RCF.

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -34,8 +34,8 @@
 
 namespace RCF {
 
-    class I_Endpoint;
-    typedef boost::shared_ptr<I_Endpoint> EndpointPtr;
+    class Endpoint;
+    typedef boost::shared_ptr<Endpoint> EndpointPtr;
 
     class RcfServer;
 
@@ -46,11 +46,11 @@ namespace RCF {
     class RcfSession;
     typedef boost::weak_ptr<RcfSession> RcfSessionWeakPtr;
 
-    class RCF_EXPORT I_ClientTransportCallback
+    class RCF_EXPORT ClientTransportCallback
     {
     public:
-        I_ClientTransportCallback() : mpAsyncDispatcher() {}
-        virtual ~I_ClientTransportCallback() {}
+        ClientTransportCallback() : mpAsyncDispatcher() {}
+        virtual ~ClientTransportCallback() {}
         virtual void onConnectCompleted(bool alreadyConnected = false) = 0;
         virtual void onSendCompleted() = 0;
         virtual void onReceiveCompleted() = 0;
@@ -66,32 +66,62 @@ namespace RCF {
 
     class ClientStub;
 
-    class RCF_EXPORT I_ClientTransport
+    /// Base class for all client transports.
+    class RCF_EXPORT ClientTransport
     {
     public:
-        I_ClientTransport();
-        I_ClientTransport(const I_ClientTransport & rhs);
+        ClientTransport();
+        ClientTransport(const ClientTransport & rhs);
 
-        virtual ~I_ClientTransport()
+        virtual ~ClientTransport()
         {}
 
+        // *** SWIG BEGIN ***
+        
+        /// Returns the transport type of this client transport.
         virtual TransportType getTransportType() = 0;
 
+        /// Sets maximum incoming message length. Incoming messages that are larger
+        /// than this size will be dropped.
+        void setMaxIncomingMessageLength(std::size_t maxMessageLength);
+
+        /// Returns maximum incoming message length.
+        std::size_t getMaxIncomingMessageLength() const;
+
+        /// Returns the byte size of the last request sent on the client transport.
+        std::size_t getLastRequestSize();
+
+        /// Returns the byte size of the last response received on the client transport.
+        std::size_t getLastResponseSize();
+
+        /// Returns the running total of bytes sent on the client transport.
+        boost::uint64_t getRunningTotalBytesSent();
+
+        /// Returns the running total of bytes received on the client transport.
+        boost::uint64_t getRunningTotalBytesReceived();
+
+        /// Resets the bytes-sent and bytes-received running totals to zero.
+        void resetRunningTotals();
+
+        // *** SWIG END ***
+
+        
+
         virtual 
-        std::auto_ptr<I_ClientTransport> clone() const = 0;
+        std::auto_ptr<ClientTransport> clone() const = 0;
 
         virtual 
         EndpointPtr getEndpointPtr() const = 0;
        
         virtual 
         int send(
-            I_ClientTransportCallback &     clientStub, 
+            ClientTransportCallback &     clientStub, 
             const std::vector<ByteBuffer> & data, 
             unsigned int                    timeoutMs) = 0;
 
         virtual 
         int receive(
-            I_ClientTransportCallback &     clientStub, 
+            ClientTransportCallback &     clientStub, 
             ByteBuffer &                    byteBuffer, 
             unsigned int                    timeoutMs) = 0;
 
@@ -100,7 +130,7 @@ namespace RCF {
 
         virtual 
         void connect(
-            I_ClientTransportCallback &     clientStub, 
+            ClientTransportCallback &     clientStub, 
             unsigned int                    timeoutMs) = 0;
 
         virtual 
@@ -119,18 +149,10 @@ namespace RCF {
         void setMaxMessageLength(std::size_t maxMessageLength);
         std::size_t getMaxMessageLength() const;
 
-        void setMaxIncomingMessageLength(std::size_t maxMessageLength);
-        std::size_t getMaxIncomingMessageLength() const;
 
         RcfSessionWeakPtr getRcfSession();
         void setRcfSession(RcfSessionWeakPtr rcfSessionWeakPtr);
 
-        std::size_t getLastRequestSize();
-        std::size_t getLastResponseSize();
-
-        boost::uint64_t getRunningTotalBytesSent();
-        boost::uint64_t getRunningTotalBytesReceived();
-        void resetRunningTotals();
 
         void setAsync(bool async);
 
@@ -138,7 +160,7 @@ namespace RCF {
 
         virtual void setTimer(
             boost::uint32_t timeoutMs,
-            I_ClientTransportCallback * pClientStub = NULL) = 0;
+            ClientTransportCallback * pClientStub = NULL) = 0;
 
         virtual void associateWithIoService(AsioIoService & ioService);
         virtual bool isAssociatedWithIoService();
@@ -167,9 +189,9 @@ namespace RCF {
         friend class ClientStub;
     };
 
-    typedef boost::shared_ptr<I_ClientTransport> ClientTransportPtr;
+    typedef boost::shared_ptr<ClientTransport> ClientTransportPtr;
 
-    typedef std::auto_ptr<I_ClientTransport> ClientTransportAutoPtr;
+    typedef std::auto_ptr<ClientTransport> ClientTransportAutoPtr;
 
     typedef boost::shared_ptr< ClientTransportAutoPtr > ClientTransportAutoPtrPtr;
 

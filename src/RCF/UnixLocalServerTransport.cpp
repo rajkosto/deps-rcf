@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -31,7 +31,7 @@ namespace RCF {
 
     using ASIO_NS::local::stream_protocol;
 
-    class UnixLocalAcceptor : public I_AsioAcceptor
+    class UnixLocalAcceptor : public AsioAcceptor
     {
     public:
         UnixLocalAcceptor(AsioIoService & ioService, const std::string & fileName) : 
@@ -72,7 +72,7 @@ namespace RCF {
             mSocketPtr(new UnixLocalSocket(ioService))
     {}
 
-    const I_RemoteAddress & UnixLocalSessionState::implGetRemoteAddress()
+    const RemoteAddress & UnixLocalSessionState::implGetRemoteAddress()
     {
         return mRemoteAddress;
     }
@@ -172,7 +172,7 @@ namespace RCF {
         return ClientTransportAutoPtr(unixLocalClientTransport.release());
     }
 
-    void UnixLocalSessionState::implTransferNativeFrom(I_ClientTransport & clientTransport)
+    void UnixLocalSessionState::implTransferNativeFrom(ClientTransport & clientTransport)
     {
         UnixLocalClientTransport *pUnixLocalClientTransport =
             dynamic_cast<UnixLocalClientTransport *>(&clientTransport);
@@ -226,7 +226,7 @@ namespace RCF {
     }
 
     ClientTransportAutoPtr UnixLocalServerTransport::implCreateClientTransport(
-        const I_Endpoint &endpoint)
+        const Endpoint &endpoint)
     {
         const UnixLocalEndpoint & unixLocalEndpoint = 
             dynamic_cast<const UnixLocalEndpoint &>(endpoint);

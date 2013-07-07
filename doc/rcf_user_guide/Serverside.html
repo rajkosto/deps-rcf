@@ -244,7 +244,7 @@
 </p>
 <pre class="programlisting"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">RcfServer</span> <span class="identifier">server</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpEndpoint</span><span class="special">(</span><span class="number">50001</span><span class="special">)</span> <span class="special">);</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ThreadPoolPtr</span> <span class="identifier">threadPoolPtr</span><span class="special">(</span> <span class="keyword">new</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ThreadPool</span><span class="special">(</span><span class="number">5</span><span class="special">)</span> <span class="special">);</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ThreadPoolPtr</span> <span class="identifier">threadPoolPtr</span><span class="special">(</span> <span class="keyword">new</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">ThreadPool</span><span class="special">(</span><span class="number">1</span><span class="special">,</span> <span class="number">5</span><span class="special">)</span> <span class="special">);</span>
 <span class="identifier">server</span><span class="special">.</span><span class="identifier">setThreadPool</span><span class="special">(</span><span class="identifier">threadPoolPtr</span><span class="special">);</span>
 </pre>
 <p>
@@ -317,7 +317,7 @@
 <p>
         
 </p>
-<pre class="programlisting"><span class="keyword">const</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">I_RemoteAddress</span> <span class="special">&amp;</span> <span class="identifier">clientAddress</span> <span class="special">=</span> <span class="identifier">session</span><span class="special">.</span><span class="identifier">getClientAddress</span><span class="special">();</span>
+<pre class="programlisting"><span class="keyword">const</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">RemoteAddress</span> <span class="special">&amp;</span> <span class="identifier">clientAddress</span> <span class="special">=</span> <span class="identifier">session</span><span class="special">.</span><span class="identifier">getClientAddress</span><span class="special">();</span>
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span> <span class="identifier">strClientAddress</span> <span class="special">=</span> <span class="identifier">clientAddress</span><span class="special">.</span><span class="identifier">string</span><span class="special">();</span>
 </pre>
 <p>

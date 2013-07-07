@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -25,47 +25,44 @@
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/Tools.hpp>
 
+#if RCF_FEATURE_SSPI==1
+#include <RCF/Schannel.hpp>
+#endif
+
+#if RCF_FEATURE_OPENSSL==1
+#include <RCF/OpenSslEncryptionFilter.hpp>
+#endif
+
 namespace RCF {
 
-    std::string getTransportProtocolName(TransportProtocol protocol)
+    CertificateImplementationType Certificate::_getType()
     {
-        switch (protocol)
-        {
-            case Tp_Clear:              return "Clear";
-            case Tp_Ntlm:               return "NTLM";
-            case Tp_Kerberos:           return "Kerberos";
-            case Tp_Negotiate:          return "SSPI Negotiate";
-            case Tp_Ssl:                return "SSL";
-            default: RCF_ASSERT(0);     return "Unknown";
-        }
+        return Cit_Unspecified;
     }
 
-    // FilterDescription
-
-    FilterDescription::FilterDescription(
-        const std::string &filterName,
-        int filterId,
-        bool removable) :
-            mFilterName(filterName),
-            mFilterId(filterId),
-            mRemovable(removable)
-    {}
-
-    const std::string &FilterDescription::getName() const
+#if RCF_FEATURE_SSPI==1
+    Win32CertificatePtr Certificate::_downcastToWin32Certificate(CertificatePtr certPtr)
     {
-        return mFilterName;
+        return boost::dynamic_pointer_cast<Win32Certificate>(certPtr);
     }
-
-    int FilterDescription::getId() const
+#else
+    Win32CertificatePtr Certificate::_downcastToWin32Certificate(CertificatePtr certPtr)
     {
-        return mFilterId;
+        return Win32CertificatePtr();
     }
+#endif
 
-    bool FilterDescription::getRemovable() const
+#if RCF_FEATURE_OPENSSL==1
+    X509CertificatePtr Certificate::_downcastToX509Certificate(CertificatePtr certPtr)
     {
-        return mRemovable;
+        return boost::dynamic_pointer_cast<X509Certificate>(certPtr);
     }
-
+#else
+    X509CertificatePtr Certificate::_downcastToX509Certificate(CertificatePtr certPtr)
+    {
+        return X509CertificatePtr();
+    }
+#endif
 
     // Filter
 
@@ -123,139 +120,9 @@ namespace RCF {
         getPreFilter().onWriteCompleted(bytesTransferred);
     }
 
-    const FilterDescription & IdentityFilter::getFilterDescription() const
+    int IdentityFilter::getFilterId() const
     {
-        return sGetFilterDescription();
-    }
-
-    const FilterDescription & IdentityFilter::sGetFilterDescription()
-    {
-        return *spFilterDescription;
-    }
-
-    const FilterDescription *IdentityFilter::spFilterDescription = NULL;
-
-    // IdentityFilterFactory
-
-    FilterPtr IdentityFilterFactory::createFilter(RcfServer &)
-    {
-        return FilterPtr( new IdentityFilter() );
-    }
-
-    const FilterDescription & IdentityFilterFactory::getFilterDescription()
-    {
-        return IdentityFilter::sGetFilterDescription();
-    }
-
-    // XorFilter
-
-    void createNonReadOnlyByteBuffers(
-        std::vector<ByteBuffer> &nonReadOnlyByteBuffers,
-        const std::vector<ByteBuffer> &byteBuffers)
-    {
-        nonReadOnlyByteBuffers.resize(0);
-        for (std::size_t i=0; i<byteBuffers.size(); ++i)
-        {
-            if (byteBuffers[i].getLength()  > 0)
-            {
-                if (byteBuffers[i].getReadOnly())
-                {
-                    boost::shared_ptr< std::vector<char> > spvc(
-                        new std::vector<char>( byteBuffers[i].getLength()));
-
-                    memcpy(
-                        &(*spvc)[0],
-                        byteBuffers[i].getPtr(),
-                        byteBuffers[i].getLength() );
-
-                    nonReadOnlyByteBuffers.push_back(
-                        ByteBuffer(&(*spvc)[0], spvc->size(), spvc));
-                }
-                else
-                {
-                    nonReadOnlyByteBuffers.push_back(byteBuffers[i]);
-                }
-            }
-        }
-    }
-
-    XorFilter::XorFilter() :
-        mMask('U')
-    {}
-    
-    void XorFilter::read(const ByteBuffer &byteBuffer, std::size_t bytesRequested)
-    {
-        getPostFilter().read(byteBuffer, bytesRequested);
-    }
-
-    void XorFilter::write(const std::vector<ByteBuffer> &byteBuffers)
-    {
-        // need to make copies of any readonly buffers before transforming
-        // TODO: only do this if at least one byte buffer is non-readonly
-
-        mTotalBytes = lengthByteBuffers(byteBuffers);
-
-        createNonReadOnlyByteBuffers(mByteBuffers, byteBuffers);
-
-        // in place transformation
-        for (std::size_t i=0; i<mByteBuffers.size(); ++i)
-        {
-            for (std::size_t j=0; j<mByteBuffers[i].getLength() ; ++j)
-            {
-                mByteBuffers[i].getPtr() [j] ^= mMask;
-            }
-        }
-
-        getPostFilter().write(mByteBuffers);
-    }
-
-    void XorFilter::onReadCompleted(const ByteBuffer &byteBuffer)
-    {
-        for (std::size_t i=0; i<byteBuffer.getLength() ; ++i)
-        {
-            byteBuffer.getPtr() [i] ^= mMask;
-        }
-        getPreFilter().onReadCompleted(byteBuffer);
-    }
-
-    void XorFilter::onWriteCompleted(std::size_t bytesTransferred)
-    {
-        if (bytesTransferred == lengthByteBuffers(mByteBuffers))
-        {
-            mByteBuffers.resize(0);
-            mTempByteBuffers.resize(0);
-            getPreFilter().onWriteCompleted(mTotalBytes);
-        }
-        else
-        {
-            sliceByteBuffers(mTempByteBuffers, mByteBuffers, bytesTransferred);
-            mByteBuffers = mTempByteBuffers;
-            getPostFilter().write(mByteBuffers);
-        }
-    }
-
-    const FilterDescription & XorFilter::getFilterDescription() const
-    {
-        return sGetFilterDescription();
-    }
-
-    const FilterDescription & XorFilter::sGetFilterDescription()
-    {
-        return *spFilterDescription;
-    }
-
-    const FilterDescription *XorFilter::spFilterDescription = NULL;
-
-    // XorFilterFactory
-
-    FilterPtr XorFilterFactory::createFilter(RcfServer &)
-    {
-        return FilterPtr( new XorFilter() );
-    }
-
-    const FilterDescription & XorFilterFactory::getFilterDescription()
-    {
-        return XorFilter::sGetFilterDescription();
+        return RcfFilter_Identity;
     }
 
     class ReadProxy : public IdentityFilter
@@ -312,6 +179,11 @@ namespace RCF {
             mBytesTransferred = byteBuffer.getLength();
         }
 
+        int getFilterId() const
+        {
+            return RcfFilter_Unknown;
+        }
+
     private:
 
         std::size_t mInByteBufferPos;
@@ -363,6 +235,11 @@ namespace RCF {
         void onWriteCompleted(std::size_t bytesTransferred)
         {
             mBytesTransferred = bytesTransferred;
+        }
+
+        int getFilterId() const
+        {
+            return RcfFilter_Unknown;
         }
 
     private:
@@ -489,15 +366,15 @@ namespace RCF {
 
 } // namespace RCF
 
-#ifdef RCF_USE_ZLIB
+#if RCF_FEATURE_ZLIB==1
 #include <RCF/ZlibCompressionFilter.hpp>
 #endif
 
-#ifdef RCF_USE_OPENSSL
+#if RCF_FEATURE_OPENSSL==1
 #include <RCF/OpenSslEncryptionFilter.hpp>
 #endif
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_SSPI==1
 #include <RCF/Schannel.hpp>
 #include <RCF/SspiFilter.hpp>
 #endif
@@ -508,16 +385,14 @@ namespace RCF {
         std::vector<FilterPtr> & filters)
     {
         filters.clear();
-
+    
         // Setup compression if configured.
         if (mEnableCompression)
         {
-#ifdef RCF_USE_ZLIB
+#if RCF_FEATURE_ZLIB==1
             FilterPtr filterPtr( new ZlibStatefulCompressionFilter() );
             filters.push_back(filterPtr);
 #else
-            // TODO: error
-            // ...
             RCF_ASSERT(0);
 #endif
         }
@@ -527,25 +402,26 @@ namespace RCF {
         {
             switch (mTransportProtocol)
             {
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_SSPI==1
             case Tp_Ntlm:       filterPtr.reset( new NtlmFilter(this) ); break;
             case Tp_Kerberos:   filterPtr.reset( new KerberosFilter(this) ); break;
             case Tp_Negotiate:  filterPtr.reset( new NegotiateFilter(this) ); break;
 #endif
 
-#if defined(RCF_USE_OPENSSL) && defined(BOOST_WINDOWS)
-            case Tp_Ssl:        if (mPreferSchannel)
+#if RCF_FEATURE_OPENSSL==1 && RCF_FEATURE_SSPI==1
+            case Tp_Ssl:        if (mSslImplementation == Si_Schannel)
                                 {
                                     filterPtr.reset( new SchannelFilter(this) ); 
                                 }
                                 else
                                 {
+                                    RCF_ASSERT(mSslImplementation == Si_OpenSsl);
                                     filterPtr.reset( new OpenSslEncryptionFilter(this) ); 
                                 }
                                 break;
-#elif defined(RCF_USE_OPENSSL)
+#elif RCF_FEATURE_OPENSSL==1
             case Tp_Ssl:        filterPtr.reset( new OpenSslEncryptionFilter(this) ); break;
-#elif defined(BOOST_WINDOWS)
+#elif RCF_FEATURE_SSPI==1
             case Tp_Ssl:        filterPtr.reset( new SchannelFilter(this) ); break;
 #else
             // Single case just to keep the compiler warnings quiet.
@@ -553,7 +429,7 @@ namespace RCF {
 #endif
 
             default:
-                RCF_THROW( Exception( _RcfError_TransportProtocolNotSupported() ) );
+                RCF_THROW( Exception( _RcfError_TransportProtocolNotSupported( getTransportProtocolName(mTransportProtocol)) ) );
             }
         }
         if (filterPtr)

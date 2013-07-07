@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -47,7 +47,7 @@ namespace RCF {
         return mPublisherName;
     }
 
-    void SubscriptionParms::setPublisherEndpoint(const I_Endpoint & publisherEp)
+    void SubscriptionParms::setPublisherEndpoint(const Endpoint & publisherEp)
     {
         mClientStub.setEndpoint(publisherEp);
     }
@@ -194,12 +194,12 @@ namespace RCF {
             ClientTransportAutoPtr clientTransportAutoPtr(
                 client.getClientStub().releaseTransport());
 
-            I_ServerTransport * pTransport = NULL;
-            I_ServerTransportEx * pTransportEx = NULL;
+            ServerTransport * pTransport = NULL;
+            ServerTransportEx * pTransportEx = NULL;
 
             if (clientTransportAutoPtr->isInProcess())
             {
-                pTransport = dynamic_cast<I_ServerTransport *>(
+                pTransport = dynamic_cast<ServerTransport *>(
                     clientTransportAutoPtr.get());
             }
             else
@@ -208,9 +208,9 @@ namespace RCF {
                     *clientTransportAutoPtr);
             }
 
-            pTransportEx = dynamic_cast<I_ServerTransportEx *>(pTransport);
+            pTransportEx = dynamic_cast<ServerTransportEx *>(pTransport);
 
-            I_ServerTransportEx & serverTransportEx = * pTransportEx; 
+            ServerTransportEx & serverTransportEx = * pTransportEx; 
 
             SessionPtr sessionPtr = serverTransportEx.createServerSession(
                 clientTransportAutoPtr,

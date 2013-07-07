@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -201,17 +201,28 @@ namespace RCF {
         case RcfError_InvalidHttpMessage            :   return "Invalid HTTP message.";
         case RcfError_HttpRequestContentLength      :   return "HTTP request must contain Content-Length field. HTTP request: %1";
         case RcfError_HttpResponseContentLength     :   return "HTTP response must contain Content-Length field. HTTP status: %1. HTTP response: %2";
-        case RcfError_InvalidOpenSslCertificate     :   return "Invalid certificate format. OpenSSL-based SSL protocol requires certificate to be in PEM format and loaded with the RCF::PemCertificate class.";
-        case RcfError_InvalidSchannelCertificate    :   return "Invalid certificate format. Schannel-based SSL protocol requires certificate to be loaded with the RCF::PfxCertificate or RCF::StoreCertificate classes.";
+        case RcfError_InvalidOpenSslCertificate     :   return "Invalid certificate format. OpenSSL-based SSL implementation requires certificate to be in PEM format and loaded with the RCF::PemCertificate class.";
+        case RcfError_InvalidSchannelCertificate    :   return "Invalid certificate format. Schannel-based SSL implementation requires certificate to be loaded with the RCF::PfxCertificate or RCF::StoreCertificate classes.";
         case RcfError_HttpConnectFailed             :   return "Failed to connect via HTTPS proxy. HTTP CONNECT request to proxy failed. HTTP status: %1. HTTP response: %2";
         case RcfError_SspiImpersonateNoSspi         :   return "Unable to impersonate client. Impersonation requires one of the following transport protocols: NTLM, Kerberos, Negotiate.";
-        case RcfError_TransportProtocolNotSupported :   return "The requested transport protocol is not supported by this RCF build.";
+        case RcfError_TransportProtocolNotSupported :   return "The requested transport protocol is not supported by this RCF build. Transport protocol: %1";
         case RcfError_SslNotSupported               :   return "SSL transport protocol is not supported by this RCF build.";
         case RcfError_SessionObjectDoesNotExist     :   return "Session object does not exist. Session object type: %1";
         case RcfError_UploadAlreadyCompleted        :   return "The specified upload has already been completed.";
         case RcfError_FileIndex                     :   return "The specified file index is invalid. Expected index: %1. Actual index: %2.";
         case RcfError_ConcurrentCalls               :   return "Error: multiple concurrent calls attempted on the same RcfClient<> object. To make concurrent calls, use multiple RcfClient<> objects instead.";
         case RcfError_ParseJsonRpcRequest           :   return "Unable to parse JSON-RPC request. json_spirit::read_stream() returned false.";
+        case RcfError_DllLoad                       :   return "Unable to load library. Library name: %1";
+        case RcfError_DllFuncLoad                   :   return "Unable to load function from dynamic library. Library name: %1. Function name: %2.";
+        case RcfError_UnixDllLoad                   :   return "Unable to load library. Library name: %1. Error: %2";
+        case RcfError_UnixDllFuncLoad               :   return "Unable to load function from dynamic library. Library name: %1. Function name: %2. Error: %3";
+        case RcfError_PingBackInterval              :   return "Invalid ping back interval. Ping back interval must be at least %2 ms. Requested ping back interval was %1 ms.";
+        case RcfError_FileOpenWrite                 :   return "Unable to open file for writing. File path: %1";
+        case RcfError_CustomCertValidation          :   return "Certificate could not be validated. Error: %1";
+        case RcfError_SupportedOnWindowsOnly        :   return "%1 is only supported on Windows platforms.";
+        case RcfError_NotSupportedOnWindows         :   return "%1 is not supported on Windows platforms.";
+        case RcfError_NotSupportedInThisBuild       :   return "%1 is not supported in this RCF build.";
+        case RcfError_NoLongerSupported             :   return "%1 is no longer supported in this version of RCF.";
 
         // Errors that are no longer in use.
         case RcfError_StubAssignment                :   return "Incompatible stub assignment.";
@@ -316,6 +327,11 @@ namespace RCF {
     bool Exception::bad() const
     {
         return !good();
+    }
+
+    void Exception::clear()
+    {
+        *this = Exception();
     }
 
     const char *Exception::what() const throw()

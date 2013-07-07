@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -47,6 +47,9 @@ namespace RCF {
             const std::vector<int> &filterIds);
 
         boost::int32_t RequestTransportFilters(const std::vector<boost::int32_t> &filterIds);
+
+        // No longer supported. Just a stub to return an error message.
+        boost::int32_t QueryForTransportFilters(const std::vector<boost::int32_t> &filterIds);
 
         FilterFactoryPtr getFilterFactoryPtr(int filterId);
    

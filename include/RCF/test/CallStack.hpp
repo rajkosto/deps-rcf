@@ -1,6 +1,20 @@
 
-// JL: This code originated from a CodeProject article: 
-// http://www.codeproject.com/KB/cpp/MemLeakDetect.aspx
+//******************************************************************************
+// RCF - Remote Call Framework
+//
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
+// http://www.deltavsoft.com
+//
+// RCF is distributed under dual licenses - closed source or GPL.
+// Consult your particular license for conditions of use.
+//
+// If you have not purchased a commercial license, you are using RCF 
+// under GPL terms.
+//
+// Version: 2.0
+// Contact: support <at> deltavsoft.com 
+//
+//******************************************************************************
 
 // This call stack implementation is used by CMemLeakDetect. It is faster than
 // other code I've tried, however it does not appear to work correctly in release

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <RCF/Endpoint.hpp>
+#include <RCF/Enums.hpp>
 #include <RCF/Export.hpp>
 #include <RCF/IpAddress.hpp>
 #include <RCF/SerializationProtocol.hpp>
@@ -32,37 +33,49 @@
 
 namespace RCF {
 
-    class I_ServerTransport;
-    class I_ClientTransport;
+    class ServerTransport;
+    class ClientTransport;
 
-    class RCF_EXPORT TcpEndpoint : public I_Endpoint
+    /// Represents a TCP endpoint.
+    class RCF_EXPORT TcpEndpoint : public Endpoint
     {
     public:
 
-        TcpEndpoint();
+        // *** SWIG BEGIN ***
+
+        /// Constructs a TcpEndpoint from a port number. The IP address defaults to 127.0.0.1 .
         TcpEndpoint(int port);
+
+        /// Constructs a TcpEndpoint from an IP address and port number.
         TcpEndpoint(const std::string &ip, int port);
+
+        /// Gets the IP address of the TcpEndpoint.
+        std::string                         getIp() const;
+
+        /// Gets the port number of the TcpEndpoint.
+        int                                 getPort() const;
+
+        /// Returns a string representation of the TcpEndpoint.
+        std::string                         asString() const;
+
+        // *** SWIG END ***
+
+        TcpEndpoint();
+        
+        
         TcpEndpoint(const IpAddress & ipAddress);
         TcpEndpoint(const TcpEndpoint &rhs);
 
-        std::auto_ptr<I_ServerTransport>    createServerTransport() const;
-        std::auto_ptr<I_ClientTransport>    createClientTransport() const;
+        std::auto_ptr<ServerTransport>    createServerTransport() const;
+        std::auto_ptr<ClientTransport>    createClientTransport() const;
         EndpointPtr                         clone() const;
-        std::string                         getIp() const;
-        int                                 getPort() const;
-        std::string                         asString() const;
+        
         IpAddress                           getIpAddress() const;
 
         bool operator<(const TcpEndpoint &rhs) const
         {
             return mIpAddress < rhs.mIpAddress;
         }
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-        void serialize(SF::Archive &ar);
-
-#endif
 
     private:
         IpAddress mIpAddress;

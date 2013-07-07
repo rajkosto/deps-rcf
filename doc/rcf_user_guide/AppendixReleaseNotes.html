@@ -19,6 +19,14 @@
     Notes</a>
 </h2></div></div></div>
 <div class="toc"><dl>
+<dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2682___2013_06_01">RCF
+      2.0.0.2682 - 2013-06-01</a></span></dt>
+<dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2679___2013_03_27">RCF
+      2.0.0.2679 - 2013-03-27</a></span></dt>
+<dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2678___2013_03_07">RCF
+      2.0.0.2678 - 2013-03-07</a></span></dt>
+<dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2675___2013_01_03">RCF
+      2.0.0.2675 - 2013-01-03</a></span></dt>
 <dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2673___2012_10_28">RCF
       2.0.0.2673 - 2012-10-28</a></span></dt>
 <dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2672___2012_10_23">RCF
@@ -43,6 +51,191 @@
 <dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_0_9d">RCF 0.9d</a></span></dt>
 <dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_0_9c">RCF 0.9c</a></span></dt>
 </dl></div>
+<div class="section" lang="en">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2682___2013_06_01"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2682___2013_06_01" title="RCF 2.0.0.2682 - 2013-06-01">RCF
+      2.0.0.2682 - 2013-06-01</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul type="disc">
+<li>
+            Fix potential order of destruction problem in <code class="computeroutput"><span class="identifier">SessionTimeoutService</span></code>.
+          </li>
+<li>
+            Fix bool conversion compiler error in <code class="computeroutput"><span class="identifier">RcfSession</span><span class="special">::</span><span class="identifier">hasDefaultServerStub</span><span class="special">()</span></code> (reported on gcc 4.6.3) .
+          </li>
+<li>
+            Accumulate multiple <code class="computeroutput"><span class="identifier">ByteBuffer</span></code>'s
+            in SSPI filter, to prevent potential fragmentation of network send operations.
+          </li>
+<li>
+            Allow compile-time linking to zlib, by defining <code class="computeroutput"><span class="identifier">RCF_ZLIB_STATIC</span></code>
+            in build.
+          </li>
+<li>
+            <code class="computeroutput"><span class="identifier">ThreadPool</span></code> refactored,
+            with simpler constructors and get / set methods.
+          </li>
+<li>
+            Classes renamed: <code class="computeroutput"><span class="identifier">I_Endpoint</span></code>
+            to <code class="computeroutput"><span class="identifier">Endpoint</span></code>, <code class="computeroutput"><span class="identifier">I_ServerTransport</span></code> to <code class="computeroutput"><span class="identifier">ServerTransport</span></code>, <code class="computeroutput"><span class="identifier">I_ClientTransport</span></code>
+            to <code class="computeroutput"><span class="identifier">ClientTransport</span></code>,
+            <code class="computeroutput"><span class="identifier">I_SessionState</span></code> to <code class="computeroutput"><span class="identifier">SessionState</span></code>, <code class="computeroutput"><span class="identifier">I_RemoteAddress</span></code>
+            to <code class="computeroutput"><span class="identifier">RemoteAddress</span></code>.
+          </li>
+<li>
+            Removed <code class="computeroutput"><span class="identifier">NamedPipeEndpoint</span></code>
+            class. Code using <code class="computeroutput"><span class="identifier">NamedPipeEndpoint</span></code>
+            should use <code class="computeroutput"><span class="identifier">Win32NamedPipeEndpoint</span></code>
+            or <code class="computeroutput"><span class="identifier">UnixLocalEndpoint</span></code>
+            instead.
+          </li>
+<li>
+            Refactoring and simplifications to SSL functionality:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  Added <code class="computeroutput"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">setSslImplementation</span><span class="special">()</span></code>,
+                  <code class="computeroutput"><span class="identifier">RcfServer</span><span class="special">::</span><span class="identifier">setSslImplementation</span><span class="special">()</span></code>
+                  and <code class="computeroutput"><span class="identifier">ClientStub</span><span class="special">::</span><span class="identifier">setSslImplementation</span><span class="special">()</span></code> , to configure whether RCF uses
+                  Schannel or OpenSSL.
+                </li>
+<li>
+                  Renamed <code class="computeroutput"><span class="identifier">setSslCertificate</span><span class="special">()</span></code> to <code class="computeroutput"><span class="identifier">setCertificate</span><span class="special">()</span></code>, and <code class="computeroutput"><span class="identifier">setSslCaCertificate</span><span class="special">()</span></code> to <code class="computeroutput"><span class="identifier">setCaCertificate</span><span class="special">()</span></code>.
+                </li>
+<li>
+                  Merged certificate validation callback signature, from <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">function</span><span class="special">&lt;</span><span class="keyword">bool</span><span class="special">(</span><span class="identifier">OpenSslEncryptionFilter</span> <span class="special">&amp;)&gt;</span></code>
+                  and <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">function</span><span class="special">&lt;</span><span class="keyword">bool</span><span class="special">(</span><span class="identifier">SspiFilter</span> <span class="special">&amp;)&gt;</span></code>
+                  , to <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">function</span><span class="special">&lt;</span><span class="keyword">bool</span><span class="special">(</span><span class="identifier">I_Certificate</span> <span class="special">*)&gt;</span></code>.
+                </li>
+<li>
+                  Merged <code class="computeroutput"><span class="identifier">setSchannelCertificateValidationCb</span><span class="special">()</span></code> and <code class="computeroutput"><span class="identifier">setOpenSslCertificateValidationCb</span><span class="special">()</span></code> , to <code class="computeroutput"><span class="identifier">setCertificateValidationCallback</span><span class="special">()</span></code>.
+                </li>
+<li>
+                  Renamed <code class="computeroutput"><span class="identifier">setSchannelDefaultCertificateValidation</span><span class="special">()</span></code> to <code class="computeroutput"><span class="identifier">setEnableSchannelCertificateValidation</span><span class="special">()</span></code>.
+                </li>
+<li>
+                  Added <code class="computeroutput"><span class="identifier">Win32Certificate</span><span class="special">::</span><span class="identifier">getCertificateName</span><span class="special">()</span></code>, <code class="computeroutput"><span class="identifier">Win32Certificate</span><span class="special">::</span><span class="identifier">getIssuerName</span><span class="special">()</span></code>, <code class="computeroutput"><span class="identifier">X509Certificate</span><span class="special">::</span><span class="identifier">getCertificateName</span><span class="special">()</span></code>, and <code class="computeroutput"><span class="identifier">X509Certificate</span><span class="special">::</span><span class="identifier">getIssuerName</span><span class="special">()</span></code> functions.
+                </li>
+<li>
+                  Referencing arbitrary Windows stores from <code class="computeroutput"><span class="identifier">PfxCertificate</span><span class="special">::</span><span class="identifier">addToStore</span><span class="special">()</span></code> and <code class="computeroutput"><span class="identifier">StoreCertificate</span><span class="special">::</span><span class="identifier">StoreCertificate</span><span class="special">()</span></code> , using the <code class="computeroutput"><span class="identifier">Win32CertificateLocation</span></code>
+                  and <code class="computeroutput"><span class="identifier">Win32CertificateStore</span></code>
+                  enums.
+                </li>
+<li>
+                  Added <code class="computeroutput"><span class="identifier">StoreCertificateIterator</span></code>
+                  class, for iterating through certificates in a Windows store.
+                </li>
+</ul></div>
+          </li>
+<li>
+            Downloads:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2682.zip" target="_top">RCF-2.0.0.2682.zip</a>
+                </li>
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2682.tar.gz" target="_top">RCF-2.0.0.2682.tar.gz</a>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2679___2013_03_27"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2679___2013_03_27" title="RCF 2.0.0.2679 - 2013-03-27">RCF
+      2.0.0.2679 - 2013-03-27</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul type="disc">
+<li>
+            Add dummy parameters to <code class="computeroutput"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">init</span><span class="special">()</span></code> and <code class="computeroutput"><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">RcfInitDeinit</span><span class="special">::</span><span class="identifier">RcfInitDeinit</span><span class="special">()</span></code>, to trap compiler define mismatches
+            when building RCF as a DLL.
+          </li>
+<li>
+            Server throws an exception immediately, if a client specifies a ping-back
+            interval that is less than the minimum ping-back interval of the server.
+          </li>
+<li>
+            Downloads:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2679.zip" target="_top">RCF-2.0.0.2679.zip</a>
+                </li>
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2679.tar.gz" target="_top">RCF-2.0.0.2679.tar.gz</a>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2678___2013_03_07"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2678___2013_03_07" title="RCF 2.0.0.2678 - 2013-03-07">RCF
+      2.0.0.2678 - 2013-03-07</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul type="disc">
+<li>
+            Fix compatibility with Boost 1.53.0, by removing usages of <code class="computeroutput"><span class="identifier">boost</span><span class="special">::</span><span class="identifier">shared_static_cast</span><span class="special">&lt;&gt;</span></code>.
+          </li>
+<li>
+            Increase the maximum number of RCF methods in a RCF interface, from 100
+            to 200. If you need more than 100 methods, define <code class="computeroutput"><span class="identifier">RCF_MAX_METHOD_COUNT</span><span class="special">=</span><span class="number">200</span></code> in
+            your build.
+          </li>
+<li>
+            zlib and OpenSSL libraries are now loaded dynamically at runtime, rather
+            than linked. This means that if you are building RCF with <code class="computeroutput"><span class="identifier">RCF_USE_ZLIB</span></code> or <code class="computeroutput"><span class="identifier">RCF_USE_OPENSSL</span></code>,
+            you no longer need to link to zlib and OpenSSL. RCF will load the zlib
+            and OpenSSL libraries at runtime, on the first execution of any compression
+            code, or OpenSSL-based encryption code.
+          </li>
+<li>
+            Changed Visual Studio demo solution, to build and use a RCF DLL.
+          </li>
+<li>
+            Changed cmake demo projects, to link against <code class="computeroutput"><span class="identifier">pthread</span></code>
+            and <code class="computeroutput"><span class="identifier">dl</span></code> on non-Windows
+            platforms.
+          </li>
+<li>
+            Downloads:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2678.zip" target="_top">RCF-2.0.0.2678.zip</a>
+                </li>
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2678.tar.gz" target="_top">RCF-2.0.0.2678.tar.gz</a>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2675___2013_01_03"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2675___2013_01_03" title="RCF 2.0.0.2675 - 2013-01-03">RCF
+      2.0.0.2675 - 2013-01-03</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul type="disc">
+<li>
+            Trigger compiler error if user defines <code class="computeroutput"><span class="identifier">UNICODE</span></code>
+            or <code class="computeroutput"><span class="identifier">_UNICODE</span></code> when building
+            RCF on non-Windows platforms.
+          </li>
+<li>
+            Fix compiler error when using <code class="computeroutput"><span class="identifier">RCF_USE_BOOST_FILESYSTEM</span></code>
+            together with <code class="computeroutput"><span class="identifier">RCF_USE_BOOST_SERIALIZATION</span></code>.
+          </li>
+<li>
+            Downloads:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2675.zip" target="_top">RCF-2.0.0.2675.zip</a>
+                </li>
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2675.tar.gz" target="_top">RCF-2.0.0.2675.tar.gz</a>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
 <div class="section" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2673___2012_10_28"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2673___2012_10_28" title="RCF 2.0.0.2673 - 2012-10-28">RCF

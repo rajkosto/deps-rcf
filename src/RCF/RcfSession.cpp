@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -21,21 +21,25 @@
 #include <RCF/ClientTransport.hpp>
 #include <RCF/Marshal.hpp>
 #include <RCF/PerformanceData.hpp>
-#include <RCF/PingBackService.hpp>
 #include <RCF/RcfServer.hpp>
 #include <RCF/SerializationProtocol.hpp>
-#include <RCF/SessionTimeoutService.hpp>
+
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/Version.hpp>
 
 #include <boost/bind.hpp>
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_SSPI==1
 #include <RCF/Schannel.hpp>
 #endif
 
-#ifdef RCF_USE_OPENSSL
+#if RCF_FEATURE_OPENSSL==1
 #include <RCF/OpenSslEncryptionFilter.hpp>
+#endif
+
+#if RCF_FEATURE_SERVER==1
+#include <RCF/PingBackService.hpp>
+#include <RCF/SessionTimeoutService.hpp>
 #endif
 
 namespace RCF {
@@ -81,11 +85,6 @@ namespace RCF {
                 --getPerformanceData().mRcfSessions;
             }
 
-            if (!isInProcess())
-            {
-                mRcfServer.unregisterSession(mWeakThisPtr);
-            }
-
             // no locks here, relying on dtor thread safety of reference counted objects
             clearParameters();
             if (mOnDestroyCallback)
@@ -115,12 +114,12 @@ namespace RCF {
         return mpInProcessParameters;
     }
 
-    I_SessionState & RcfSession::getSessionState() const
+    SessionState & RcfSession::getSessionState() const
     {
         return *mpSessionState;
     }
 
-    void RcfSession::setSessionState(I_SessionState & sessionState)
+    void RcfSession::setSessionState(SessionState & sessionState)
     {
         mpSessionState = &sessionState;
     }
@@ -166,7 +165,7 @@ namespace RCF {
         onWriteCompletedCallbacks.swap( mOnWriteCompletedCallbacks );
     }
 
-    const RCF::I_RemoteAddress &RcfSession::getClientAddress()
+    const RCF::RemoteAddress &RcfSession::getClientAddress()
     {
         return getSessionState().getRemoteAddress();
     }
@@ -181,7 +180,7 @@ namespace RCF {
     bool RcfSession::hasDefaultServerStub()
     {
         Lock lock(mMutex);
-        return mDefaultStubEntryPtr;
+        return mDefaultStubEntryPtr.get() ? true : false;
     }
 
     StubEntryPtr RcfSession::getDefaultStubEntryPtr()
@@ -350,6 +349,9 @@ namespace RCF {
             PingBackServicePtr pbsPtr = mRcfServer.getPingBackServicePtr();
             if (pbsPtr)
             {
+
+#if RCF_FEATURE_SERVER==1
+
                 // Disable reconnecting for this session. After sending a 
                 // pingback, a server I/O thread would get a write completion 
                 // notification, and if it happened to be an error (unlikely 
@@ -363,8 +365,12 @@ namespace RCF {
                 Lock lock(mIoStateMutex);
                 RCF_ASSERT_EQ( mPingBackTimerEntry.first , 0 );
                 mPingBackTimerEntry = pingBackTimerEntry;
+
+#endif
+
             }
             else
+
             {
                 // TODO: something more efficient than throwing
                 Exception e(_RcfError_NoPingBackService());
@@ -383,8 +389,14 @@ namespace RCF {
             PingBackServicePtr pbsPtr = mRcfServer.getPingBackServicePtr();
             if (pbsPtr)
             {
+
+#if RCF_FEATURE_SERVER==1
+
                 pbsPtr->unregisterSession(mPingBackTimerEntry);
                 mPingBackTimerEntry = PingBackTimerEntry();
+
+#endif
+
             }
         }
     }
@@ -461,7 +473,7 @@ namespace RCF {
         return mRequest.mOneway;
     }
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 
     void RcfSession::cancelDownload()
     {
@@ -519,8 +531,8 @@ namespace RCF {
             for (std::size_t i=0; i<transportFilters.size(); ++i)
             {
 
-#if defined(BOOST_WINDOWS)
-                if (transportFilters[i]->getFilterDescription().getId() == RcfFilter_SspiSchannel)
+#if RCF_FEATURE_SSPI==1
+                if (transportFilters[i]->getFilterId() == RcfFilter_SspiSchannel)
                 {
                     SchannelServerFilter & schannelFilter = static_cast<SchannelServerFilter &>(*transportFilters[i]);
                     RCF::CertificatePtr peerCertPtr = schannelFilter.getPeerCertificate();
@@ -528,8 +540,8 @@ namespace RCF {
                 }
 #endif
 
-#if defined(RCF_USE_OPENSSL)
-                if (transportFilters[i]->getFilterDescription().getId() == RcfFilter_OpenSsl)
+#if RCF_FEATURE_OPENSSL==1
+                if (transportFilters[i]->getFilterId() == RcfFilter_OpenSsl)
                 {
                     OpenSslEncryptionFilter & opensslFilter = static_cast<OpenSslEncryptionFilter &>(*transportFilters[i]);
                     RCF::CertificatePtr peerCertPtr = opensslFilter.getPeerCertificate();
@@ -597,6 +609,11 @@ namespace RCF {
     boost::uint64_t RcfSession::getTotalBytesSent() const
     {
         return mpSessionState->getTotalBytesSent();
+    }
+
+    bool RcfSession::isConnected() const
+    {
+        return getSessionState().isConnected();
     }
 
 } // namespace RCF

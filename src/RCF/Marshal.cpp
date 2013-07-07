@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -521,10 +521,7 @@ namespace RCF {
     {
         if (mPingBackIntervalMs && mRuntimeVersion >= 5)
         {
-            // Check for the  first pingback after 1*mPingBackIntervalMs, and 
-            // after that, check after 3*mPingBackIntervalMs.
-
-            mPingBackCheckIntervalMs = 1 * mPingBackIntervalMs;
+            mPingBackCheckIntervalMs = 3 * mPingBackIntervalMs;
 
             mNextPingBackCheckMs = 
                 RCF::getCurrentTimeMs() + mPingBackCheckIntervalMs;
@@ -687,7 +684,7 @@ namespace RCF {
             mpParameters->read(mIn);
             mIn.clearByteBuffer();
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 
             // Check for any file downloads.
             {
@@ -868,14 +865,14 @@ namespace RCF {
     }
 
     void convertRcfSessionToRcfClient(
-        RcfServer::OnCallbackConnectionCreated func,
+        OnCallbackConnectionCreated func,
         RemoteCallSemantics rcs)
     {
         RcfSessionPtr sessionPtr = getCurrentRcfSessionPtr()->shared_from_this();
         RcfSession & rcfSession = *sessionPtr;
 
-        I_ServerTransportEx & serverTransport =
-            dynamic_cast<I_ServerTransportEx &>(
+        ServerTransportEx & serverTransport =
+            dynamic_cast<ServerTransportEx &>(
                 rcfSession.getSessionState().getServerTransport());
 
         ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(
@@ -896,11 +893,11 @@ namespace RCF {
 
     RcfSessionPtr convertRcfClientToRcfSession(
         ClientStub & clientStub, 
-        I_ServerTransport & serverTransport,
+        ServerTransport & serverTransport,
         bool keepClientConnection)
     {
-        I_ServerTransportEx &serverTransportEx =
-            dynamic_cast<RCF::I_ServerTransportEx &>(serverTransport);
+        ServerTransportEx &serverTransportEx =
+            dynamic_cast<RCF::ServerTransportEx &>(serverTransport);
 
         ClientTransportAutoPtr clientTransportAutoPtr(
             clientStub.releaseTransport());
@@ -928,7 +925,7 @@ namespace RCF {
 
     void createCallbackConnectionImpl(
         ClientStub & clientStub, 
-        I_ServerTransport & callbackServer)
+        ServerTransport & callbackServer)
     {
         RcfClient<I_CreateCallbackConnection> client(clientStub);
         client.getClientStub().setTransport( clientStub.releaseTransport() );

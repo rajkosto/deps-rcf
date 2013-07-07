@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -25,11 +25,6 @@
 
 #include <RCF/TcpAsioServerTransport.hpp>
 #include <RCF/TcpClientTransport.hpp>
-
-#ifdef RCF_USE_SF_SERIALIZATION
-#include <SF/Registry.hpp>
-#include <SF/SerializeParent.hpp>
-#endif
 
 namespace RCF {
 
@@ -84,40 +79,16 @@ namespace RCF {
         return mIpAddress;
     }
 
-#ifdef RCF_USE_SF_SERIALIZATION
-
-    void TcpEndpoint::serialize(SF::Archive &ar)
+    std::auto_ptr<ServerTransport> TcpEndpoint::createServerTransport() const
     {
-        // TODO: versioning.
-        // ...
-
-        serializeParent( (I_Endpoint*) 0, ar, *this);
-        ar & mIpAddress;
-    }
-
-#endif
-
-    std::auto_ptr<I_ServerTransport> TcpEndpoint::createServerTransport() const
-    {
-        return std::auto_ptr<I_ServerTransport>(
+        return std::auto_ptr<ServerTransport>(
             new RCF::TcpAsioServerTransport(mIpAddress));
     }
 
-    std::auto_ptr<I_ClientTransport> TcpEndpoint::createClientTransport() const
+    std::auto_ptr<ClientTransport> TcpEndpoint::createClientTransport() const
     {
-        return std::auto_ptr<I_ClientTransport>(
+        return std::auto_ptr<ClientTransport>(
             new RCF::TcpClientTransport(mIpAddress));
     }
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-    void initTcpEndpointSerialization()
-    {
-
-        SF::registerType( (TcpEndpoint *) 0, "RCF::TcpEndpoint");
-        SF::registerBaseAndDerived( (I_Endpoint *) 0, (TcpEndpoint *) 0);
-    }
-
-#endif
 
 } // namespace RCF

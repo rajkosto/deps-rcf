@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -21,14 +21,10 @@
 #include <RCF/InitDeinit.hpp>
 #include <RCF/util/Tchar.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
-#include <SF/Registry.hpp>
-#endif
-
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
 #include <RCF/Win32NamedPipeClientTransport.hpp>
 #include <RCF/Win32NamedPipeServerTransport.hpp>
-#else
+#elif RCF_FEATURE_LOCALSOCKET==1
 #include <RCF/UnixLocalServerTransport.hpp>
 #include <RCF/UnixLocalClientTransport.hpp>
 #endif
@@ -42,7 +38,7 @@ namespace RCF {
         mPipeName(pipeName)
     {}
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
 
     ServerTransportAutoPtr NamedPipeEndpoint::createServerTransport() const
     {
@@ -80,24 +76,6 @@ namespace RCF {
         std::ostringstream os;
         os << "Named pipe endpoint \"" << RCF::toAstring(mPipeName) << "\"";
         return os.str();
-    }
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-    void NamedPipeEndpoint::serialize(SF::Archive & ar)
-    {
-        serializeParent( (I_Endpoint*) 0, ar, *this);
-        ar & mPipeName;
-    }
-
-#endif
-
-    void initNamedPipeEndpointSerialization()
-    {
-#ifdef RCF_USE_SF_SERIALIZATION
-        SF::registerType( (NamedPipeEndpoint *) 0, "RCF::NamedPipeEndpoint");
-        SF::registerBaseAndDerived( (I_Endpoint *) 0, (NamedPipeEndpoint *) 0);
-#endif
     }
 
 } // namespace RCF

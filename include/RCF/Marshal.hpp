@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -1658,13 +1658,13 @@ namespace RCF {
     // Bidirectional connections - converting between RcfClient and RcfSession.
 
     RCF_EXPORT void convertRcfSessionToRcfClient(
-        CallbackConnectionService::OnCallbackConnectionCreated func,
+        OnCallbackConnectionCreated func,
         RemoteCallSemantics rcs = RCF::Twoway);
 
 
     RCF_EXPORT RcfSessionPtr convertRcfClientToRcfSession(
         ClientStub & clientStub, 
-        I_ServerTransport & serverTransport,
+        ServerTransport & serverTransport,
         bool keepClientConnection = false);
 
     RCF_EXPORT RcfSessionPtr convertRcfClientToRcfSession(
@@ -1688,7 +1688,7 @@ namespace RCF {
     template<typename RcfClientT>
     inline RcfSessionPtr convertRcfClientToRcfSession(
         RcfClientT & client, 
-        I_ServerTransport & serverTransport,
+        ServerTransport & serverTransport,
         bool keepClientConnection = false)
     {
         return convertRcfClientToRcfSession(
@@ -1701,7 +1701,7 @@ namespace RCF {
 
     RCF_EXPORT void createCallbackConnectionImpl(
         ClientStub & client, 
-        I_ServerTransport & callbackServer);
+        ServerTransport & callbackServer);
 
     RCF_EXPORT void createCallbackConnectionImpl(
         ClientStub & client, 
@@ -1722,7 +1722,7 @@ namespace RCF {
     template<typename RcfClientT>
     void createCallbackConnectionImpl(
         RcfClientT & client, 
-        I_ServerTransport & callbackServer)
+        ServerTransport & callbackServer)
     {
         createCallbackConnection(
             client.getClientStub(), 

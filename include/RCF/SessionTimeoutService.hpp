@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -28,9 +28,9 @@
 
 namespace RCF {
 
-    class RcfSession;
-    typedef boost::shared_ptr<RcfSession> RcfSessionPtr;
-    typedef boost::weak_ptr<RcfSession> RcfSessionWeakPtr;
+    class SessionState;
+    typedef boost::shared_ptr<SessionState> SessionStatePtr;
+    typedef boost::weak_ptr<SessionState> SessionStateWeakPtr;
 
     class RCF_EXPORT SessionTimeoutService : public I_Service
     {
@@ -46,7 +46,7 @@ namespace RCF {
 
     private:
 
-        std::vector<RcfSessionWeakPtr>  mSessionsTemp;
+        std::vector<SessionStateWeakPtr>  mSessionsTemp;
 
         boost::uint32_t                 mSessionTimeoutMs;
         boost::uint32_t                 mReapingIntervalMs;

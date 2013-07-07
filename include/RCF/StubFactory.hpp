@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -30,17 +30,17 @@ namespace RCF {
     class I_RcfClient;
     typedef boost::shared_ptr<I_RcfClient> RcfClientPtr;
 
-    class I_StubFactory
+    class StubFactory
     {
     public:
-        virtual ~I_StubFactory()
+        virtual ~StubFactory()
         {}
 
         virtual RcfClientPtr makeServerStub() = 0;
     };
 
     template<typename T, typename I1>
-    class StubFactory_1 : public I_StubFactory
+    class StubFactory_1 : public StubFactory
     {
     public:
         RcfClientPtr makeServerStub()
@@ -58,7 +58,7 @@ namespace RCF {
     };
 
     template<typename T, typename I1, typename I2>
-    class StubFactory_2 : public I_StubFactory
+    class StubFactory_2 : public StubFactory
     {
     public:
         RcfClientPtr makeServerStub()
@@ -85,7 +85,7 @@ namespace RCF {
     };
 
     template<typename T, typename I1, typename I2, typename I3>
-    class StubFactory_3 : public I_StubFactory
+    class StubFactory_3 : public StubFactory
     {
     public:
         RcfClientPtr makeServerStub()
@@ -121,7 +121,7 @@ namespace RCF {
     };
 
     template<typename T, typename I1, typename I2, typename I3, typename I4>
-    class StubFactory_4 : public I_StubFactory
+    class StubFactory_4 : public StubFactory
     {
     public:
         RcfClientPtr makeServerStub()

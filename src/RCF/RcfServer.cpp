@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -29,17 +29,12 @@
 #include <RCF/IpServerTransport.hpp>
 #include <RCF/Marshal.hpp>
 #include <RCF/MethodInvocation.hpp>
-#include <RCF/ObjectFactoryService.hpp>
-#include <RCF/PingBackService.hpp>
-#include <RCF/PublishingService.hpp>
+
 #include <RCF/RcfClient.hpp>
 #include <RCF/RcfSession.hpp>
 #include <RCF/ServerTask.hpp>
-#include <RCF/SessionObjectFactoryService.hpp>
-#include <RCF/SessionTimeoutService.hpp>
 #include <RCF/Service.hpp>
 #include <RCF/StubEntry.hpp>
-#include <RCF/SubscriptionService.hpp>
 #include <RCF/TcpClientTransport.hpp>
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/Token.hpp>
@@ -55,29 +50,48 @@
 #include <RCF/BsAutoPtr.hpp>
 #endif
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 #include <RCF/FileTransferService.hpp>
 #else
 namespace RCF { class FileTransferService {}; }
 #endif
 
-#ifdef RCF_USE_ZLIB
+#if RCF_FEATURE_ZLIB==1
 #include <RCF/ZlibCompressionFilter.hpp>
 #endif
 
-#ifdef RCF_USE_OPENSSL
+#if RCF_FEATURE_OPENSSL==1
 #include <RCF/OpenSslEncryptionFilter.hpp>
 #endif
 
-#ifdef RCF_USE_JSON
+#if RCF_FEATURE_JSON==1
 #include <RCF/JsonRpc.hpp>
 #endif
 
-#ifdef BOOST_WINDOWS
+#if RCF_FEATURE_SSPI==1
 #include <RCF/Schannel.hpp>
 #include <RCF/SspiFilter.hpp>
+#endif
+
+#if RCF_FEATURE_NAMEDPIPE==1
 #include <RCF/Win32NamedPipeServerTransport.hpp>
+#endif
+
+#ifdef BOOST_WINDOWS
 #include <RCF/Win32Username.hpp>
+#endif
+
+#if RCF_FEATURE_PUBSUB==1
+#include <RCF/PublishingService.hpp>
+#include <RCF/SubscriptionService.hpp>
+#endif
+
+#if RCF_FEATURE_SERVER==1
+#include <RCF/CallbackConnectionService.hpp>
+#include <RCF/ObjectFactoryService.hpp>
+#include <RCF/PingBackService.hpp>
+#include <RCF/SessionObjectFactoryService.hpp>
+#include <RCF/SessionTimeoutService.hpp>
 #endif
 
 namespace RCF {
@@ -87,22 +101,24 @@ namespace RCF {
     RcfServer::RcfServer() :
         mStubMapMutex(WriterPriority),
         mStarted(),
-        mThreadPoolPtr( new ThreadPool(1, "RCF Server") ),
+        mThreadPoolPtr( new ThreadPool(1) ),
         mRuntimeVersion(RCF::getDefaultRuntimeVersion()),
         mArchiveVersion(RCF::getDefaultArchiveVersion()),
         mPropertiesMutex(WriterPriority)
     {
+        mThreadPoolPtr->setThreadName("RCF Server");
         init();
     }
 
-    RcfServer::RcfServer(const I_Endpoint &endpoint) :
+    RcfServer::RcfServer(const Endpoint &endpoint) :
         mStubMapMutex(WriterPriority),
         mStarted(),
-        mThreadPoolPtr( new ThreadPool(1, "RCF Server") ),
+        mThreadPoolPtr( new ThreadPool(1) ),
         mRuntimeVersion(RCF::getDefaultRuntimeVersion()),
         mArchiveVersion(RCF::getDefaultArchiveVersion()),
         mPropertiesMutex(WriterPriority)
     {
+        mThreadPoolPtr->setThreadName("RCF Server");
         addEndpoint(endpoint);
         init();
     }
@@ -110,11 +126,12 @@ namespace RCF {
     RcfServer::RcfServer(ServicePtr servicePtr) :
         mStubMapMutex(WriterPriority),
         mStarted(),
-        mThreadPoolPtr( new ThreadPool(1, "RCF Server") ),
+        mThreadPoolPtr( new ThreadPool(1) ),
         mRuntimeVersion(RCF::getDefaultRuntimeVersion()),
         mArchiveVersion(RCF::getDefaultArchiveVersion()),
         mPropertiesMutex(WriterPriority)
     {
+        mThreadPoolPtr->setThreadName("RCF Server");
         addService(servicePtr);
         init();
     }
@@ -122,11 +139,12 @@ namespace RCF {
     RcfServer::RcfServer(ServerTransportPtr serverTransportPtr) :
         mStubMapMutex(WriterPriority),
         mStarted(),
-        mThreadPoolPtr( new ThreadPool(1, "RCF Server") ),
+        mThreadPoolPtr( new ThreadPool(1) ),
         mRuntimeVersion(RCF::getDefaultRuntimeVersion()),
         mArchiveVersion(RCF::getDefaultArchiveVersion()),
         mPropertiesMutex(WriterPriority)
     {
+        mThreadPoolPtr->setThreadName("RCF Server");
         addService( boost::dynamic_pointer_cast<I_Service>(serverTransportPtr) );
         init();
     }
@@ -141,63 +159,75 @@ namespace RCF {
     void RcfServer::init()
     {
         mSessionTimeoutMs = 0;
-        mSessionReapingIntervalMs = 30*1000;
+        mSessionHarvestingIntervalMs = 30*1000;
+
+        mServerObjectHarvestingIntervalS = 60;
 
         mOfsMaxNumberOfObjects = 0;
         mOfsObjectTimeoutS = 0;
         mOfsCleanupIntervalS = 0;
         mOfsCleanupThreshold = 0.0;
 
-        mPreferSchannel = false;
+        mSslImplementation = RCF::getDefaultSslImplementation();
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
         mFileUploadQuota = 0;
         mFileDownloadQuota = 0;
 #endif
+        
         mFilterServicePtr.reset( new FilterService() );
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_SSPI==1
         mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new NtlmFilterFactory() ) );
         mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new KerberosFilterFactory() ) );
         mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new NegotiateFilterFactory() ) );
         mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new SchannelFilterFactory() ) );
 #endif
 
-#ifdef RCF_USE_ZLIB
+#if RCF_FEATURE_ZLIB==1
         mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new ZlibCompressionFilterFactory() ) );
         mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new ZlibStatelessCompressionFilterFactory() ) );
 #endif
 
-#ifdef RCF_USE_OPENSSL
+#if RCF_FEATURE_OPENSSL==1
         mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new OpenSslEncryptionFilterFactory() ));        
 #endif
 
-        mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new IdentityFilterFactory() ) );
-        mFilterServicePtr->addFilterFactory( FilterFactoryPtr( new XorFilterFactory() ) );
+        addService(mFilterServicePtr);
 
-
+#if RCF_FEATURE_SERVER==1
         mPingBackServicePtr.reset( new PingBackService() );
         mSessionTimeoutServicePtr.reset( new SessionTimeoutService() );
+        mCallbackConnectionServicePtr.reset( new CallbackConnectionService() );
+        mServerObjectServicePtr.reset( new ServerObjectService() );
+        
+        addService(mPingBackServicePtr);
+        addService(mSessionTimeoutServicePtr);
+        addService(mCallbackConnectionServicePtr);
+        addService(mServerObjectServicePtr);
+#endif
+
+#if RCF_FEATURE_PUBSUB==1
         mPublishingServicePtr.reset( new PublishingService() );
         mSubscriptionServicePtr.reset( new SubscriptionService() );
-        mCallbackConnectionServicePtr.reset( new CallbackConnectionService() );
+
+        addService(mPublishingServicePtr);
+        addService(mSubscriptionServicePtr);
+#endif
+
+#if RCF_FEATURE_LEGACY==1
         mSessionObjectFactoryServicePtr.reset( new SessionObjectFactoryService() );
         mObjectFactoryServicePtr.reset( new ObjectFactoryService() );
 
-        addService(mFilterServicePtr);
-        addService(mPingBackServicePtr);
-        addService(mSessionTimeoutServicePtr);
-        addService(mPublishingServicePtr);
-        addService(mSubscriptionServicePtr);
-        addService(mCallbackConnectionServicePtr);
         addService(mSessionObjectFactoryServicePtr);
         addService(mObjectFactoryServicePtr);
+#endif
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
         mFileTransferServicePtr.reset( new FileTransferService() );
         addService(mFileTransferServicePtr);
 #endif
-
+        
     }
 
     bool RcfServer::addService(ServicePtr servicePtr)
@@ -215,7 +245,7 @@ namespace RCF {
             mServices.push_back(servicePtr);
 
             ServerTransportPtr serverTransportPtr =
-                boost::dynamic_pointer_cast<I_ServerTransport>(servicePtr);
+                boost::dynamic_pointer_cast<ServerTransport>(servicePtr);
 
             if (serverTransportPtr)
             {
@@ -243,7 +273,7 @@ namespace RCF {
             mServices.erase(iter);
 
             ServerTransportPtr serverTransportPtr =
-                boost::dynamic_pointer_cast<I_ServerTransport>(servicePtr);
+                boost::dynamic_pointer_cast<ServerTransport>(servicePtr);
 
             if (serverTransportPtr)
             {
@@ -285,7 +315,7 @@ namespace RCF {
             // Muxer type == 0 , means we have to have a local thread manager.
             if (taskEntry.mMuxerType == Mt_None && !taskEntry.mLocalThreadPoolPtr)
             {
-                taskEntry.mLocalThreadPoolPtr.reset( new ThreadPool(1, "") );
+                taskEntry.mLocalThreadPoolPtr.reset( new ThreadPool(1) );
             }
 
             if (taskEntry.mLocalThreadPoolPtr)
@@ -430,28 +460,7 @@ namespace RCF {
     {
         RcfSessionPtr rcfSessionPtr(new RcfSession(*this));
         rcfSessionPtr->setWeakThisPtr();
-        registerSession(rcfSessionPtr);
         return rcfSessionPtr;
-    }
-
-    void RcfServer::registerSession(
-        RcfSessionPtr rcfSessionPtr)
-    {
-        Lock lock(mSessionsMutex);
-        mSessions.insert( RcfSessionWeakPtr(rcfSessionPtr));
-    }
-
-    void RcfServer::unregisterSession(
-        RcfSessionWeakPtr rcfSessionWeakPtr)
-    {
-        Lock lock(mSessionsMutex);
-
-        std::set<RcfSessionWeakPtr>::iterator iter =
-            mSessions.find(rcfSessionWeakPtr);
-
-        RCF_ASSERT(iter != mSessions.end());
-
-        mSessions.erase(iter);
     }
 
     void RcfServer::onReadCompleted(SessionPtr sessionPtr)
@@ -483,12 +492,13 @@ namespace RCF {
         Lock lock(mStopCallInProgressMutex);
         if (!mStopCallInProgress)
         {
-            I_ServerTransport & transport = mpSessionState->getServerTransport();
+            ServerTransport & transport = mpSessionState->getServerTransport();
 
             // If this is the first call on a Win32 pipe transport, impersonate the client
             // and get their username.
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
+
             if (    getTransportType() == Tt_Win32NamedPipe 
                 &&  mClientUsername.empty() 
                 &&  !getIsCallbackSession())
@@ -497,6 +507,7 @@ namespace RCF {
                 tstring domainAndUsername = RCF::getMyDomain() + RCF_T("\\") + RCF::getMyUserName();
                 getCurrentRcfSession().mClientUsername = domainAndUsername;
             }
+
 #endif
 
             RpcProtocol rpcProtocol = transport.getRpcProtocol();
@@ -886,7 +897,7 @@ namespace RCF {
         StubEntryPtr mStubEntry;
     };
 
-#ifdef RCF_USE_JSON
+#if RCF_FEATURE_JSON==1
 
     void RcfSession::processJsonRpcRequest()
     {
@@ -1057,26 +1068,35 @@ namespace RCF {
     
     void RcfSession::verifyTransportProtocol(RCF::TransportProtocol protocol)
     {
-        std::vector<TransportProtocol> supportedProtocols;
-        supportedProtocols = mpSessionState->getServerTransport().getSupportedProtocols();
-        if (supportedProtocols.empty())
+        std::vector<TransportProtocol> protocols;
+
+        // Transport protocols can be set on either the server transport or the server.
+        protocols = mpSessionState->getServerTransport().getSupportedProtocols();
+        if (protocols.empty())
         {
-            supportedProtocols = mRcfServer.mSupportedProtocols;
+            protocols = mRcfServer.mSupportedProtocols;
         }
 
-        if (supportedProtocols.size() > 0)
+        if (protocols.size() > 0)
         {
-            bool supported = false;
-            for (std::size_t i=0; i<mRcfServer.mSupportedProtocols.size(); ++i)
+            if (    std::find(protocols.begin(), protocols.end(), protocol) 
+                ==  protocols.end())
             {
-                if (mRcfServer.mSupportedProtocols[i] == protocol)
+                // Protocol not supported. Put together an error message listing
+                // the supported protocols.
+
+                std::string protocolList = "[ ";
+                for (std::size_t i=0; i<protocols.size(); ++i)
                 {
-                    supported = true;
+                    if (i > 0)
+                    {
+                        protocolList += ", ";
+                    }
+                    protocolList += getTransportProtocolName(protocols[i]);
                 }
-            }
-            if (!supported)
-            {
-                throw Exception(RcfError_ProtocolNotSupported);
+                protocolList += " ]";
+
+                RCF_THROW( Exception( _RcfError_ClearCommunicationNotAllowed(protocolList) ));
             }
         }
     }
@@ -1107,28 +1127,7 @@ namespace RCF {
             {
                 if (mRequest.getService() != "I_RequestTransportFilters")
                 {
-                    if (mTransportProtocol == Tp_Clear)
-                    {
-                        const std::vector<TransportProtocol> & protocols = mRcfServer.getSupportedTransportProtocols();
-                        if (protocols.size() > 0)
-                        {
-                            if (std::find(protocols.begin(), protocols.end(), Tp_Clear) == protocols.end())
-                            {
-                                std::string protocolNames;
-                                for (std::size_t i=0; i<protocols.size(); ++i)
-                                {
-                                    if (i > 0)
-                                    {
-                                        protocolNames += ", ";
-                                    }
-                                    protocolNames += getTransportProtocolName(protocols[i]);
-                                    
-                                }
-                                RCF_THROW( Exception( _RcfError_ClearCommunicationNotAllowed(protocolNames) ));
-                            }
-                        }
-                    }
-
+                    verifyTransportProtocol(mTransportProtocol);
                     mTransportProtocolVerified = true;
                 }
             }
@@ -1162,7 +1161,7 @@ namespace RCF {
         }
     }
 
-    I_ServerTransport &RcfServer::getServerTransport()
+    ServerTransport &RcfServer::getServerTransport()
     {
         return *getServerTransportPtr();
     }
@@ -1178,9 +1177,9 @@ namespace RCF {
         return mServerTransports[0];
     }
 
-    I_IpServerTransport &RcfServer::getIpServerTransport()
+    IpServerTransport &RcfServer::getIpServerTransport()
     {
-        return dynamic_cast<RCF::I_IpServerTransport &>(getServerTransport());
+        return dynamic_cast<RCF::IpServerTransport &>(getServerTransport());
     }    
 
     ServerBindingPtr RcfServer::bindImpl(
@@ -1195,7 +1194,7 @@ namespace RCF {
         return rcfClientPtr->getServerStubPtr();
     }
 
-#ifdef RCF_USE_JSON
+#if RCF_FEATURE_JSON==1
 
     void RcfServer::bindJsonRpc(JsonRpcMethod jsonRpcMethod, const std::string & jsonRpcName)
     {
@@ -1230,6 +1229,8 @@ namespace RCF {
                 return filterFactoryPtr->createFilter(*this);
             }
         }
+
+        RCF_THROW( Exception( _RcfError_UnknownFilter()) );
         return FilterPtr();
     }
 
@@ -1315,7 +1316,7 @@ namespace RCF {
         return mThreadPoolPtr;
     }
 
-    I_ServerTransport & RcfServer::addEndpoint(const RCF::I_Endpoint & endpoint)
+    ServerTransport & RcfServer::addEndpoint(const RCF::Endpoint & endpoint)
     {
         ServerTransportPtr transportPtr(endpoint.createServerTransport().release());
         addServerTransport(transportPtr);
@@ -1326,7 +1327,7 @@ namespace RCF {
 
 #include <RCF/Config.hpp>
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
 #include <RCF/Win32NamedPipeClientTransport.hpp>
 #include <RCF/Win32NamedPipeServerTransport.hpp>
 #endif
@@ -1340,8 +1341,8 @@ namespace RCF {
 
 namespace RCF {
 
-    I_ServerTransport & RcfServer::findTransportCompatibleWith(
-        I_ClientTransport & clientTransport)
+    ServerTransport & RcfServer::findTransportCompatibleWith(
+        ClientTransport & clientTransport)
     {
         std::string ti = typeid(clientTransport).name();
         std::vector<std::string> serverTypeids;
@@ -1350,7 +1351,7 @@ namespace RCF {
             serverTypeids.push_back( typeid(TcpAsioServerTransport).name() );
         }
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
         else if (ti == typeid(Win32NamedPipeClientTransport).name())
         {
             serverTypeids.push_back( typeid(Win32NamedPipeServerTransport).name() );
@@ -1378,7 +1379,7 @@ namespace RCF {
 
         RCF_THROW(Exception("No corresponding server transport."));
         
-        return * (I_ServerTransport *) NULL;
+        return * (ServerTransport *) NULL;
     }
 
     void RcfServer::setSupportedTransportProtocols(
@@ -1394,13 +1395,13 @@ namespace RCF {
         return mSupportedProtocols;
     }
 
-    void RcfServer::setSslCertificate(CertificatePtr certificatePtr)
+    void RcfServer::setCertificate(CertificatePtr certificatePtr)
     {
         WriteLock lock(mPropertiesMutex);
         mCertificatePtr = certificatePtr;
     }
 
-    CertificatePtr RcfServer::getSslCertificate()
+    CertificatePtr RcfServer::getCertificate()
     {
         ReadLock lock(mPropertiesMutex);
         return mCertificatePtr;
@@ -1423,81 +1424,61 @@ namespace RCF {
     //--------------------------------------------------------------------------
     // Certificate validation.
 
-    void RcfServer::setSslCaCertificate(CertificatePtr caCertificatePtr)
+    void RcfServer::setCaCertificate(CertificatePtr caCertificatePtr)
     {
         WriteLock lock(mPropertiesMutex);
         mCaCertificatePtr = caCertificatePtr;
 
-        mOpenSslCertificateValidationCb.clear();
-        mSchannelCertificateValidationCb.clear();
-        mSchannelAutoCertificateValidation.clear();
+        mCertificateValidationCb.clear();
+        mSchannelCertificateValidation.clear();
     }
 
-    CertificatePtr RcfServer::getSslCaCertificate()
+    CertificatePtr RcfServer::getCaCertificate()
     {
         ReadLock lock(mPropertiesMutex);
         return mCaCertificatePtr;
     }
 
-    void RcfServer::setOpenSslCertificateValidationCb(
-        OpenSslCertificateValidationCb certificateValidationCb)
+    void RcfServer::setCertificateValidationCallback(
+        CertificateValidationCb certificateValidationCb)
     {
         WriteLock lock(mPropertiesMutex);
-        mOpenSslCertificateValidationCb = certificateValidationCb;
+        mCertificateValidationCb = certificateValidationCb;
 
         mCaCertificatePtr.reset();
-        mSchannelCertificateValidationCb.clear();
-        mSchannelAutoCertificateValidation.clear();
+        mSchannelCertificateValidation.clear();
     }
 
-    const RcfServer::OpenSslCertificateValidationCb & RcfServer::getOpenSslCertificateValidationCb() const
+    const RcfServer::CertificateValidationCb & RcfServer::getCertificateValidationCallback() const
     {
         ReadLock lock(mPropertiesMutex);
-        return mOpenSslCertificateValidationCb;
+        return mCertificateValidationCb;
     }
 
-    void RcfServer::setSchannelCertificateValidationCb(SchannelCertificateValidationCb certificateValidationCb)
+    void RcfServer::setEnableSchannelCertificateValidation(const tstring & peerName)
     {
         WriteLock lock(mPropertiesMutex);
-        mSchannelCertificateValidationCb = certificateValidationCb;
+        mSchannelCertificateValidation = peerName;
 
         mCaCertificatePtr.reset();
-        mOpenSslCertificateValidationCb.clear();
-        mSchannelAutoCertificateValidation.clear();
+        mCertificateValidationCb.clear();
     }
 
-    const RcfServer::SchannelCertificateValidationCb & 
-    RcfServer::getSchannelCertificateValidationCb() const
+    tstring RcfServer::getEnableSchannelCertificateValidation() const
     {
         ReadLock lock(mPropertiesMutex);
-        return mSchannelCertificateValidationCb;
+        return mSchannelCertificateValidation;
     }
 
-    void RcfServer::setSchannelDefaultCertificateValidation(const tstring & peerName)
-    {
-        WriteLock lock(mPropertiesMutex);
-        mSchannelAutoCertificateValidation = peerName;
-
-        mCaCertificatePtr.reset();
-        mOpenSslCertificateValidationCb.clear();
-        mSchannelCertificateValidationCb.clear();
-    }
-
-    tstring RcfServer::getSchannelDefaultCertificateValidation() const
-    {
-        ReadLock lock(mPropertiesMutex);
-        return mSchannelAutoCertificateValidation;
-    }
-
-    void RcfServer::setPreferSchannel(bool preferSchannel)
+    void RcfServer::setSslImplementation(SslImplementation sslImplementation)
     {
         RCF_ASSERT(!mStarted);
-        mPreferSchannel = preferSchannel;
+        mSslImplementation = sslImplementation;
     }
 
-    bool RcfServer::getPreferSchannel() const
+    SslImplementation RcfServer::getSslImplementation() const
     {
-        return mPreferSchannel;
+        return mSslImplementation;
     }
 
     void RcfServer::setSessionTimeoutMs(boost::uint32_t sessionTimeoutMs)
@@ -1511,15 +1492,15 @@ namespace RCF {
         return mSessionTimeoutMs;
     }
 
-    void RcfServer::setSessionReapingIntervalMs(boost::uint32_t sessionReapingIntervalMs)
+    void RcfServer::setSessionHarvestingIntervalMs(boost::uint32_t sessionHarvestingIntervalMs)
     {
         RCF_ASSERT(!mStarted);
-        mSessionReapingIntervalMs = sessionReapingIntervalMs;
+        mSessionHarvestingIntervalMs = sessionHarvestingIntervalMs;
     }
 
-    boost::uint32_t RcfServer::getSessionReapingIntervalMs()
+    boost::uint32_t RcfServer::getSessionHarvestingIntervalMs()
     {
-        return mSessionReapingIntervalMs;
+        return mSessionHarvestingIntervalMs;
     }
 
     void RcfServer::setOnCallbackConnectionCreated(OnCallbackConnectionCreated onCallbackConnectionCreated)
@@ -1528,7 +1509,7 @@ namespace RCF {
         mOnCallbackConnectionCreated = onCallbackConnectionCreated;
     }
 
-    RcfServer::OnCallbackConnectionCreated RcfServer::getOnCallbackConnectionCreated()
+    OnCallbackConnectionCreated RcfServer::getOnCallbackConnectionCreated()
     {
         return mOnCallbackConnectionCreated;
     }
@@ -1577,7 +1558,7 @@ namespace RCF {
         return mOfsCleanupThreshold;
     }
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 
     void RcfServer::setOnFileDownloadProgress(OnFileDownloadProgress onFileDownloadProgress)
     {
@@ -1637,5 +1618,26 @@ namespace RCF {
     }
 
 #endif
+
+    boost::uint32_t RcfServer::getServerObjectHarvestingIntervalS() const
+    {
+        return mServerObjectHarvestingIntervalS;
+    }
+
+    void RcfServer::setServerObjectHarvestingIntervalS(boost::uint32_t harvestingIntervalS)
+    {
+        mServerObjectHarvestingIntervalS = harvestingIntervalS;
+    }
+
+    void RcfServer::deleteServerObject(const std::string & objectKey)
+    {
+
+#if RCF_FEATURE_SERVER==1
+        return mServerObjectServicePtr->deleteServerObject(objectKey);
+#else
+        RCF_ASSERT(0 && "This RCF build does not support server objects.");
+#endif
+
+    }
 
 }

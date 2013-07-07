@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -299,8 +299,9 @@ namespace RCF {
         }
     }
 
-    AmiThreadPool::AmiThreadPool() : mThreadPool(1, "RCF AMI")
+    AmiThreadPool::AmiThreadPool() : mThreadPool(1)
     {
+        mThreadPool.setThreadName("RCF AMI");
         mThreadPool.enableMuxerType(Mt_Asio);
     }
 

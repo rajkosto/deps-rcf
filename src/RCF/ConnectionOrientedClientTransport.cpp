@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -67,10 +67,9 @@ namespace RCF {
                 mFilter.onWriteCompleted(bytesTransferred);
         }
 
-        const FilterDescription &getFilterDescription() const
+        int getFilterId() const
         {
-            RCF_ASSERT(0);
-            return * (const FilterDescription *) NULL;
+            return RcfFilter_Unknown;
         }
 
         ConnectionOrientedClientTransport &mTransport;
@@ -133,7 +132,7 @@ namespace RCF {
 
     ConnectionOrientedClientTransport::ConnectionOrientedClientTransport(
         const ConnectionOrientedClientTransport &rhs) :
-            I_ClientTransport(rhs),        
+            ClientTransport(rhs),        
             mOwn(true),
             mClosed(true),
             mMaxSendSize(1024*1024*10),
@@ -174,7 +173,7 @@ namespace RCF {
     }
 
     void ConnectionOrientedClientTransport::connect(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         unsigned int timeoutMs)
     {
         if (!isConnected())
@@ -344,7 +343,7 @@ namespace RCF {
 
 
     int ConnectionOrientedClientTransport::send(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         const std::vector<ByteBuffer> &data,
         unsigned int totalTimeoutMs)
     {
@@ -470,7 +469,7 @@ namespace RCF {
     }
 
     int ConnectionOrientedClientTransport::receive(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         ByteBuffer &byteBuffer,
         unsigned int timeoutMs)
     {
@@ -705,7 +704,7 @@ namespace RCF {
 
     void ConnectionOrientedClientTransport::setTimer(
         boost::uint32_t timeoutMs,
-        I_ClientTransportCallback *pClientStub)
+        ClientTransportCallback *pClientStub)
     {
         mpClientStub = pClientStub;
 

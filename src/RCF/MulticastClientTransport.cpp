@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -44,7 +44,7 @@ namespace RCF {
         return EndpointPtr();
     }
 
-    class DummyCallback : public I_ClientTransportCallback
+    class DummyCallback : public ClientTransportCallback
     {
     public:
         void onConnectCompleted(bool alreadyConnected = false)
@@ -68,7 +68,7 @@ namespace RCF {
     };
 
     int MulticastClientTransport::send(
-        I_ClientTransportCallback &clientStub,
+        ClientTransportCallback &clientStub,
         const std::vector<ByteBuffer> &data,
         unsigned int timeoutMs)
     {
@@ -126,7 +126,7 @@ namespace RCF {
     }
 
     int MulticastClientTransport::receive(
-        I_ClientTransportCallback &clientStub,
+        ClientTransportCallback &clientStub,
         ByteBuffer &byteBuffer,
         unsigned int timeoutMs)
     {
@@ -142,7 +142,7 @@ namespace RCF {
         return true;
     }
 
-    void MulticastClientTransport::connect(I_ClientTransportCallback &clientStub, unsigned int timeoutMs)
+    void MulticastClientTransport::connect(ClientTransportCallback &clientStub, unsigned int timeoutMs)
     {
         RCF_UNUSED_VARIABLE(clientStub);
         RCF_UNUSED_VARIABLE(timeoutMs);
@@ -191,7 +191,7 @@ namespace RCF {
 
     void MulticastClientTransport::setTimer(
         boost::uint32_t timeoutMs,
-        I_ClientTransportCallback *pClientStub)
+        ClientTransportCallback *pClientStub)
     {
         RCF_UNUSED_VARIABLE(timeoutMs);
         RCF_UNUSED_VARIABLE(pClientStub);
@@ -208,7 +208,7 @@ namespace RCF {
         ClientTransportList::iterator iter;
         for (iter = mClientTransports.begin(); iter != mClientTransports.end(); ++iter)
         {
-            RCF::I_ClientTransport & transport = ***iter;
+            RCF::ClientTransport & transport = ***iter;
 
             RcfSessionWeakPtr rcfSessionWeakPtr = transport.getRcfSession();
             RcfSessionPtr rcfSessionPtr = rcfSessionWeakPtr.lock();
@@ -263,7 +263,7 @@ namespace RCF {
         ClientTransportList::iterator iter;
         for (iter = mClientTransports.begin(); iter != mClientTransports.end(); ++iter)
         {
-            I_ClientTransport & transport = ***iter;
+            ClientTransport & transport = ***iter;
             RcfSessionPtr rcfSessionPtr = transport.getRcfSession().lock();
             if (rcfSessionPtr)
             {

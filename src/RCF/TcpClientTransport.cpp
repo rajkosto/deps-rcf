@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -73,13 +73,13 @@ namespace RCF {
         return Tt_Tcp;
     }
 
-    std::auto_ptr<I_ClientTransport> TcpClientTransport::clone() const
+    std::auto_ptr<ClientTransport> TcpClientTransport::clone() const
     {
         return ClientTransportAutoPtr( new TcpClientTransport(*this) );
     }
 
     void TcpClientTransport::implConnect(
-        I_ClientTransportCallback &clientStub,
+        ClientTransportCallback &clientStub,
         unsigned int timeoutMs)
     {
         // TODO: replace throw with return, where possible
@@ -322,7 +322,7 @@ namespace RCF {
     }
 
     void TcpClientTransport::implConnectAsync(
-        I_ClientTransportCallback &clientStub,
+        ClientTransportCallback &clientStub,
         unsigned int timeoutMs)
     {
         // TODO: sort this out

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -36,13 +36,14 @@
 
 #include <RCF/TcpAsioServerTransport.hpp>
 #include <RCF/Asio.hpp>
+#include <RCF/Config.hpp>
 
 #ifdef RCF_HAS_LOCAL_SOCKETS
 #include <RCF/UnixLocalClientTransport.hpp>
 #include <RCF/UnixLocalServerTransport.hpp>
 #endif
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
 #include <RCF/Win32NamedPipeClientTransport.hpp>
 #include <RCF/Win32NamedPipeEndpoint.hpp>
 #include <RCF/Win32NamedPipeServerTransport.hpp>
@@ -111,7 +112,7 @@ namespace RCF {
     static std::string loopBackV4 = "127.0.0.1";
     static std::string loopBackV6 = "::1";
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
 
     class Win32NamedPipeTransportFactory : public I_TransportFactory
     {
@@ -159,6 +160,8 @@ namespace RCF {
     };
 
 #endif
+
+#if RCF_FEATURE_TCP==1
 
     class TcpAsioTransportFactory : public I_TransportFactory
     {
@@ -220,7 +223,9 @@ namespace RCF {
 
     };
 
-#ifdef RCF_HAS_LOCAL_SOCKETS
+#endif
+
+#if RCF_FEATURE_LOCALSOCKET==1
 
     class UnixLocalTransportFactory : public I_TransportFactory
     {
@@ -302,6 +307,8 @@ namespace RCF {
 
 #endif // RCF_HAS_LOCAL_SOCKETS
 
+#if RCF_FEATURE_UDP==1
+
     class UdpTransportFactory : public I_TransportFactory
     {
     public:
@@ -361,12 +368,14 @@ namespace RCF {
         std::string mLoopback;
     };
 
+#endif
+
     typedef TcpAsioTransportFactory TcpTransportFactory;
 
     void initializeTransportFactories()
     {
 
-#ifdef RCF_USE_IPV6
+#if RCF_FEATURE_IPV6==1
         const bool compileTimeIpv6 = true;
         ExceptionPtr ePtr;
         IpAddress("::1").resolve(ePtr);
@@ -376,12 +385,14 @@ namespace RCF {
         const bool runTimeIpv6 = false;
 #endif
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_NAMEDPIPE==1
 
         getTransportFactories().push_back(
             TransportFactoryPtr( new Win32NamedPipeTransportFactory()));
 
 #endif
+
+#if RCF_FEATURE_TCP==1
 
         getTransportFactories().push_back(
             TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V4)));
@@ -398,12 +409,16 @@ namespace RCF {
                 TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V6)));
         }
 
-#ifdef RCF_HAS_LOCAL_SOCKETS
-        getTransportFactories().push_back(
-            TransportFactoryPtr( new UnixLocalTransportFactory()));
 #endif
 
-#ifndef RCF_TEST_NO_UDP
+#if RCF_FEATURE_LOCALSOCKET==1
+
+        getTransportFactories().push_back(
+            TransportFactoryPtr( new UnixLocalTransportFactory()));
+
+#endif
+
+#if RCF_FEATURE_UDP==1
 
         getTransportFactories().push_back(
             TransportFactoryPtr( new UdpTransportFactory(IpAddress::V4)));

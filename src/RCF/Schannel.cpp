@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -318,13 +318,13 @@ namespace RCF {
 
             if (pRemoteCertContext)
             {
-                mRemoteCert.reset( new Win32Certificate(pRemoteCertContext) );
+                mRemoteCertPtr.reset( new Win32Certificate(pRemoteCertContext) );
             }
 
             // If we have a custom validation callback, call it.
             if (mCertValidationCallback)
             {
-                mCertValidationCallback(*this);
+                mCertValidationCallback(mRemoteCertPtr.get());
             }
         }
         else
@@ -376,7 +376,7 @@ namespace RCF {
         TimeStamp Expiration    = {0};
 
         DWORD contextRequirements = mContextRequirements;
-        if (mLocalCert && mLocalCert->getWin32Context())
+        if (mLocalCertPtr && mLocalCertPtr->getWin32Context())
         {
             contextRequirements |= ISC_REQ_USE_SUPPLIED_CREDS;
         }
@@ -454,12 +454,17 @@ namespace RCF {
                 SECPKG_ATTR_REMOTE_CERT_CONTEXT,
                 (PVOID)&pRemoteCertContext);
 
-            mRemoteCert.reset( new Win32Certificate(pRemoteCertContext) );
+            mRemoteCertPtr.reset( new Win32Certificate(pRemoteCertContext) );
 
             // If we have a custom validation callback, call it.
             if (mCertValidationCallback)
             {
-                mCertValidationCallback(*this);
+                bool ok = mCertValidationCallback(mRemoteCertPtr.get());
+                if (!ok)
+                {
+                    Exception e(_RcfError_SslCertVerification());
+                    RCF_THROW(e);
+                }
             }
 
             // And now back to business.
@@ -480,9 +485,9 @@ namespace RCF {
         SCHANNEL_CRED schannelCred          = {0};       
         schannelCred.dwVersion              = SCHANNEL_CRED_VERSION;
         PCCERT_CONTEXT pCertContext         = NULL;
-        if(mLocalCert)
+        if(mLocalCertPtr)
         {
-            pCertContext                    = mLocalCert->getWin32Context();
+            pCertContext                    = mLocalCertPtr->getWin32Context();
             schannelCred.cCreds             = 1;
             schannelCred.paCred             = &pCertContext;
         }
@@ -546,15 +551,15 @@ namespace RCF {
         ULONG contextRequirements) :
             SspiServerFilter(UNISP_NAME, RCF_T(""), BoolSchannel)
     {
-        CertificatePtr certificatePtr = server.getSslCertificate();
+        CertificatePtr certificatePtr = server.getCertificate();
         Win32CertificatePtr certificateBasePtr = boost::dynamic_pointer_cast<Win32Certificate>(certificatePtr);
         if (certificateBasePtr)
         {
-            mLocalCert = certificateBasePtr;
+            mLocalCertPtr = certificateBasePtr;
         }
 
-        mCertValidationCallback = server.getSchannelCertificateValidationCb();
-        mAutoCertValidation = server.getSchannelDefaultCertificateValidation();
+        mCertValidationCallback = server.getCertificateValidationCallback();
+        mAutoCertValidation = server.getEnableSchannelCertificateValidation();
 
         mContextRequirements = contextRequirements;
         mEnabledProtocols = enabledProtocols;
@@ -594,29 +599,21 @@ namespace RCF {
     {
         mEnabledProtocols = enabledProtocols;
 
-        CertificatePtr certificatePtr = pClientStub->getSslCertificate();
+        CertificatePtr certificatePtr = pClientStub->getCertificate();
         Win32CertificatePtr certificateBasePtr = boost::dynamic_pointer_cast<Win32Certificate>(certificatePtr);
         if (certificateBasePtr)
         {
-            mLocalCert = certificateBasePtr;
+            mLocalCertPtr = certificateBasePtr;
         }
 
-        mCertValidationCallback = pClientStub->getSchannelCertificateValidationCb();
-        mAutoCertValidation = pClientStub->getSchannelDefaultCertificateValidation();
+        mCertValidationCallback = pClientStub->getCertificateValidationCallback();
+        mAutoCertValidation = pClientStub->getEnableSchannelCertificateValidation();
     }
 
     Win32CertificatePtr SspiFilter::getPeerCertificate()
     {
-        return mRemoteCert;
+        return mRemoteCertPtr;
     }    
-
-#if defined(__MINGW32__) && (__GNUC__ <= 3)
-
-    // PfxCertificate and StoreCertificate have not been implemented for mingw gcc 3.4 and earlier.
-    // A number of Cert* and PFX* functions seem to be missing from the mingw headers, and there
-    // are issues with std::wstring.
-
-#else
 
     // Certificate utility classes.
 
@@ -733,10 +730,33 @@ namespace RCF {
     }
 
     void PfxCertificate::addToStore(
-        DWORD dwFlags, 
-        const std::string & storeName)
+        Win32CertificateLocation certStoreLocation, 
+        Win32CertificateStore certStore)
     {
-        std::wstring wStoreName(storeName.begin(), storeName.end());
+
+        std::wstring wStoreName;
+        switch (certStore)
+        {
+        case Cs_AddressBook:            wStoreName = L"AddressBook";      break;
+        case Cs_AuthRoot:               wStoreName = L"AuthRoot";         break;
+        case Cs_CertificateAuthority:   wStoreName = L"CA";               break;
+        case Cs_Disallowed:             wStoreName = L"Disallowed";       break;
+        case Cs_My:                     wStoreName = L"MY";               break;
+        case Cs_Root:                   wStoreName = L"Root";             break;
+        case Cs_TrustedPeople:          wStoreName = L"TrustedPeople";    break;
+        case Cs_TrustedPublisher:       wStoreName = L"TrustedPublisher"; break;
+        default:
+            RCF_ASSERT(0 && "Invalid certificate store value.");
+        }
+
+        DWORD dwFlags = 0;
+        switch (certStoreLocation)
+        {
+        case Cl_CurrentUser:            dwFlags = CERT_SYSTEM_STORE_CURRENT_USER;   break;
+        case Cl_LocalMachine:           dwFlags = CERT_SYSTEM_STORE_LOCAL_MACHINE;  break;
+        default:
+            RCF_ASSERT(0 && "Invalid certificate store location value.");
+        }
 
         HCERTSTORE hCertStore = CertOpenStore(
             (LPCSTR) CERT_STORE_PROV_SYSTEM,
@@ -801,6 +821,50 @@ namespace RCF {
     tstring Win32Certificate::getOrganizationName()
     {
         return getCertAttribute(szOID_ORGANIZATION_NAME);
+    }
+
+    tstring Win32Certificate::getCertificateName()
+    {
+        DWORD bufferSize = CertNameToStr(
+            X509_ASN_ENCODING,
+            &mpCert->pCertInfo->Subject,
+            CERT_X500_NAME_STR,
+            NULL,
+            0);
+
+        std::vector<TCHAR> buffer(bufferSize);
+
+        bufferSize = CertNameToStr(
+            X509_ASN_ENCODING,
+            &mpCert->pCertInfo->Subject,
+            CERT_X500_NAME_STR,
+            &buffer[0],
+            bufferSize);
+
+        tstring strName(&buffer[0]);
+        return strName;
+    }
+
+    tstring Win32Certificate::getIssuerName()
+    {
+        DWORD bufferSize = CertNameToStr(
+            X509_ASN_ENCODING,
+            &mpCert->pCertInfo->Issuer,
+            CERT_X500_NAME_STR,
+            NULL,
+            0);
+
+        std::vector<TCHAR> buffer(bufferSize);
+
+        bufferSize = CertNameToStr(
+            X509_ASN_ENCODING,
+            &mpCert->pCertInfo->Issuer,
+            CERT_X500_NAME_STR,
+            &buffer[0],
+            bufferSize);
+
+        tstring strName(&buffer[0]);
+        return strName;
     }
 
     tstring Win32Certificate::getCertAttribute(const char * whichAttr)
@@ -869,17 +933,41 @@ namespace RCF {
         return tstring();
     }
 
-    Win32CertificatePtr Win32Certificate::isCertificateValid()
+    Win32CertificatePtr Win32Certificate::findRootCertificate(
+        Win32CertificateLocation certStoreLocation, 
+        Win32CertificateStore certStore)
     {
-        Win32CertificatePtr issuerCertPtr;
+        std::wstring storeName;
+        switch (certStore)
+        {
+        case Cs_AddressBook:            storeName = L"AddressBook";      break;
+        case Cs_AuthRoot:               storeName = L"AuthRoot";         break;
+        case Cs_CertificateAuthority:   storeName = L"CA";               break;
+        case Cs_Disallowed:             storeName = L"Disallowed";       break;
+        case Cs_My:                     storeName = L"MY";               break;
+        case Cs_Root:                   storeName = L"Root";             break;
+        case Cs_TrustedPeople:          storeName = L"TrustedPeople";    break;
+        case Cs_TrustedPublisher:       storeName = L"TrustedPublisher"; break;
+        default:
+            RCF_ASSERT(0 && "Invalid certificate store value.");
+        }
 
-        std::wstring storeName = L"Root";
+        DWORD dwFlags = 0;
+        switch (certStoreLocation)
+        {
+        case Cl_CurrentUser:            dwFlags = CERT_SYSTEM_STORE_CURRENT_USER;   break;
+        case Cl_LocalMachine:           dwFlags = CERT_SYSTEM_STORE_LOCAL_MACHINE;  break;
+        default:
+            RCF_ASSERT(0 && "Invalid certificate store location value.");
+        }
+
+        Win32CertificatePtr issuerCertPtr;
 
         HCERTSTORE hCertStore = CertOpenStore(
             (LPCSTR) CERT_STORE_PROV_SYSTEM,
             X509_ASN_ENCODING,
             0,
-            CERT_SYSTEM_STORE_LOCAL_MACHINE,
+            dwFlags,
             storeName.c_str());
 
         DWORD dwErr = GetLastError();
@@ -888,55 +976,53 @@ namespace RCF {
             hCertStore, 
             Exception(_RcfError_ApiError("CertOpenStore()"), dwErr));
 
-        PCCERT_CONTEXT pSubjectContext = getWin32Context();
+        PCCERT_CONTEXT  pSubjectContext = getWin32Context();
 
+        DWORD           dwCertFlags = 0;
+        PCCERT_CONTEXT  pIssuerContext = NULL;
+
+        pSubjectContext = CertDuplicateCertificateContext(pSubjectContext);
+        if (pSubjectContext)
         {
-            DWORD           dwFlags;
-            PCCERT_CONTEXT  pIssuerContext;
-
-            pSubjectContext = CertDuplicateCertificateContext(pSubjectContext);
-            if (pSubjectContext)
+            do 
             {
-                do 
+                dwCertFlags = 
+                        CERT_STORE_REVOCATION_FLAG 
+                    |   CERT_STORE_SIGNATURE_FLAG 
+                    |   CERT_STORE_TIME_VALIDITY_FLAG;
+
+                pIssuerContext = CertGetIssuerCertificateFromStore(
+                    hCertStore,
+                    pSubjectContext, 
+                    0, 
+                    &dwCertFlags);
+
+                if (pIssuerContext) 
                 {
-                    dwFlags = 
-                            CERT_STORE_REVOCATION_FLAG 
-                        |   CERT_STORE_SIGNATURE_FLAG 
-                        |   CERT_STORE_TIME_VALIDITY_FLAG;
-
-                    pIssuerContext = CertGetIssuerCertificateFromStore(
-                        hCertStore,
-                        pSubjectContext, 
-                        0, 
-                        &dwFlags);
-
-                    if (pIssuerContext) 
+                    CertFreeCertificateContext(pSubjectContext);
+                    pSubjectContext = pIssuerContext;
+                    if (dwCertFlags & CERT_STORE_NO_CRL_FLAG)
                     {
-                        CertFreeCertificateContext(pSubjectContext);
-                        pSubjectContext = pIssuerContext;
-                        if (dwFlags & CERT_STORE_NO_CRL_FLAG)
-                        {
-                            // No CRL list available. Proceed anyway.
-                            dwFlags &= ~(CERT_STORE_NO_CRL_FLAG | CERT_STORE_REVOCATION_FLAG);
-                        }
-                        if (dwFlags) 
-                        {
-                            if ( dwFlags & CERT_STORE_TIME_VALIDITY_FLAG)
-                            {
-                                // Certificate is expired.
-                                // ...
-                            }
-                            break;
-                        }
-                    } 
-                    else if (GetLastError() == CRYPT_E_SELF_SIGNED) 
+                        // No CRL list available. Proceed anyway.
+                        dwCertFlags &= ~(CERT_STORE_NO_CRL_FLAG | CERT_STORE_REVOCATION_FLAG);
+                    }
+                    if (dwCertFlags) 
                     {
-                        // Got the root certificate.
-                        issuerCertPtr.reset( new Win32Certificate(pSubjectContext) );
+                        if ( dwCertFlags & CERT_STORE_TIME_VALIDITY_FLAG)
+                        {
+                            // Certificate is expired.
+                            // ...
+                        }
+                        break;
                     }
                 } 
-                while (pIssuerContext);
-            }
+                else if (GetLastError() == CRYPT_E_SELF_SIGNED) 
+                {
+                    // Got the root certificate.
+                    issuerCertPtr.reset( new Win32Certificate(pSubjectContext) );
+                }
+            } 
+            while (pIssuerContext);
         }
 
         CertCloseStore(hCertStore, 0);
@@ -955,18 +1041,40 @@ namespace RCF {
     }
 
     StoreCertificate::StoreCertificate(
-        DWORD dwStoreFlags, 
-        const std::string & storeName,
+        Win32CertificateLocation certStoreLocation, 
+        Win32CertificateStore certStore,
         const tstring & certName) :
             mStore(0)
     {
-        std::wstring wStoreName(storeName.begin(), storeName.end());
+        std::wstring wStoreName;
+        switch (certStore)
+        {
+        case Cs_AddressBook:            wStoreName = L"AddressBook";      break;
+        case Cs_AuthRoot:               wStoreName = L"AuthRoot";         break;
+        case Cs_CertificateAuthority:   wStoreName = L"CA";               break;
+        case Cs_Disallowed:             wStoreName = L"Disallowed";       break;
+        case Cs_My:                     wStoreName = L"MY";               break;
+        case Cs_Root:                   wStoreName = L"Root";             break;
+        case Cs_TrustedPeople:          wStoreName = L"TrustedPeople";    break;
+        case Cs_TrustedPublisher:       wStoreName = L"TrustedPublisher"; break;
+        default:
+            RCF_ASSERT(0 && "Invalid certificate store value.");
+        }
+
+        DWORD dwFlags = 0;
+        switch (certStoreLocation)
+        {
+        case Cl_CurrentUser:            dwFlags = CERT_SYSTEM_STORE_CURRENT_USER;   break;
+        case Cl_LocalMachine:           dwFlags = CERT_SYSTEM_STORE_LOCAL_MACHINE;  break;
+        default:
+            RCF_ASSERT(0 && "Invalid certificate store location value.");
+        }
 
         mStore = CertOpenStore(
             (LPCSTR) CERT_STORE_PROV_SYSTEM,
             X509_ASN_ENCODING,
             0,
-            dwStoreFlags,
+            dwFlags,
             &wStoreName[0]);
 
         DWORD dwErr = GetLastError();
@@ -1021,7 +1129,19 @@ namespace RCF {
         }
     }
 
-    RCF::ByteBuffer StoreCertificate::exportToPfx()
+    void Win32Certificate::exportToPfx(const std::string & pfxFilePath)
+    {
+        RCF::ByteBuffer pfxBuffer = exportToPfx();
+        std::ofstream fout(pfxFilePath.c_str(), std::ios::binary);
+        if (!fout)
+        {
+            RCF_THROW( Exception(_RcfError_FileOpenWrite(pfxFilePath)) );
+        }
+        fout.write(pfxBuffer.getPtr(), pfxBuffer.getLength());
+        fout.close();
+    }
+
+    RCF::ByteBuffer Win32Certificate::exportToPfx()
     {
         PCCERT_CONTEXT pContext = getWin32Context();
 
@@ -1083,8 +1203,102 @@ namespace RCF {
     StoreCertificate::~StoreCertificate()
     {
         CertCloseStore(mStore, 0);
+        mStore = NULL;
     }
 
-#endif
+    StoreCertificateIterator::StoreCertificateIterator(
+        Win32CertificateLocation certStoreLocation, 
+        Win32CertificateStore certStore) : 
+            mhCertStore(NULL),
+            mpCertIterator(NULL)
+    {
+        std::wstring strCertStore;
+        switch (certStore)
+        {
+            case Cs_AddressBook:            strCertStore = L"AddressBook";      break;
+            case Cs_AuthRoot:               strCertStore = L"AuthRoot";         break;
+            case Cs_CertificateAuthority:   strCertStore = L"CA";               break;
+            case Cs_Disallowed:             strCertStore = L"Disallowed";       break;
+            case Cs_My:                     strCertStore = L"MY";               break;
+            case Cs_Root:                   strCertStore = L"Root";             break;
+            case Cs_TrustedPeople:          strCertStore = L"TrustedPeople";    break;
+            case Cs_TrustedPublisher:       strCertStore = L"TrustedPublisher"; break;
+            default:
+                RCF_ASSERT(0 && "Invalid certificate store value.");
+        }
+
+        DWORD dwStoreLocation = 0;
+        switch (certStoreLocation)
+        {
+            case Cl_CurrentUser:            dwStoreLocation = CERT_SYSTEM_STORE_CURRENT_USER;   break;
+            case Cl_LocalMachine:           dwStoreLocation = CERT_SYSTEM_STORE_LOCAL_MACHINE;  break;
+            default:
+                RCF_ASSERT(0 && "Invalid certificate store location value.");
+        }
+        
+        mhCertStore = CertOpenStore(
+            (LPCSTR) CERT_STORE_PROV_SYSTEM,
+            X509_ASN_ENCODING,
+            0,
+            dwStoreLocation,
+            strCertStore.c_str());
+
+        DWORD dwErr = GetLastError();
+
+        RCF_VERIFY(
+            mhCertStore, 
+            Exception(_RcfError_ApiError("CertOpenStore()"), dwErr));   
+    }
+
+    StoreCertificateIterator::~StoreCertificateIterator()
+    {
+        if (mpCertIterator)
+        {
+            CertFreeCertificateContext(mpCertIterator);
+            mpCertIterator = NULL;
+        }
+
+        CertCloseStore(mhCertStore, 0);
+        mhCertStore = NULL;
+    }
+
+    bool StoreCertificateIterator::moveNext()
+    {
+        mpCertIterator = CertFindCertificateInStore(
+            mhCertStore, 
+            X509_ASN_ENCODING, 
+            0,
+            CERT_FIND_ANY,
+            NULL,
+            mpCertIterator);
+
+        if (mpCertIterator)
+        {
+            PCCERT_CONTEXT pCert = CertDuplicateCertificateContext(mpCertIterator);
+            mCurrentCertPtr.reset( new Win32Certificate(pCert) );
+            return true;
+        }
+        else
+        {
+            mCurrentCertPtr.reset();
+            return false;
+        }
+    }
+
+    void StoreCertificateIterator::reset()
+    {
+        if (mpCertIterator)
+        {
+            CertFreeCertificateContext(mpCertIterator);
+            mpCertIterator = NULL;
+        }
+
+        mCurrentCertPtr.reset();
+    }
+
+    Win32CertificatePtr StoreCertificateIterator::current()
+    {
+        return mCurrentCertPtr;
+    }
 
 } // namespace RCF

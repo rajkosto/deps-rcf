@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -59,7 +59,7 @@ namespace RCF {
     {
     }
 
-    const I_RemoteAddress & Win32NamedPipeSessionState::implGetRemoteAddress()
+    const RemoteAddress & Win32NamedPipeSessionState::implGetRemoteAddress()
     {
         return mRemoteAddress;
     }
@@ -266,7 +266,7 @@ namespace RCF {
 
     bool Win32NamedPipeSessionState::implIsConnected()
     {
-        RCF_ASSERT(0 && "not implemented yet");
+        //RCF_ASSERT(0 && "not implemented yet");
         return true;
     }
 
@@ -283,7 +283,7 @@ namespace RCF {
         return ClientTransportAutoPtr(pipeClientTransportPtr.release());
     }
 
-    void Win32NamedPipeSessionState::implTransferNativeFrom(I_ClientTransport & clientTransport)
+    void Win32NamedPipeSessionState::implTransferNativeFrom(ClientTransport & clientTransport)
     {
         
         Win32NamedPipeClientTransport * pPipeClientTransport =
@@ -375,7 +375,7 @@ namespace RCF {
     }
 
     ClientTransportAutoPtr Win32NamedPipeServerTransport::implCreateClientTransport(
-        const I_Endpoint &endpoint)
+        const Endpoint &endpoint)
     {
         const Win32NamedPipeEndpoint & pipeEndpoint = 
             dynamic_cast<const Win32NamedPipeEndpoint &>(endpoint);

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -354,7 +354,7 @@ namespace RCF {
             ClientStub * pClientStub = getTlsClientStubPtr();
             if (pClientStub)
             {
-                I_ClientTransport & clientTransport = pClientStub->getTransport();
+                ClientTransport & clientTransport = pClientStub->getTransport();
                 mMaxMessageLength = clientTransport.getMaxMessageLength();
             }
         }
@@ -417,48 +417,64 @@ namespace RCF {
             ClientStub * pClientStub = getTlsClientStubPtr();
             if (pClientStub)
             {
-                I_ClientTransport & clientTransport = pClientStub->getTransport();
+                ClientTransport & clientTransport = pClientStub->getTransport();
                 mMaxMessageLength = clientTransport.getMaxMessageLength();
             }
         }
 
-        // TODO: write many buffers in one go
+        // TODO: can we pass multiple buffers through to lower layers, and still 
+        // have them coalesced at the network send stage?
 
-        static const std::size_t MergeBufferLen = 10*1000;
+        // If we are given multiple small buffers, copy them into a single larger
+        // buffer to improve network performance. 
+
+        std::size_t MaxMergeBufferLen = 1024*1024; // 1 MB
+
         // SSL won't do more than ~16536 bytes in one message.
-        static const std::size_t MaxSchannelLen = 16000;
-        BOOST_STATIC_ASSERT((MergeBufferLen <= MaxSchannelLen));
-
-        if (mMergeBuffer.empty())
+        const std::size_t MaxSchannelLen = 16000;
+        if (mSchannel)
         {
-            mMergeBuffer.resize(MergeBufferLen);
+            MaxMergeBufferLen = MaxSchannelLen;
         }
 
-        std::size_t mergeLength = 0;
-
+        ByteBuffer mergeBuffer;
         if (byteBuffers.size() > 1)
         {
-            sliceByteBuffers(mMergeBufferList, byteBuffers, 0, mMergeBuffer.size());
-            if (mMergeBufferList.size() > 1)
+            // Check if we have small enough buffers to merge.
+            std::vector<ByteBuffer> mergeBufferList;
+            sliceByteBuffers(mergeBufferList, byteBuffers, 0, MaxMergeBufferLen);
+            if (mergeBufferList.size() > 1)
             {
-                copyByteBuffers(mMergeBufferList, &mMergeBuffer[0]);
-                mergeLength = lengthByteBuffers(mMergeBufferList);
+                // Allocate merge buffer.
+                ReallocBufferPtr mergeVecPtr = getObjectPool().getReallocBufferPtr();
+                mergeVecPtr->resize( RCF_MIN(MaxMergeBufferLen, lengthByteBuffers(byteBuffers)) );
+
+                // Copy to merge buffer.
+                copyByteBuffers(mergeBufferList, &(*mergeVecPtr)[0]);
+                std::size_t mergeLength = lengthByteBuffers(mergeBufferList);
+                mergeVecPtr->resize(mergeLength);
+                mergeBuffer = ByteBuffer(mergeVecPtr);
+
+                mergeBufferList.resize(0);
             }
-            mMergeBufferList.resize(0);
         }
-        
-        if (mergeLength)
+
+        // If we have a merge buffer, use that for the next write operation.
+        if (mergeBuffer.getLength() > 0)
         {
-            mWriteByteBufferOrig = ByteBuffer(&mMergeBuffer[0], mergeLength);
-        }
-        else if (mSchannel)
-        {
-            const ByteBuffer & b = byteBuffers.front();
-            mWriteByteBufferOrig = ByteBuffer( b, 0, RCF_MIN(b.getLength(), MaxSchannelLen));
+            mWriteByteBufferOrig = mergeBuffer;
         }
         else
         {
             mWriteByteBufferOrig = byteBuffers.front();
+        }
+        
+        if (mSchannel)
+        {
+            mWriteByteBufferOrig = ByteBuffer( 
+                mWriteByteBufferOrig, 
+                0, 
+                RCF_MIN(mWriteByteBufferOrig.getLength(), MaxSchannelLen));
         }
 
         mPreState = Writing;
@@ -1082,13 +1098,13 @@ namespace RCF {
         session.getTransportFilters(filters);
         for (std::size_t i=0; i<filters.size(); ++i)
         {
-            int filterId = filters[i]->getFilterDescription().getId();
+            int filterId = filters[i]->getFilterId();
 
             if (    filterId == RcfFilter_SspiNtlm 
                 ||  filterId == RcfFilter_SspiKerberos 
                 ||  filterId == RcfFilter_SspiNegotiate)
             {
-                mSspiFilterPtr = boost::shared_static_cast<SspiFilter>(filters[i]);
+                mSspiFilterPtr = boost::static_pointer_cast<SspiFilter>(filters[i]);
             }
         }
 
@@ -1648,13 +1664,6 @@ namespace RCF {
     }
 
     //**************************************************************************
-
-    const FilterDescription *gpNtlmFilterDescription = NULL;
-    const FilterDescription *gpKerberosFilterDescription = NULL;
-    const FilterDescription *gpNegotiateFilterDescription = NULL;
-    const FilterDescription *gpSchannelFilterDescription = NULL;
-
-    //**************************************************************************
     // Server filters.
 
     SspiServerFilter::SspiServerFilter(
@@ -1666,7 +1675,7 @@ namespace RCF {
         RcfSession * pRcfSession = RCF::getTlsRcfSessionPtr();
         if (pRcfSession)
         {
-            I_ServerTransport & serverTransport = 
+            ServerTransport & serverTransport = 
                 pRcfSession->getSessionState().getServerTransport();
 
             mMaxMessageLength = serverTransport.getMaxMessageLength();
@@ -1678,9 +1687,9 @@ namespace RCF {
         SspiServerFilter(RCF_T("NTLM"), RCF_T(""))
     {}
 
-    const FilterDescription &NtlmServerFilter::getFilterDescription() const
+    int NtlmServerFilter::getFilterId() const
     {
-        return *gpNtlmFilterDescription;
+        return RcfFilter_SspiNtlm;
     }
 
     // Kerberos
@@ -1688,9 +1697,9 @@ namespace RCF {
         SspiServerFilter(RCF_T("Kerberos"), RCF_T(""))
     {}
 
-    const FilterDescription &KerberosServerFilter::getFilterDescription() const
+    int KerberosServerFilter::getFilterId() const
     {
-        return *gpKerberosFilterDescription;
+        return RcfFilter_SspiKerberos;
     }
 
     // Negotiate
@@ -1699,15 +1708,15 @@ namespace RCF {
             SspiServerFilter(RCF_T("Negotiate"), packageList)
     {}
 
-    const FilterDescription &NegotiateServerFilter::getFilterDescription() const
+    int NegotiateServerFilter::getFilterId() const
     {
-        return *gpNegotiateFilterDescription;
+        return RcfFilter_SspiNegotiate;
     }
 
     // Schannel
-    const FilterDescription &SchannelServerFilter::getFilterDescription() const
+    int SchannelServerFilter::getFilterId() const
     {
-        return *gpSchannelFilterDescription;
+        return RcfFilter_SspiSchannel;
     }
 
     //**************************************************************************
@@ -1718,9 +1727,10 @@ namespace RCF {
     {
         return FilterPtr( new NtlmServerFilter() );
     }
-    const FilterDescription &NtlmFilterFactory::getFilterDescription()
+
+    int NtlmFilterFactory::getFilterId()
     {
-        return *gpNtlmFilterDescription;
+        return RcfFilter_SspiNtlm;
     }
 
     // Kerberos
@@ -1728,9 +1738,10 @@ namespace RCF {
     {
         return FilterPtr( new KerberosServerFilter() );
     }
-    const FilterDescription &KerberosFilterFactory::getFilterDescription()
+
+    int KerberosFilterFactory::getFilterId()
     {
-        return *gpKerberosFilterDescription;
+        return RcfFilter_SspiKerberos;
     }
 
     // Negotiate
@@ -1743,15 +1754,16 @@ namespace RCF {
     {
         return FilterPtr( new NegotiateServerFilter(mPackageList) );
     }
-    const FilterDescription &NegotiateFilterFactory::getFilterDescription()
+
+    int NegotiateFilterFactory::getFilterId()
     {
-        return *gpNegotiateFilterDescription;
+        return RcfFilter_SspiNegotiate;
     }
 
     // Schannel
-    const FilterDescription &SchannelFilterFactory::getFilterDescription()
+    int SchannelFilterFactory::getFilterId()
     {
-        return *gpSchannelFilterDescription;
+        return RcfFilter_SspiSchannel;
     }
 
     //**************************************************************************
@@ -1770,10 +1782,9 @@ namespace RCF {
                 RCF_T(""))
     {}
 
-    const FilterDescription & 
-    NtlmClientFilter::getFilterDescription() const
+    int NtlmClientFilter::getFilterId() const
     {
-        return *gpNtlmFilterDescription;
+        return RcfFilter_SspiNtlm;
     }
 
     // Kerberos
@@ -1789,10 +1800,9 @@ namespace RCF {
                 RCF_T(""))
     {}
 
-    const FilterDescription & 
-    KerberosClientFilter::getFilterDescription() const
+    int KerberosClientFilter::getFilterId() const
     {
-        return *gpKerberosFilterDescription;
+        return RcfFilter_SspiKerberos;
     }
 
     // Negotiate
@@ -1808,17 +1818,15 @@ namespace RCF {
                 RCF_T("Kerberos,NTLM"))
     {}
 
-    const FilterDescription & 
-    NegotiateClientFilter::getFilterDescription() const
+    int NegotiateClientFilter::getFilterId() const
     {
-        return *gpNegotiateFilterDescription;
+        return RcfFilter_SspiNegotiate;
     }
 
     // Schannel
-    const FilterDescription & 
-    SchannelClientFilter::getFilterDescription() const
+    int SchannelClientFilter::getFilterId() const
     {
-        return *gpSchannelFilterDescription;
+        return RcfFilter_SspiSchannel;
     }
 
     //************************************************************************
@@ -1832,9 +1840,6 @@ namespace RCF {
     {
         return gpSecurityInterface;
     }
-
-    void initSspiFilterDescriptions();
-    void deinitSspiFilterDescriptions();
 
     void SspiInitialize()
     {
@@ -1881,64 +1886,13 @@ namespace RCF {
 
             RCF_THROW(e);
         }
-
-        initSspiFilterDescriptions();
     }
 
     void SspiUninitialize()
     {
-        deinitSspiFilterDescriptions();
-
         FreeLibrary (ghProvider);
         ghProvider = NULL;
         gpSecurityInterface = NULL;
-    }
-
-    void initSspiFilterDescriptions()
-    {
-        RCF_ASSERT(!gpNtlmFilterDescription);
-        RCF_ASSERT(!gpKerberosFilterDescription);
-        RCF_ASSERT(!gpNegotiateFilterDescription);
-        RCF_ASSERT(!gpSchannelFilterDescription);
-
-        gpNtlmFilterDescription =
-            new FilterDescription(
-                "sspi ntlm filter",
-                RcfFilter_SspiNtlm,
-                true);
-       
-        gpKerberosFilterDescription =
-            new FilterDescription(
-                "sspi kerberos filter",
-                RcfFilter_SspiKerberos,
-                true);
-       
-        gpNegotiateFilterDescription =
-            new FilterDescription(
-                "sspi negotiate filter",
-                RcfFilter_SspiNegotiate,
-                true);
-
-        gpSchannelFilterDescription =
-            new FilterDescription(
-                "sspi schannel filter",
-                RcfFilter_SspiSchannel,
-                true);
-    }
-
-    void deinitSspiFilterDescriptions()
-    {
-        delete gpNtlmFilterDescription;
-        gpNtlmFilterDescription = NULL;
-
-        delete gpKerberosFilterDescription;
-        gpKerberosFilterDescription = NULL;
-
-        delete gpNegotiateFilterDescription;
-        gpNegotiateFilterDescription = NULL;
-
-        delete gpSchannelFilterDescription;
-        gpSchannelFilterDescription = NULL;
     }
 
 } // namespace RCF

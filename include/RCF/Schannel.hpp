@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -42,7 +42,7 @@ namespace RCF {
         ASC_REQ_ALLOCATE_MEMORY |
         ASC_REQ_STREAM;
 
-    class RCF_EXPORT SchannelServerFilter : public SspiServerFilter
+    class SchannelServerFilter : public SspiServerFilter
     {
     public:
         SchannelServerFilter(
@@ -50,10 +50,10 @@ namespace RCF {
             DWORD enabledProtocols,
             ULONG contextRequirements);
 
-        const FilterDescription &           getFilterDescription() const;
+        int getFilterId() const;
     };
 
-    class RCF_EXPORT SchannelFilterFactory : public FilterFactory
+    class SchannelFilterFactory : public FilterFactory
     {
     public:
 
@@ -62,7 +62,7 @@ namespace RCF {
             ULONG contextRequirements = DefaultSchannelContextRequirements);
 
         FilterPtr                           createFilter(RcfServer & server);
-        const FilterDescription &           getFilterDescription();
+        int                                 getFilterId();
 
     private:
         
@@ -70,7 +70,7 @@ namespace RCF {
         DWORD mEnabledProtocols;
     };
 
-    class RCF_EXPORT SchannelClientFilter : public SspiClientFilter
+    class SchannelClientFilter : public SspiClientFilter
     {
     public:
         SchannelClientFilter(
@@ -78,7 +78,7 @@ namespace RCF {
             DWORD enabledProtocols = SP_PROT_NONE,
             ULONG contextRequirements = DefaultSchannelContextRequirements);
 
-        const FilterDescription &           getFilterDescription() const;
+        int getFilterId() const;
     };
 
     typedef SchannelClientFilter        SchannelFilter;
@@ -88,26 +88,52 @@ namespace RCF {
     class Win32Certificate;
     typedef boost::shared_ptr<Win32Certificate> Win32CertificatePtr;
     
-    class RCF_EXPORT Win32Certificate : public I_Certificate
+    /// Represents an in-memory certificate, usually from a remote peer. Only applicable to Schannel.
+    class RCF_EXPORT Win32Certificate : public Certificate
     {
     public:
         Win32Certificate();
         Win32Certificate(PCCERT_CONTEXT pContext);
         ~Win32Certificate();
 
-        tstring getCertAttribute(const char * whichAttr);
-        tstring getSubjectName();
-        tstring getOrganizationName();
+        // *** SWIG BEGIN ***
+
+        virtual CertificateImplementationType _getType()
+        {
+            return Cit_Win32;
+        }
+
+        /// Gets the name of the certificate.
+        tstring getCertificateName();
+
+        /// Gets the name of the issuer of the certificate.
+        tstring getIssuerName();
+
+        /// Exports the certificate in PFX format, to the given file path.
+        void exportToPfx(const std::string & pfxFilePath);
+
+        /// Attempts to locate a root certificate for this certificate, in the given certificate store.
+        /// Returns the root certificate if found, and otherwise null.
+        Win32CertificatePtr findRootCertificate(
+            Win32CertificateLocation certStoreLocation, 
+            Win32CertificateStore certStore);
+
+        // *** SWIG END ***
 
         PCCERT_CONTEXT getWin32Context();
 
-        // Validate against the Root store. If ok, returns handle to the root certificate, otherwise null.
-        Win32CertificatePtr isCertificateValid();
+        
 
         void setHasBeenDeleted()
         {
             mHasBeenDeleted = true;
         }
+
+        tstring getSubjectName();
+        tstring getOrganizationName();
+        tstring getCertAttribute(const char * whichAttr);
+
+        RCF::ByteBuffer exportToPfx();
 
     protected:
 
@@ -116,15 +142,25 @@ namespace RCF {
     };
 
     
-
+    /// Use this class to load a certificate from .pfx format. Only applicable to Schannel.
     class RCF_EXPORT PfxCertificate : public Win32Certificate
     {
     public:
 
+        // *** SWIG BEGIN ***
+
+        /// Loads a certificate from a .pfx file, using the given file path, password and certificate name.
         PfxCertificate(
             const std::string & pathToCert, 
             const tstring & password,
             const tstring & certName);
+
+        /// Adds the certificate to the given Windows certificate store.
+        void addToStore(
+            Win32CertificateLocation certStoreLocation, 
+            Win32CertificateStore certStore);
+
+        // *** SWIG END ***
 
         PfxCertificate(
             ByteBuffer certPfxBlob, 
@@ -132,10 +168,6 @@ namespace RCF {
             const tstring & certName);
 
         ~PfxCertificate();
-
-        void addToStore(
-            DWORD dwFlags, 
-            const std::string & storeName);
 
     private:
 
@@ -152,22 +184,60 @@ namespace RCF {
         HCERTSTORE mPfxStore;
     };
 
+    /// Represents a certificate in a Windows certificate store.
     class RCF_EXPORT StoreCertificate  : public Win32Certificate
     {
     public:
 
+        // *** SWIG BEGIN ***
+
+        /// Loads a certificate from a certificate store.
         StoreCertificate(
-            DWORD dwStoreFlags,
-            const std::string & storeName,
+            Win32CertificateLocation certStoreLocation, 
+            Win32CertificateStore certStore,
             const tstring & certName);
+
+        /// Removes the certificate from the store it was loaded from.
+        void removeFromStore();
+
+        // *** SWIG END ***
 
         ~StoreCertificate();
 
-        void removeFromStore();
-        RCF::ByteBuffer exportToPfx();
-
     private:
         HCERTSTORE mStore;
+    };
+
+    /// Iterates over the certificates in a Windows certificate store.
+    class RCF_EXPORT StoreCertificateIterator
+    {
+    public:
+
+        // *** SWIG BEGIN ***
+
+        /// Constructs a store iterator for the the given certificate location and store.
+        StoreCertificateIterator(
+            Win32CertificateLocation certStoreLocation, 
+            Win32CertificateStore certStore);
+
+        /// Moves to the next certificate in the store. Returns false if there are no more certificates, and true otherwise.
+        bool moveNext();
+
+        /// Resets the iterator back to the beginning of the store.
+        void reset();
+
+        /// Returns the current certificate.
+        Win32CertificatePtr current();
+
+        // *** SWIG END ***
+
+        ~StoreCertificateIterator();
+
+    private:
+
+        HCERTSTORE              mhCertStore;
+        PCCERT_CONTEXT          mpCertIterator;
+        Win32CertificatePtr     mCurrentCertPtr;
     };
 
 } // namespace RCF

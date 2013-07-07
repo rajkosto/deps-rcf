@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -25,9 +25,12 @@ namespace RCF {
 
     FileIoThreadPool::FileIoThreadPool() : 
         mSerializeFileIo(false),
-        mThreadPool(1, 10, "RCF Async File IO", 30*1000, false) 
-        
+        mThreadPool(1,10) 
     {
+        mThreadPool.setThreadName("RCF Async File IO");
+        mThreadPool.setThreadIdleTimeoutMs(30*1000);
+        mThreadPool.setReserveLastThread(false);
+
         mThreadPool.setTask( boost::bind(
             &FileIoThreadPool::ioTask,
             this));

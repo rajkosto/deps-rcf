@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -44,21 +44,27 @@ namespace RCF {
 
     void FilterService::addFilterFactory(FilterFactoryPtr filterFactoryPtr)
     {
-        FilterDescription filterDescription = filterFactoryPtr->getFilterDescription();
+        int filterId = filterFactoryPtr->getFilterId();
         WriteLock writeLock(mFilterFactoryMapMutex);
-        mFilterFactoryMap[ filterDescription.getId() ] = filterFactoryPtr;
+        mFilterFactoryMap[ filterId ] = filterFactoryPtr;
     }
 
     void FilterService::addFilterFactory(
         FilterFactoryPtr filterFactoryPtr,
         const std::vector<int> &filterIds)
     {
-        FilterDescription filterDescription = filterFactoryPtr->getFilterDescription();
         WriteLock writeLock(mFilterFactoryMapMutex);
         for (std::size_t i=0; i<filterIds.size(); ++i)
         {
             mFilterFactoryMap[ filterIds[i] ] = filterFactoryPtr;
         }
+    }
+
+    // remotely accessible
+    boost::int32_t FilterService::QueryForTransportFilters(const std::vector<boost::int32_t> &filterIds)
+    {
+        RCF_THROW( _RcfError_NoLongerSupported("FilterService::QueryForTransportFilters()") );
+        return RcfError_Ok;
     }
 
     // remotely accessible
@@ -77,31 +83,15 @@ namespace RCF {
         {
             int filterId = filterIds[i];
 
-#if defined(BOOST_WINDOWS)
-            bool onWindows = true;
-#else
-            bool onWindows = false;
-#endif
-
-#if defined(RCF_USE_OPENSSL)
-            bool withOpenSsl = true;
-#else
-            bool withOpenSsl = false;
-#endif
-
             if (filterId == RcfFilter_SspiSchannel || filterId == RcfFilter_OpenSsl)
             {               
-                if (onWindows && server.getPreferSchannel())
+                if (server.getSslImplementation() == RCF::Si_Schannel)
                 {
                     filterId = RcfFilter_SspiSchannel;
-                }
-                else if (withOpenSsl)
-                {
-                    filterId = RcfFilter_OpenSsl;
                 }
                 else
                 {
-                    filterId = RcfFilter_SspiSchannel;
+                    filterId = RcfFilter_OpenSsl;
                 }
             }
 
@@ -123,7 +113,7 @@ namespace RCF {
         FilterPtr filterPtr;
         if (filters->size() > 0)
         {
-            if ( (*filters)[0]->getFilterDescription().getId() == RcfFilter_ZlibCompressionStateful )
+            if ( (*filters)[0]->getFilterId() == RcfFilter_ZlibCompressionStateful )
             {
                 session.mEnableCompression = true;
                 if (filters->size() > 1)
@@ -147,7 +137,7 @@ namespace RCF {
         }
         else
         {
-            int filterId = filterPtr->getFilterDescription().getId();
+            int filterId = filterPtr->getFilterId();
             switch (filterId)
             {
             case RcfFilter_SspiNtlm:        protocol = Tp_Ntlm;         break;

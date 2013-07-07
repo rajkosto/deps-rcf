@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -20,6 +20,7 @@
 #define INCLUDE_RCF_SERVERTRANSPORT_HPP
 
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -35,23 +36,26 @@
 namespace RCF {
 
     class Filter;
-    class I_Endpoint;
-    class I_ClientTransport;
-    class I_SessionState;
+    class Endpoint;
+    class ClientTransport;
+    class SessionState;
     class StubEntry;
+    class RcfSession;
 
     typedef boost::shared_ptr<Filter>               FilterPtr;
-    typedef std::auto_ptr<I_ClientTransport>        ClientTransportAutoPtr;
+    typedef std::auto_ptr<ClientTransport>        ClientTransportAutoPtr;
     typedef boost::shared_ptr<StubEntry>            StubEntryPtr;
 
-    class I_ServerTransport;
-    typedef boost::shared_ptr<I_ServerTransport>    ServerTransportPtr;
-    typedef std::auto_ptr<I_ServerTransport>        ServerTransportAutoPtr;
+    class ServerTransport;
+    typedef boost::shared_ptr<ServerTransport>    ServerTransportPtr;
+    typedef std::auto_ptr<ServerTransport>        ServerTransportAutoPtr;
 
-    class I_RemoteAddress
+    typedef boost::shared_ptr<RcfSession>           RcfSessionPtr;
+
+    class RemoteAddress
     {
     public:
-        virtual ~I_RemoteAddress()
+        virtual ~RemoteAddress()
         {}
 
         virtual std::string string() const
@@ -60,26 +64,29 @@ namespace RCF {
         }
     };
 
-    class NoRemoteAddress : public I_RemoteAddress
+    class NoRemoteAddress : public RemoteAddress
     {};
    
-    class I_SessionState : public boost::enable_shared_from_this<I_SessionState>
+    class SessionState : public boost::enable_shared_from_this<SessionState>
     {
     public:
 
-        I_SessionState();
-        virtual ~I_SessionState() {}
+        SessionState();
+        virtual ~SessionState();
 
         virtual void        postRead() = 0;
         virtual ByteBuffer  getReadByteBuffer() = 0;
         virtual void        postWrite(std::vector<ByteBuffer> &byteBuffers) = 0;
         virtual void        postClose() = 0;
        
-        virtual I_ServerTransport & 
+        virtual ServerTransport & 
                             getServerTransport() = 0;
 
-        virtual const I_RemoteAddress & 
+        virtual const RemoteAddress & 
                             getRemoteAddress() = 0;
+
+        virtual bool        isConnected() = 0;
+
 
         virtual void        setTransportFilters(const std::vector<FilterPtr> &filters) = 0;
         virtual void        getTransportFilters(std::vector<FilterPtr> &filters) = 0;
@@ -89,22 +96,28 @@ namespace RCF {
         boost::uint64_t     getTotalBytesReceived() const;
         boost::uint64_t     getTotalBytesSent() const;
 
+        RcfSessionPtr       getSessionPtr() const;
+
     protected:
         bool                    mEnableReconnect;
         boost::uint64_t         mBytesReceivedCounter;
         boost::uint64_t         mBytesSentCounter;
 
+        RcfSessionPtr           mSessionPtr;
+
     };
 
-    typedef boost::shared_ptr<I_SessionState> SessionStatePtr;
+    typedef boost::shared_ptr<SessionState>   SessionStatePtr;
+    typedef boost::weak_ptr<SessionState>     SessionStateWeakPtr;
 
     class RcfSession;
-    typedef boost::shared_ptr<RcfSession> RcfSessionPtr;
+    typedef boost::shared_ptr<RcfSession>       RcfSessionPtr;
     
-    typedef RcfSession I_Session;
-    typedef RcfSessionPtr SessionPtr;
+    typedef RcfSession                          I_Session;
+    typedef RcfSessionPtr                       SessionPtr;
+
     class ThreadPool;
-    typedef boost::shared_ptr<ThreadPool> ThreadPoolPtr;
+    typedef boost::shared_ptr<ThreadPool>       ThreadPoolPtr;
 
     enum RpcProtocol
     {
@@ -112,40 +125,61 @@ namespace RCF {
         Rp_JsonRpc = 1,
     };
 
-    // Base class of all server transport services.
-    class RCF_EXPORT I_ServerTransport
+    /// Base class for all server transports.
+    class RCF_EXPORT ServerTransport
     {
     public:
-        I_ServerTransport();
+        ServerTransport();
 
-        virtual ~I_ServerTransport() {}
-
-        virtual TransportType getTransportType() = 0;
+        virtual ~ServerTransport() {}
 
         virtual ServerTransportPtr 
                         clone() = 0;
 
         // Deprecated - use setMaxIncomingMessageLength()/getMaxIncomingMessageLength() instead.
-        I_ServerTransport & setMaxMessageLength(std::size_t maxMessageLength);
+        ServerTransport & setMaxMessageLength(std::size_t maxMessageLength);
         std::size_t         getMaxMessageLength() const;
 
-        I_ServerTransport & setMaxIncomingMessageLength(std::size_t maxMessageLength);
+        // *** SWIG BEGIN ***
+
+        /// Returns the transport type of this server transport.
+        virtual TransportType getTransportType() = 0;
+
+        /// Sets maximum incoming message length. Incoming messages that are larger
+        /// than this size will be dropped.
+        ServerTransport & setMaxIncomingMessageLength(std::size_t maxMessageLength);
+
+        /// Returns maximum incoming message length.
         std::size_t         getMaxIncomingMessageLength() const;
 
-        std::size_t         getConnectionLimit() const;
-        I_ServerTransport & setConnectionLimit(std::size_t connectionLimit);
+        /// Sets the maximum number of simultaneous connections to the server transport.
+        ServerTransport & setConnectionLimit(std::size_t connectionLimit);
 
+        /// Returns the maximum number of simultaneous connections to the server transport.
+        std::size_t         getConnectionLimit() const;
+
+        /// Sets the initial number of listening connections that are created when the server transport starts.
+        ServerTransport & setInitialNumberOfConnections(std::size_t initialNumberOfConnections);
+
+        /// Returns the initial number of listening connections that are created when the server transport starts.
         std::size_t         getInitialNumberOfConnections() const;
-        I_ServerTransport & setInitialNumberOfConnections(std::size_t initialNumberOfConnections);
-        
+
+        /// Sets the thread pool that the server transport will use.
+        ServerTransport & setThreadPool(ThreadPoolPtr threadPoolPtr);
+
+        /// Sets the list of supported protocols the server transport supports. Clients
+        /// that connect without using one of the supported protocols are dropped. If
+        /// the list of supported protocols is empty, all protocols are allowed.
+        ServerTransport & setSupportedProtocols(const std::vector<TransportProtocol> & protocols);
+
+        /// Returns the list of supported protocols for the server transport.
+        const std::vector<TransportProtocol> & getSupportedProtocols() const;
+
+        // *** SWIG END ***
 
         void                setRpcProtocol(RpcProtocol rpcProtocol);
         RpcProtocol         getRpcProtocol() const;
 
-        I_ServerTransport & setThreadPool(ThreadPoolPtr threadPoolPtr);
-
-        I_ServerTransport & setSupportedProtocols(const std::vector<TransportProtocol> & protocols);
-        const std::vector<TransportProtocol> & getSupportedProtocols() const;
         
     protected:
 
@@ -160,17 +194,32 @@ namespace RCF {
         std::size_t                 mInitialNumberOfConnections;
 
         std::vector<TransportProtocol> mSupportedProtocols;
+
+    protected:
+
+        Mutex                           mSessionsMutex;
+        std::set<SessionStateWeakPtr>   mSessions;
+
+    public:
+
+        template<typename Iter>
+        void enumerateSessions(const Iter & iter)
+        {
+            Lock lock(mSessionsMutex);
+            std::copy(mSessions.begin(), mSessions.end(), iter);
+        }
+
     };
 
-    class I_ServerTransportEx
+    class ServerTransportEx
     {
     public:
 
-        virtual ~I_ServerTransportEx() {}
+        virtual ~ServerTransportEx() {}
 
         virtual ClientTransportAutoPtr 
             createClientTransport(
-                const I_Endpoint &endpoint) = 0;
+                const Endpoint &endpoint) = 0;
        
         virtual SessionPtr 
             createServerSession(
@@ -185,11 +234,7 @@ namespace RCF {
         virtual bool 
             reflect(
                 const SessionPtr &sessionPtr1,
-                const SessionPtr &sessionPtr2) = 0;
-       
-        virtual bool 
-            isConnected(
-                const SessionPtr &sessionPtr) = 0;
+                const SessionPtr &sessionPtr2) = 0;       
     };   
 
     RCF_EXPORT std::size_t  getDefaultMaxMessageLength();

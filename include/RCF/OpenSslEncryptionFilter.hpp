@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -45,14 +45,22 @@ namespace RCF {
     class OpenSslEncryptionFilter;
     class OpenSslEncryptionFilterImpl;
 
-    typedef boost::function1<bool, OpenSslEncryptionFilter&> OpenSslCertificateValidationCb;
+    typedef boost::function1<bool, Certificate *> CertificateValidationCb;
 
-    class RCF_EXPORT PemCertificate : public I_Certificate
+    /// Use this class to load a certificate in .pem format. Only applicable to OpenSSL.
+    class RCF_EXPORT PemCertificate : public Certificate
     {
     public:
+
+        // *** SWIG BEGIN ***
+
+        /// Loads a .pem certificate, using the given file path and password.
         PemCertificate(const std::string & pathToCert, const std::string & password = "");
 
+        // *** SWIG END ***
+
     private:
+
         friend class OpenSslEncryptionFilter;
         friend class OpenSslEncryptionFilterFactory;
 
@@ -60,20 +68,37 @@ namespace RCF {
         std::string mPassword;
     };
 
-    class X509Certificate : public I_Certificate
+    class OpenSslDll;
+    class OpenSslCryptoDll;
+
+    /// Represents an in-memory certificate, usually from a remote peer. Only applicable to OpenSSL.
+    class RCF_EXPORT X509Certificate : public Certificate
     {
     public:
-        X509Certificate(X509 * pX509) : mpX509(pX509)
+
+        // *** SWIG BEGIN ***
+
+        virtual CertificateImplementationType _getType()
         {
+            return Cit_X509;
         }
 
-        X509 * getX509()
-        {
-            return mpX509;
-        }
+        /// Gets the name of the certificate.
+        std::string getCertificateName();
+
+        /// Gets the name of the issuer of the certificate.
+        std::string getIssuerName();
+
+        // *** SWIG END ***
+
+        X509Certificate(X509 * pX509);
+
+        X509 * getX509();
 
     private:
-        X509 * mpX509;
+        OpenSslDll &                    mSslDll;
+        OpenSslCryptoDll &              mCryptoDll;
+        X509 *                          mpX509;
     };
 
     typedef boost::shared_ptr<X509Certificate> X509CertificatePtr;
@@ -83,10 +108,7 @@ namespace RCF {
     class RCF_EXPORT OpenSslEncryptionFilter : public Filter, boost::noncopyable
     {
     public:
-        // TODO: should be private
-        static const FilterDescription *    spFilterDescription;
-        static const FilterDescription &    sGetFilterDescription();
-        const FilterDescription &           getFilterDescription() const;
+        int                         getFilterId() const;
 
     public:
 
@@ -100,7 +122,7 @@ namespace RCF {
             const std::string &     certificateFilePassword,
             const std::string &     caCertificate,
             const std::string &     ciphers,
-            OpenSslCertificateValidationCb verifyFunctor,
+            CertificateValidationCb verifyFunctor,
             SslRole                 sslRole = SslClient,
             unsigned int            bioBufferSize = 2048);
 
@@ -119,18 +141,18 @@ namespace RCF {
         friend class OpenSslEncryptionFilterImpl;
         boost::shared_ptr<OpenSslEncryptionFilterImpl> mImplPtr;
     };
-
-    class RCF_EXPORT OpenSslEncryptionFilterFactory : public FilterFactory
+    
+    class OpenSslEncryptionFilterFactory : public FilterFactory
     {
     public:
         OpenSslEncryptionFilterFactory();
 
         FilterPtr                   createFilter(RcfServer & server);
-        const FilterDescription &   getFilterDescription();
+        int                         getFilterId();
 
     private:
         SslRole         mRole;
-    };
+    };  
 
 
 } // namespace RCF

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -146,7 +146,7 @@ namespace RCF {
     }
 
     void UnixLocalClientTransport::implConnect(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         unsigned int timeoutMs)
     {
         implConnect(timeoutMs);
@@ -154,7 +154,7 @@ namespace RCF {
     }
 
     void UnixLocalClientTransport::implConnectAsync(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         unsigned int timeoutMs)
     {
         // TODO: sort this out

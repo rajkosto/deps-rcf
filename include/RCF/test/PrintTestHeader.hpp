@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -50,8 +50,10 @@ inline void printTestHeader(const char *file)
     std::cout << "Visual C++ 9.0";
 #elif defined(_MSC_VER) && _MSC_VER == 1600
     std::cout << "Visual C++ 10.0";
+#elif defined(_MSC_VER) && _MSC_VER == 1700
+    std::cout << "Visual C++ 11.0";
 #elif defined(_MSC_VER) 
-    std::cout << "Visual C++ ??? - " << "_MSC_VER is " << _MSC_VER;
+    std::cout << "Visual C++ <<<version>>> - " << "_MSC_VER is " << _MSC_VER;
 #endif
 
 #if defined(__GNUC__)
@@ -115,8 +117,9 @@ inline void printTestHeader(const char *file)
 
 #endif
     
-
-    
+#ifdef BOOST_SP_ENABLE_DEBUG_HOOKS
+    std::cout << "BOOST_SP_ENABLE_DEBUG_HOOKS" << std::endl;
+#endif 
 
     std::cout << "RCF_MAX_METHOD_COUNT: " << RCF_MAX_METHOD_COUNT << std::endl;
 
@@ -132,17 +135,19 @@ inline void printTestHeader(const char *file)
     std::cout << "RCF_USE_BOOST_XML_SERIALIZATION" << std::endl;
 #endif
 
-#ifdef RCF_USE_ZLIB
-    std::cout << "RCF_USE_ZLIB" << std::endl;
-#endif
+    std::cout << "RCF_FEATURE_ZLIB             : " << RCF_FEATURE_ZLIB << std::endl;
 
-#ifdef RCF_USE_OPENSSL
-    std::cout << "RCF_USE_OPENSSL" << std::endl;
-#endif
+    std::cout << "RCF_FEATURE_OPENSSL          : " << RCF_FEATURE_OPENSSL << std::endl;
 
-#ifdef BOOST_SP_ENABLE_DEBUG_HOOKS
-    std::cout << "BOOST_SP_ENABLE_DEBUG_HOOKS" << std::endl;
-#endif
+    std::cout << "RCF_FEATURE_FILETRANSFER     : " << RCF_FEATURE_FILETRANSFER << std::endl;
+
+    std::cout << "RCF_FEATURE_JSON             : " << RCF_FEATURE_JSON << std::endl;
+
+    std::cout << "RCF_FEATURE_IPV6             : " << RCF_FEATURE_IPV6 << std::endl;
+
+    std::cout << "RCF_FEATURE_PROTOBUF         : " << RCF_FEATURE_PROTOBUF << std::endl;
+
+    std::cout << "RCF_FEATURE_CUSTOM_ALLOCATOR : " << RCF_FEATURE_CUSTOM_ALLOCATOR << std::endl;
 
     std::cout << "*********************\n\n";
 }

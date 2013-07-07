@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -25,7 +25,7 @@
 
 namespace RCF {
 
-    class InProcessRemoteAddress : public I_RemoteAddress
+    class InProcessRemoteAddress : public RemoteAddress
     {
     public:
         InProcessRemoteAddress(InProcessTransport & transport) : mTransport(transport)
@@ -43,10 +43,10 @@ namespace RCF {
     };
 
     class RCF_EXPORT InProcessTransport : 
-        public I_ClientTransport, 
-        public I_SessionState, 
-        public I_ServerTransport, 
-        public I_ServerTransportEx
+        public ClientTransport, 
+        public SessionState, 
+        public ServerTransport, 
+        public ServerTransportEx
     {
     public:
         InProcessTransport(RcfServer & server, RcfServer * pCallbackServer = NULL);
@@ -68,24 +68,24 @@ namespace RCF {
         void doInProcessCall(ClientStub & clientStub);
 
         // I_ClientTransport
-        std::auto_ptr<I_ClientTransport> clone() const;
+        std::auto_ptr<ClientTransport> clone() const;
 
         EndpointPtr getEndpointPtr() const;
 
         int send(
-            I_ClientTransportCallback &     clientStub, 
+            ClientTransportCallback &     clientStub, 
             const std::vector<ByteBuffer> & data, 
             unsigned int                    timeoutMs);
 
         int receive(
-            I_ClientTransportCallback &     clientStub, 
+            ClientTransportCallback &     clientStub, 
             ByteBuffer &                    byteBuffer, 
             unsigned int                    timeoutMs);
 
         bool isConnected();
 
         void connect(
-            I_ClientTransportCallback &     clientStub, 
+            ClientTransportCallback &     clientStub, 
             unsigned int                    timeoutMs);
 
         void disconnect(
@@ -99,15 +99,15 @@ namespace RCF {
 
         void setTimer(
             boost::uint32_t timeoutMs,
-            I_ClientTransportCallback * pClientStub);
+            ClientTransportCallback * pClientStub);
 
         // I_SessionState
         void        postRead();
         ByteBuffer  getReadByteBuffer();
         void        postWrite(std::vector<ByteBuffer> &byteBuffers);
         void        postClose();
-        I_ServerTransport & getServerTransport();
-        const I_RemoteAddress & getRemoteAddress();
+        ServerTransport & getServerTransport();
+        const RemoteAddress & getRemoteAddress();
         //void        setTransportFilters(const std::vector<FilterPtr> &filters);
         //void        getTransportFilters(std::vector<FilterPtr> &filters);;
 
@@ -117,7 +117,7 @@ namespace RCF {
         // I_ServerTransportEx
         ClientTransportAutoPtr 
             createClientTransport(
-            const I_Endpoint &endpoint);
+            const Endpoint &endpoint);
 
         SessionPtr 
             createServerSession(

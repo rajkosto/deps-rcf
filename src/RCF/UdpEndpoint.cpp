@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -22,10 +22,6 @@
 #include <RCF/SerializationProtocol.hpp>
 #include <RCF/UdpClientTransport.hpp>
 #include <RCF/UdpServerTransport.hpp>
-
-#ifdef RCF_USE_SF_SERIALIZATION
-#include <SF/Registry.hpp>
-#endif
 
 namespace RCF {
 
@@ -105,9 +101,9 @@ namespace RCF {
         return ServerTransportAutoPtr(udpServerTransportPtr.release());
     }
 
-    std::auto_ptr<I_ClientTransport> UdpEndpoint::createClientTransport() const
+    std::auto_ptr<ClientTransport> UdpEndpoint::createClientTransport() const
     {
-        return std::auto_ptr<I_ClientTransport>(
+        return std::auto_ptr<ClientTransport>(
             new UdpClientTransport(mIp));
     }
 
@@ -117,25 +113,5 @@ namespace RCF {
         os << "UDP endpoint " << mIp.string();
         return os.str();
     }
-
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-    void UdpEndpoint::serialize(SF::Archive &ar)
-    {
-        // TODO: versioning.
-        // ...
-
-        serializeParent( (I_Endpoint*) 0, ar, *this);
-        ar & mIp;
-    }
-
-    void initUdpEndpointSerialization()
-    {
-        SF::registerType( (UdpEndpoint *) 0, "RCF::UdpEndpoint");
-        SF::registerBaseAndDerived( (I_Endpoint *) 0, (UdpEndpoint *) 0);
-    }
-
-#endif
 
 } // namespace RCF

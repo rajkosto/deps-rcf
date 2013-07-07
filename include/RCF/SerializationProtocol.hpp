@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -28,7 +28,7 @@
 #include <RCF/ByteOrdering.hpp>
 #include <RCF/MemStream.hpp>
 
-#ifdef RCF_USE_PROTOBUF
+#if RCF_FEATURE_PROTOBUF==1
 #include <boost/type_traits/is_base_and_derived.hpp>
 #include <RCF/GoogleProtobufs.hpp>
 #endif
@@ -270,7 +270,7 @@ namespace RCF {
         in.read(t);
     }
 
-#ifdef RCF_USE_PROTOBUF
+#if RCF_FEATURE_PROTOBUF==1
 
     // Some compile-time gymnastics to detect Protobuf classes, so we don't 
     // pass them off to SF or Boost.Serialization.

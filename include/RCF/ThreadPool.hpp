@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -82,6 +82,7 @@ namespace RCF {
 
     static const MuxerType DefaultMuxerType = Mt_Asio;
 
+    /// Represents a server-side thread pool.
     class RCF_EXPORT ThreadPool : 
         public boost::enable_shared_from_this<ThreadPool>
     {
@@ -90,16 +91,45 @@ namespace RCF {
         typedef boost::function0<void> ThreadInitFunctor;
         typedef boost::function0<void> ThreadDeinitFunctor;
 
-        ThreadPool(
-            std::size_t         threadCount,
-            const std::string & threadName = "");
+        // *** SWIG BEGIN ***
 
-        ThreadPool(
-            std::size_t         threadMinCount,
-            std::size_t         threadMaxCount,
-            const std::string & threadName = "",
-            boost::uint32_t     threadIdleTimeoutMs = 30*1000,
-            bool                reserveLastThread = false);
+        ThreadPool(std::size_t fixedThreadCount);
+        ThreadPool(std::size_t threadMinCount, std::size_t threadMaxCount);
+
+        /// Sets the minimum number of threads in the thread pool.
+        void            setThreadMinCount(std::size_t threadMinCount);
+
+        /// Returns the minimum number of threads in the thread pool.
+        std::size_t     getThreadMinCount() const;
+
+        /// Sets the maximum number of threads in the thread pool.
+        void            setThreadMaxCount(std::size_t threadMaxCount);
+
+        /// Returns the maximum number of threads in the thread pool.
+        std::size_t     getThreadMaxCount() const;
+
+        /// Sets the thread idle timeout value, in milliseconds. After a thread has
+        /// been idle for this time, it will be shut down, unless the thread count
+        /// is already at the minimum value for the thread pool.
+        void            setThreadIdleTimeoutMs(boost::uint32_t threadIdleTimeoutMs);
+
+        /// Returns the thread idle timeout value, in milliseconds.
+        boost::uint32_t getThreadIdleTimeoutMs() const;
+
+        /// If this setting is true, clients will receive an error message right
+        /// away, if all threads in the thread pool are busy. Otherwise, the client
+        /// will wait for a thread in the thread pool to become free.
+        void            setReserveLastThread(bool reserveLastThread);
+        bool            getReserveLastThread() const;
+
+        /// Sets the thread name of the thread pool threads, as visible in a debugger.
+        void            setThreadName(const std::string & threadName);
+
+        /// Returns the thread name of the thread pool threads.
+        std::string     getThreadName() const;
+
+
+        // *** SWIG END ***
 
         ~ThreadPool();
         
@@ -112,9 +142,6 @@ namespace RCF {
 
         void            addThreadDeinitFunctor(
                             ThreadDeinitFunctor threadDeinitFunctor);
-
-        void            setThreadName(const std::string &threadName);
-        std::string     getThreadName();
 
         AsioIoService * getIoService();
 
@@ -150,14 +177,14 @@ namespace RCF {
         friend class                        TaskEntry;
         friend class                        RcfServer;
 
-        Mutex                               mInitDeinitMutex;
+        mutable Mutex                       mInitDeinitMutex;
         std::vector<ThreadInitFunctor>      mThreadInitFunctors;
         std::vector<ThreadDeinitFunctor>    mThreadDeinitFunctors;
         std::string                         mThreadName;
         boost::shared_ptr<AsioMuxer>        mAsioIoServicePtr;
 
         bool                                mStarted;
-        std::size_t                         mThreadTargetCount;
+        std::size_t                         mThreadMinCount;
         std::size_t                         mThreadMaxCount;
         bool                                mReserveLastThread;
         boost::uint32_t                     mThreadIdleTimeoutMs;

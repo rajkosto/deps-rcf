@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -31,44 +31,42 @@
 #include <RCF/SerializationProtocol.hpp>
 #include <RCF/TypeTraits.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
-#include <SF/SfNew.hpp>
-#endif
-
-#include <SF/SerializeParent.hpp>
-
 namespace RCF {
 
-    class I_ServerTransport;
-    class I_ClientTransport;
+    class ServerTransport;
+    class ClientTransport;
 
-    class RCF_EXPORT UdpEndpoint : public I_Endpoint
+    /// Represents a UDP endpoint.
+    class RCF_EXPORT UdpEndpoint : public Endpoint
     {
     public:
 
-        UdpEndpoint();
+        // *** SWIG BEGIN ***
+
+        /// Constructs a UdpEndpoint from a port number. The IP address defaults to 127.0.0.1 .
         UdpEndpoint(int port);
+
+        /// Constructs a UdpEndpoint from an IP address and port number.
         UdpEndpoint(const std::string &ip, int port);
-        UdpEndpoint(const IpAddress & ipAddress);
-        UdpEndpoint(const UdpEndpoint &rhs);
-       
-        std::auto_ptr<I_ServerTransport>    createServerTransport() const;
-        std::auto_ptr<I_ClientTransport>    createClientTransport() const;
-        EndpointPtr                         clone() const;
-        std::string                         getIp() const;
-        int                                 getPort() const;
-        std::string                         asString() const;
+
+        std::string         getIp() const;
+        int                 getPort() const;
+        std::string         asString() const;
 
         UdpEndpoint &       enableSharedAddressBinding(bool enable = true);
         UdpEndpoint &       listenOnMulticast(const IpAddress & multicastIp);
         UdpEndpoint &       listenOnMulticast(const std::string & multicastIp);
+
+        // *** SWIG END ***
+
+        UdpEndpoint();
+        UdpEndpoint(const IpAddress & ipAddress);
+        UdpEndpoint(const UdpEndpoint &rhs);
        
-#ifdef RCF_USE_SF_SERIALIZATION
-
-        void serialize(SF::Archive &ar);
-
-#endif
-
+        std::auto_ptr<ServerTransport>    createServerTransport() const;
+        std::auto_ptr<ClientTransport>    createClientTransport() const;
+        EndpointPtr                         clone() const;
+       
     private:
         IpAddress           mIp;
         IpAddress           mMulticastIp;

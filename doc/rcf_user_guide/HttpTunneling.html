@@ -59,7 +59,7 @@
 <span class="identifier">HelloWorldImpl</span> <span class="identifier">helloWorldImpl</span><span class="special">;</span>
 <span class="identifier">server</span><span class="special">.</span><span class="identifier">bind</span><span class="special">&lt;</span><span class="identifier">I_HelloWorld</span><span class="special">&gt;(</span><span class="identifier">helloWorldImpl</span><span class="special">);</span>
 
-<span class="identifier">server</span><span class="special">.</span><span class="identifier">setSslCertificate</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">CertificatePtr</span><span class="special">(</span> <span class="keyword">new</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">PfxCertificate</span><span class="special">(</span>
+<span class="identifier">server</span><span class="special">.</span><span class="identifier">setCertificate</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">CertificatePtr</span><span class="special">(</span> <span class="keyword">new</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">PfxCertificate</span><span class="special">(</span>
     <span class="string">"C:\\serverCert.p12"</span><span class="special">,</span> 
     <span class="string">"password"</span><span class="special">,</span> 
     <span class="string">"CertificateName"</span><span class="special">)</span> <span class="special">)</span> <span class="special">);</span>
@@ -93,7 +93,7 @@
         
 </p>
 <pre class="programlisting"><span class="identifier">RcfClient</span><span class="special">&lt;</span><span class="identifier">I_HelloWorld</span><span class="special">&gt;</span> <span class="identifier">client</span><span class="special">(</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">HttpsEndpoint</span><span class="special">(</span><span class="string">"server.acme.com"</span><span class="special">,</span> <span class="number">443</span><span class="special">)</span> <span class="special">);</span>
-<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setSchannelCertificateValidationCb</span><span class="special">(&amp;</span><span class="identifier">schannelValidate</span><span class="special">);</span>
+<span class="identifier">client</span><span class="special">.</span><span class="identifier">getClientStub</span><span class="special">().</span><span class="identifier">setCertificateValidationCallback</span><span class="special">(&amp;</span><span class="identifier">schannelValidate</span><span class="special">);</span>
 <span class="identifier">client</span><span class="special">.</span><span class="identifier">Print</span><span class="special">(</span><span class="string">"Hello World"</span><span class="special">);</span>
 </pre>
 <p>

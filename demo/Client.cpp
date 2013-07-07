@@ -42,6 +42,7 @@ int main()
     {
         std::cout << "Caught exception:\n";
         std::cout << e.getError().getErrorString() << std::endl;
+        return 1;
     }
 
     return 0;

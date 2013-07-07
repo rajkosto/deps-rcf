@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -45,7 +45,7 @@ namespace RCF {
         mpRcfServer = & server;
         
         mSessionTimeoutMs = mpRcfServer->getSessionTimeoutMs();
-        mReapingIntervalMs = mpRcfServer->getSessionReapingIntervalMs();
+        mReapingIntervalMs = mpRcfServer->getSessionHarvestingIntervalMs();
 
         if (mSessionTimeoutMs)
         {
@@ -69,16 +69,20 @@ namespace RCF {
 
         for (std::size_t i=0; i<mSessionsTemp.size(); ++i)
         {
-            RcfSessionPtr rcfSessionPtr = mSessionsTemp[i].lock();
-            if (rcfSessionPtr)
+            SessionStatePtr sessionStatePtr = mSessionsTemp[i].lock();
+            if (sessionStatePtr)
             {
-                boost::uint32_t lastTouched = rcfSessionPtr->getTouchTimestamp();
-                if (lastTouched)
+                RcfSessionPtr rcfSessionPtr = sessionStatePtr->getSessionPtr();
+                if (rcfSessionPtr)
                 {
-                    RCF::Timer lastTouchedTimer( lastTouched );
-                    if (lastTouchedTimer.elapsed(mSessionTimeoutMs))
+                    boost::uint32_t lastTouched = rcfSessionPtr->getTouchTimestamp();
+                    if (lastTouched)
                     {
-                        rcfSessionPtr->disconnect();
+                        RCF::Timer lastTouchedTimer( lastTouched );
+                        if (lastTouchedTimer.elapsed(mSessionTimeoutMs))
+                        {
+                            rcfSessionPtr->disconnect();
+                        }
                     }
                 }
             }

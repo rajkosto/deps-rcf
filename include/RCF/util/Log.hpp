@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -99,6 +99,8 @@ namespace RCF {
     class LogTarget;
     typedef boost::shared_ptr<LogTarget> LogTargetPtr;
 
+    /// Base class for log targets. Log targets are passed to the enableLogging()
+    /// function, to configure RCF logging.
     class RCF_EXPORT LogTarget
     {
     public:
@@ -107,6 +109,7 @@ namespace RCF {
         virtual void write(const RCF::ByteBuffer & output) = 0;
     };
 
+    /// Configures log output to be directed to standard output.
     class RCF_EXPORT LogToStdout : public LogTarget
     {
     public:
@@ -122,6 +125,7 @@ namespace RCF {
 
 #ifdef BOOST_WINDOWS
 
+    /// Configures log output to be directed to Windows debug output.
     class RCF_EXPORT LogToDebugWindow : public LogTarget
     {
     public:
@@ -129,6 +133,7 @@ namespace RCF {
         void write(const RCF::ByteBuffer & output);
     };
 
+    /// Configures log output to be directed to the Windows event log.
     class RCF_EXPORT LogToEventLog : public LogTarget
     {
     public:
@@ -146,6 +151,7 @@ namespace RCF {
 
 #endif
 
+    /// Configures log output to be directed to a log file.
     class RCF_EXPORT LogToFile : public LogTarget
     {
     public:
@@ -374,23 +380,22 @@ namespace RCF {
     #define UTIL_LOG_OP(x, next)                  UTIL_LOG_A.notify_((x), #x).UTIL_LOG_ ## next
 
 
-
 #ifdef BOOST_WINDOWS
-
-    RCF_EXPORT void enableLogging(
-        const LogTarget &       logTarget = LogToDebugWindow(), 
-        int                     logLevel = 2, 
-        const std::string &     logFormat = "");
-
+    typedef LogToDebugWindow DefaultLogTarget;
 #else
-
-    RCF_EXPORT void enableLogging(
-        const LogTarget &       logTarget = LogToStdout(), 
-        int                     logLevel = 2, 
-        const std::string &     logFormat = "");
-
+    typedef LogToStdout DefaultLogTarget;
 #endif
 
+    /// Configures logging for the RCF runtime.
+    /// logTarget is where the log output will appear.
+    /// loglevel is the detail level of the log, ranging from 0 (no logging), 1 (errors-only logging) to 4 (maximum detail logging).
+    /// logFormat is an optional parameter describing the format of the log output.
+    RCF_EXPORT void enableLogging(
+        const LogTarget &       logTarget = DefaultLogTarget(), 
+        int                     logLevel = 2, 
+        const std::string &     logFormat = "");
+
+    /// Disables logging for the RCF runtime.
     RCF_EXPORT void disableLogging();
 
 } // namespace RCF

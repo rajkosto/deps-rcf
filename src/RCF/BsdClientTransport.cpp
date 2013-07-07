@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -32,13 +32,15 @@ namespace RCF {
 
     BsdClientTransport::BsdClientTransport() :
         mFd(-1),
-        mpIoService(NULL)
+        mpIoService(NULL),
+        mWriteCounter(0)
     {}
 
     BsdClientTransport::BsdClientTransport(TcpSocketPtr socketPtr) :
         mFd(-1),
         mTcpSocketPtr(socketPtr),
-        mpIoService(& socketPtr->get_io_service())
+        mpIoService(& socketPtr->get_io_service()),
+        mWriteCounter(0)
     {
         mClosed = false;
         mAsioTimerPtr.reset( new AsioDeadlineTimer( getAmiThreadPool().getIoService() ));
@@ -49,7 +51,8 @@ namespace RCF {
     BsdClientTransport::BsdClientTransport(UnixLocalSocketPtr socketPtr) :
         mFd(-1),
         mLocalSocketPtr(socketPtr),
-        mpIoService(& socketPtr->get_io_service())
+        mpIoService(& socketPtr->get_io_service()),
+        mWriteCounter(0)
     {
         mClosed = false;
         mAsioTimerPtr.reset( new AsioDeadlineTimer( getAmiThreadPool().getIoService() ));
@@ -60,7 +63,8 @@ namespace RCF {
     BsdClientTransport::BsdClientTransport(const BsdClientTransport & rhs) :
         ConnectionOrientedClientTransport(rhs),
         mFd(-1),
-        mpIoService(NULL)
+        mpIoService(NULL),
+        mWriteCounter(0)
     {}
 
     BsdClientTransport::~BsdClientTransport()
@@ -188,6 +192,8 @@ namespace RCF {
         const ByteBuffer &byteBuffer,
         std::size_t bytesRequested)
     {
+        mWriteCounter = 0;
+
         std::size_t bytesToRead = RCF_MIN(bytesRequested, byteBuffer.getLength());
 
         PollingFunctor pollingFunctor(
@@ -250,6 +256,8 @@ namespace RCF {
         const ByteBuffer &byteBuffer,
         std::size_t bytesRequested)
     {
+        mWriteCounter = 0;
+
         RecursiveLock lock(mOverlappedPtr->mMutex);
 
         mOverlappedPtr->mOpType = OverlappedAmi::Read;
@@ -281,6 +289,14 @@ namespace RCF {
     std::size_t BsdClientTransport::implWrite(
         const std::vector<ByteBuffer> &byteBuffers)
     {
+        ++mWriteCounter;
+
+        if (mWriteCounter > 1)
+        {
+            // Put a breakpoint here to catch write buffer fragmentation.
+            mWriteCounter = mWriteCounter;
+        }
+
         PollingFunctor pollingFunctor(
             mClientProgressPtr,
             ClientProgress::Send,
@@ -343,6 +359,14 @@ namespace RCF {
     std::size_t BsdClientTransport::implWriteAsync(
         const std::vector<ByteBuffer> &byteBuffers)
     {
+        ++mWriteCounter;
+
+        if (mWriteCounter > 1)
+        {
+            // Put a breakpoint here to catch write buffer fragmentation.
+            mWriteCounter = mWriteCounter;
+        }
+
         if (!mAsioBuffersPtr)
         {
             mAsioBuffersPtr.reset( new AsioBuffers() );

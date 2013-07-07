@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -36,28 +36,32 @@
 #include <RCF/CheckRtti.hpp>
 #include <RCF/Export.hpp>
 #include <RCF/GetInterfaceName.hpp>
-#include <RCF/PublishingService.hpp>
 #include <RCF/RcfClient.hpp>
+#include <RCF/ServerObjectService.hpp>
 #include <RCF/ServerStub.hpp>
 #include <RCF/ServerTransport.hpp>
-#include <RCF/SubscriptionService.hpp>
 #include <RCF/ThreadLibrary.hpp>
 #include <RCF/ThreadPool.hpp>
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 #include <RCF/FileTransferService.hpp>
+#endif
+
+#if RCF_FEATURE_PUBSUB==1
+#include <RCF/PublishingService.hpp>
+#include <RCF/SubscriptionService.hpp>
 #endif
 
 namespace RCF {
 
-    class I_ServerTransport;
+    class ServerTransport;
     class StubEntry;
     class I_Service;
     class RcfSession;
-    class I_Endpoint;
+    class Endpoint;
     class I_FilterFactoryLookupProvider;
     class I_RcfClient;
-    class I_IpServerTransport;
+    class IpServerTransport;
     class PingBackService;
     class FileTransferService;
     class ObjectFactoryService;
@@ -67,14 +71,15 @@ namespace RCF {
     class SubscriptionService;
     class SessionObjectFactoryService;
     class ObjectFactoryService;
-
-    typedef boost::shared_ptr<I_ServerTransport>                ServerTransportPtr;
+    class CallbackConnectionService;
+    
+    typedef boost::shared_ptr<ServerTransport>                  ServerTransportPtr;
     typedef boost::shared_ptr<StubEntry>                        StubEntryPtr;
     typedef boost::shared_ptr<I_Service>                        ServicePtr;
     typedef boost::shared_ptr<RcfSession>                       RcfSessionPtr;
     typedef boost::shared_ptr<I_FilterFactoryLookupProvider>    FilterFactoryLookupProviderPtr;
     typedef boost::shared_ptr<I_RcfClient>                      RcfClientPtr;
-    typedef boost::shared_ptr<I_Endpoint>                       EndpointPtr;
+    typedef boost::shared_ptr<Endpoint>                         EndpointPtr;
     typedef boost::shared_ptr<PingBackService>                  PingBackServicePtr;
     typedef boost::shared_ptr<FileTransferService>              FileTransferServicePtr;
     typedef boost::shared_ptr<ObjectFactoryService>             ObjectFactoryServicePtr;
@@ -84,6 +89,7 @@ namespace RCF {
     typedef boost::shared_ptr<SubscriptionService>              SubscriptionServicePtr;
     typedef boost::shared_ptr<SessionObjectFactoryService>      SessionObjectFactoryServicePtr;
     typedef boost::shared_ptr<ObjectFactoryService>             ObjectFactoryServicePtr;
+    typedef boost::shared_ptr<CallbackConnectionService>        CallbackConnectionServicePtr;
     typedef boost::weak_ptr<RcfSession>                         RcfSessionWeakPtr;  
 
     template<typename Interface>
@@ -105,12 +111,14 @@ namespace RCF {
 
     class SspiFilter;
 
+    typedef boost::function2<void, RcfSessionPtr, ClientTransportAutoPtr> OnCallbackConnectionCreated;
+
     class RCF_EXPORT RcfServer : boost::noncopyable
     {
     public:
 
         RcfServer();
-        RcfServer(const I_Endpoint &endpoint);
+        RcfServer(const Endpoint &endpoint);
         RcfServer(ServicePtr servicePtr);
         RcfServer(ServerTransportPtr serverTransportPtr);
 
@@ -128,7 +136,7 @@ namespace RCF {
 
     public:
 
-        I_ServerTransport &     
+        ServerTransport &     
                 getServerTransport();
 
         I_Service &             
@@ -137,7 +145,7 @@ namespace RCF {
         ServerTransportPtr      
                 getServerTransportPtr();
 
-        I_IpServerTransport &   
+        IpServerTransport &   
                 getIpServerTransport();
 
     private:
@@ -177,7 +185,7 @@ namespace RCF {
         bool    removeServerTransport(
                     ServerTransportPtr serverTransportPtr);
 
-        I_ServerTransport & findTransportCompatibleWith(I_ClientTransport & clienetTransport);
+        ServerTransport & findTransportCompatibleWith(ClientTransport & clienetTransport);
         
         void    setStartCallback(const StartCallback &startCallback);       
         
@@ -212,8 +220,12 @@ namespace RCF {
         template<typename Iter>
         void enumerateSessions(const Iter & iter)
         {
-            Lock lock(mSessionsMutex);
-            std::copy(mSessions.begin(), mSessions.end(), iter);
+
+            for (std::size_t i=0; i<mServerTransports.size(); ++i)
+            {
+                mServerTransports[i]->enumerateSessions(iter);
+            }
+
         }
 
         //*************************************
@@ -228,16 +240,8 @@ namespace RCF {
         typedef std::map<std::string, JsonRpcMethod>    JsonRpcMethods;
         JsonRpcMethods                                  mJsonRpcMethods;
 
-        Mutex                                           mSessionsMutex;
-        std::set<RcfSessionWeakPtr>                     mSessions;
-
         friend class RcfSession;
 
-        void registerSession(
-            RcfSessionPtr rcfSessionPtr);
-
-        void unregisterSession(
-            RcfSessionWeakPtr rcfSessionWeakPtr);
 
 
         //*************************************
@@ -255,6 +259,7 @@ namespace RCF {
         CallbackConnectionServicePtr                    mCallbackConnectionServicePtr;
         SessionObjectFactoryServicePtr                  mSessionObjectFactoryServicePtr;
         ObjectFactoryServicePtr                         mObjectFactoryServicePtr;
+        ServerObjectServicePtr                          mServerObjectServicePtr;
 
         void startService(ServicePtr servicePtr) const;
         void stopService(ServicePtr servicePtr) const;
@@ -276,7 +281,7 @@ namespace RCF {
     public:
         void                    setThreadPool(ThreadPoolPtr threadPoolPtr);
         ThreadPoolPtr           getThreadPool();
-        I_ServerTransport &     addEndpoint(const I_Endpoint & endpoint);
+        ServerTransport &     addEndpoint(const Endpoint & endpoint);
 
     private:
         ThreadPoolPtr                                   mThreadPoolPtr;
@@ -435,7 +440,7 @@ namespace RCF {
             return true;
         }
 
-#ifdef RCF_USE_JSON
+#if RCF_FEATURE_JSON==1
         void bindJsonRpc(JsonRpcMethod jsonRpcMethod, const std::string & jsonRpcName);
         void unbindJsonRpc(const std::string & jsonRpcName);
 #endif
@@ -446,36 +451,31 @@ namespace RCF {
         const std::vector<TransportProtocol> & 
             getSupportedTransportProtocols() const;
 
-        void setSslCertificate(CertificatePtr certificatePtr);
-        CertificatePtr getSslCertificate();
+        void setCertificate(CertificatePtr certificatePtr);
+        CertificatePtr getCertificate();
 
         void setOpenSslCipherSuite(const std::string & cipherSuite);
         std::string getOpenSslCipherSuite() const;
 
-        void setSslCaCertificate(CertificatePtr certificatePtr);
-        CertificatePtr getSslCaCertificate();
+        void setCaCertificate(CertificatePtr certificatePtr);
+        CertificatePtr getCaCertificate();
 
-        typedef boost::function<bool(OpenSslEncryptionFilter &)> OpenSslCertificateValidationCb;
-        void setOpenSslCertificateValidationCb(OpenSslCertificateValidationCb certificateValidationCb);
-        const OpenSslCertificateValidationCb & getOpenSslCertificateValidationCb() const;
-        
-        typedef boost::function<bool(SspiFilter &)> SchannelCertificateValidationCb;
-        void setSchannelCertificateValidationCb(SchannelCertificateValidationCb certificateValidationCb);
-        const SchannelCertificateValidationCb & getSchannelCertificateValidationCb() const;
 
-        void setSchannelDefaultCertificateValidation(const tstring & peerName);
-        tstring getSchannelDefaultCertificateValidation() const;
+        typedef boost::function<bool(Certificate *)> CertificateValidationCb;
+        void setCertificateValidationCallback(CertificateValidationCb certificateValidationCb);
+        const CertificateValidationCb & getCertificateValidationCallback() const;
 
-        void setPreferSchannel(bool preferSchannel);
-        bool getPreferSchannel() const;
+        void setEnableSchannelCertificateValidation(const tstring & peerName);
+        tstring getEnableSchannelCertificateValidation() const;
+
+        void setSslImplementation(SslImplementation sslImplementation);
+        SslImplementation getSslImplementation() const;
 
         void setSessionTimeoutMs(boost::uint32_t sessionTimeoutMs);
         boost::uint32_t getSessionTimeoutMs();
 
-        void setSessionReapingIntervalMs(boost::uint32_t sessionReapingIntervalMs);
-        boost::uint32_t getSessionReapingIntervalMs();
-
-        typedef CallbackConnectionService::OnCallbackConnectionCreated OnCallbackConnectionCreated;
+        void setSessionHarvestingIntervalMs(boost::uint32_t sessionHarvestingIntervalMs);
+        boost::uint32_t getSessionHarvestingIntervalMs();
 
         void setOnCallbackConnectionCreated(OnCallbackConnectionCreated onCallbackConnectionCreated);
         OnCallbackConnectionCreated getOnCallbackConnectionCreated();
@@ -490,7 +490,7 @@ namespace RCF {
         boost::uint32_t getOfsCleanupIntervalS() const;
         float getOfsCleanupThreshold() const;
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
 
         typedef FileTransferService::OnFileDownloadProgress OnFileDownloadProgress;
         typedef FileTransferService::OnFileUploadProgress OnFileUploadProgress;
@@ -517,16 +517,16 @@ namespace RCF {
 
     private:
 
-        OnFileDownloadProgress mOnFileDownloadProgress;
-        OnFileUploadProgress mOnFileUploadProgress;
+        OnFileDownloadProgress          mOnFileDownloadProgress;
+        OnFileUploadProgress            mOnFileUploadProgress;
 
-        std::string mFileUploadDirectory;
+        std::string                     mFileUploadDirectory;
 
-        boost::uint32_t mFileUploadQuota;
-        FileUploadQuotaCallback mFileUploadQuotaCb;
+        boost::uint32_t                 mFileUploadQuota;
+        FileUploadQuotaCallback         mFileUploadQuotaCb;
 
-        boost::uint32_t mFileDownloadQuota;
-        FileDownloadQuotaCallback mFileDownloadQuotaCb;
+        boost::uint32_t                 mFileDownloadQuota;
+        FileDownloadQuotaCallback       mFileDownloadQuotaCb;
 
         friend class FileTransferService;
 
@@ -534,30 +534,31 @@ namespace RCF {
 
     private:
 
-        mutable ReadWriteMutex mPropertiesMutex;
+        mutable ReadWriteMutex          mPropertiesMutex;
 
-        std::vector<TransportProtocol> mSupportedProtocols;
-        CertificatePtr mCertificatePtr;
-        std::string mOpenSslCipherSuite;
+        std::vector<TransportProtocol>  mSupportedProtocols;
+        CertificatePtr                  mCertificatePtr;
+        std::string                     mOpenSslCipherSuite;
 
-        CertificatePtr mCaCertificatePtr;
-        OpenSslCertificateValidationCb mOpenSslCertificateValidationCb;
-        SchannelCertificateValidationCb mSchannelCertificateValidationCb;
-        tstring mSchannelAutoCertificateValidation;
+        CertificatePtr                  mCaCertificatePtr;
+        CertificateValidationCb         mCertificateValidationCb;
+        tstring                         mSchannelCertificateValidation;
 
-        bool mPreferSchannel;
+        SslImplementation               mSslImplementation;
 
-        boost::uint32_t mSessionTimeoutMs;
-        boost::uint32_t mSessionReapingIntervalMs;
+        boost::uint32_t                 mSessionTimeoutMs;
+        boost::uint32_t                 mSessionHarvestingIntervalMs;
 
-        OnCallbackConnectionCreated mOnCallbackConnectionCreated;
+        OnCallbackConnectionCreated     mOnCallbackConnectionCreated;
 
-        boost::uint32_t mOfsMaxNumberOfObjects;
-        boost::uint32_t  mOfsObjectTimeoutS;
-        boost::uint32_t mOfsCleanupIntervalS;
-        float mOfsCleanupThreshold;
+        boost::uint32_t                 mOfsMaxNumberOfObjects;
+        boost::uint32_t                 mOfsObjectTimeoutS;
+        boost::uint32_t                 mOfsCleanupIntervalS;
+        float                           mOfsCleanupThreshold;
 
     public:
+
+#if RCF_FEATURE_PUBSUB==1
 
         template<typename Interface>
         boost::shared_ptr< Publisher<Interface> > createPublisher()
@@ -576,7 +577,7 @@ namespace RCF {
         template<typename Interface, typename T>
         boost::shared_ptr< Subscription > createSubscription(
             T & t, 
-            const RCF::I_Endpoint & publisherEp)
+            const RCF::Endpoint & publisherEp)
         {
             RCF_ASSERT(mStarted);
             SubscriptionParms parms;
@@ -592,6 +593,36 @@ namespace RCF {
             RCF_ASSERT(mStarted);
             return mSubscriptionServicePtr->createSubscription<Interface>(t, parms);
         }
+
+#endif
+
+    private:
+
+        boost::uint32_t mServerObjectHarvestingIntervalS;
+
+
+    public:
+
+        boost::uint32_t getServerObjectHarvestingIntervalS() const;
+        void setServerObjectHarvestingIntervalS(boost::uint32_t harvestingIntervalS);
+
+        template<typename T>
+        boost::shared_ptr<T> queryServerObject(
+            const std::string & objectKey, 
+            boost::uint32_t timeoutMs)
+        {
+            return mServerObjectServicePtr->queryServerObject<T>(objectKey, timeoutMs);
+        }
+
+        template<typename T>
+        boost::shared_ptr<T> getServerObject(
+            const std::string & objectKey, 
+            boost::uint32_t timeoutMs)
+        {
+            return mServerObjectServicePtr->getServerObject<T>(objectKey, timeoutMs);
+        }
+
+        void deleteServerObject(const std::string & objectKey);
     };
 
 } // namespace RCF

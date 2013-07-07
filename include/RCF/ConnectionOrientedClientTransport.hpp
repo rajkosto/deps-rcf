@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -44,7 +44,7 @@ namespace RCF {
     typedef boost::shared_ptr<OverlappedAmi> OverlappedAmiPtr;
 
     class RCF_EXPORT ConnectionOrientedClientTransport : 
-        public I_ClientTransport, 
+        public ClientTransport, 
         public WithProgressCallback
     {
     public:
@@ -68,7 +68,7 @@ namespace RCF {
         void                    getTransportFilters(std::vector<FilterPtr> &filters);
         void                    connectTransportFilters();
         
-        void                    connect(I_ClientTransportCallback &clientStub, unsigned int timeoutMs);
+        void                    connect(ClientTransportCallback &clientStub, unsigned int timeoutMs);
         void                    disconnect(unsigned int timeoutMs);
         int                     timedSend(const char *buffer, std::size_t bufferLen);
         int                     timedReceive(char *buffer, std::size_t bufferLen);
@@ -118,11 +118,11 @@ namespace RCF {
             const std::vector<ByteBuffer> &byteBuffers) = 0;
 
         virtual void implConnect(
-            I_ClientTransportCallback &clientStub, 
+            ClientTransportCallback &clientStub, 
             unsigned int timeoutMs) = 0;
 
         virtual void implConnectAsync(
-            I_ClientTransportCallback &clientStub, 
+            ClientTransportCallback &clientStub, 
             unsigned int timeoutMs) = 0;
 
         virtual void implClose() = 0;
@@ -140,7 +140,7 @@ namespace RCF {
         std::size_t                 mReadBufferPos;
         std::size_t                 mWriteBufferPos;
         
-        I_ClientTransportCallback * mpClientStub;
+        ClientTransportCallback * mpClientStub;
         
         ByteBuffer *                mpClientStubReadBuffer;
         ByteBuffer                  mReadBuffer;
@@ -168,7 +168,7 @@ namespace RCF {
 
         void        setTimer(
                         boost::uint32_t timeoutMs,
-                        I_ClientTransportCallback *pClientStub);
+                        ClientTransportCallback *pClientStub);
 
         void        onTimerExpired();
 
@@ -191,12 +191,12 @@ namespace RCF {
         void        issueWrite(const std::vector<ByteBuffer> &byteBuffers);
 
         int         send(
-                        I_ClientTransportCallback &clientStub, 
+                        ClientTransportCallback &clientStub, 
                         const std::vector<ByteBuffer> &data, 
                         unsigned int timeoutMs);
 
         int         receive(
-                        I_ClientTransportCallback &clientStub, 
+                        ClientTransportCallback &clientStub, 
                         ByteBuffer &byteBuffer, 
                         unsigned int timeoutMs);
 

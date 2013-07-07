@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -41,7 +41,7 @@ namespace RCF {
             addr.sin_addr.s_addr = htonl(asioAddr.to_v4().to_ulong());
             ipAddress = IpAddress(addr);
         }
-#ifdef RCF_USE_IPV6
+#if RCF_FEATURE_IPV6==1
         else if (asioAddr.is_v6())
         {
             RCF_ASSERT(asioAddr.is_v6());
@@ -62,7 +62,7 @@ namespace RCF {
         return ipAddress;
     }
 
-    class TcpAsioAcceptor : public I_AsioAcceptor
+    class TcpAsioAcceptor : public AsioAcceptor
     {
     public:
         TcpAsioAcceptor(
@@ -81,16 +81,20 @@ namespace RCF {
         TcpAsioServerTransport &transport,
         AsioIoService & ioService) :
             AsioSessionState(transport, ioService),
-            mSocketPtr(new AsioSocket(ioService))
-    {}
+            mSocketPtr(new AsioSocket(ioService)),
+            mWriteCounter(0)
+    {
+    }
 
-    const I_RemoteAddress & TcpAsioSessionState::implGetRemoteAddress()
+    const RemoteAddress & TcpAsioSessionState::implGetRemoteAddress()
     {
         return mIpAddress;
     }
 
     void TcpAsioSessionState::implRead(char * buffer, std::size_t bufferLen)
     {
+        mWriteCounter = 0;
+
         RCF_LOG_4()(bufferLen) 
             << "TcpAsioSessionState - calling async_read_some().";
 
@@ -101,6 +105,14 @@ namespace RCF {
 
     void TcpAsioSessionState::implWrite(const std::vector<ByteBuffer> & buffers)
     {
+        ++mWriteCounter;
+
+        if (mWriteCounter > 1)
+        {
+            // Put a breakpoint here to catch write buffer fragmentation.
+            mWriteCounter = mWriteCounter;
+        }
+
         RCF_LOG_4()(RCF::lengthByteBuffers(buffers))
             << "TcpAsioSessionState - calling async_write_some().";
 
@@ -206,7 +218,7 @@ namespace RCF {
         return ClientTransportAutoPtr(tcpClientTransportPtr.release());
     }
 
-    void TcpAsioSessionState::implTransferNativeFrom(I_ClientTransport & clientTransport)
+    void TcpAsioSessionState::implTransferNativeFrom(ClientTransport & clientTransport)
     {
         TcpClientTransport *pTcpClientTransport =
             dynamic_cast<TcpClientTransport *>(&clientTransport);
@@ -380,7 +392,7 @@ namespace RCF {
     }
 
     ClientTransportAutoPtr TcpAsioServerTransport::implCreateClientTransport(
-        const I_Endpoint &endpoint)
+        const Endpoint &endpoint)
     {
         const TcpEndpoint &tcpEndpoint = 
             dynamic_cast<const TcpEndpoint &>(endpoint);

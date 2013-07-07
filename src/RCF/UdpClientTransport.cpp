@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -43,7 +43,7 @@ namespace RCF {
     }
 
     UdpClientTransport::UdpClientTransport(const UdpClientTransport &rhs) :
-        I_ClientTransport(rhs),
+        ClientTransport(rhs),
         mDestIp(rhs.mDestIp),
         mAsync(),
         mSock(-1)
@@ -74,14 +74,14 @@ namespace RCF {
 
     void UdpClientTransport::setTimer(
         boost::uint32_t timeoutMs,
-        I_ClientTransportCallback *pClientStub)
+        ClientTransportCallback *pClientStub)
     {
         RCF_UNUSED_VARIABLE(timeoutMs);
         RCF_UNUSED_VARIABLE(pClientStub);
     }
 
     void UdpClientTransport::connect(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         unsigned int timeoutMs)
     {
         RCF_LOG_4()(mSock)(mDestIp.string()) << "UdpClientTransport - creating socket.";
@@ -187,7 +187,7 @@ namespace RCF {
     }
 
     int UdpClientTransport::send(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         const std::vector<ByteBuffer> &data,
         unsigned int timeoutMs)
     {
@@ -238,7 +238,7 @@ namespace RCF {
     }
 
     int UdpClientTransport::receive(
-        I_ClientTransportCallback &clientStub, 
+        ClientTransportCallback &clientStub, 
         ByteBuffer &byteBuffer,
         unsigned int timeoutMs)
     {

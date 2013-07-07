@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -253,9 +253,8 @@ namespace RCF {
             if (sessionStatePtr.get() == NULL)
             {
                 sessionStatePtr = SessionStatePtr(new SessionState(*this));
-                SessionPtr sessionPtr = getSessionManager().createSession();
-                sessionPtr->setSessionState(*sessionStatePtr);
-                sessionStatePtr->mSessionPtr = sessionPtr;
+                sessionStatePtr->mSessionPtr = getSessionManager().createSession();
+                sessionStatePtr->mSessionPtr->setSessionState(*sessionStatePtr);
                 setTlsUdpSessionStatePtr(sessionStatePtr);
             }
 
@@ -465,17 +464,17 @@ namespace RCF {
         close();
     }
    
-    const I_RemoteAddress &UdpSessionState::getRemoteAddress() const
+    const RemoteAddress &UdpSessionState::getRemoteAddress() const
     {
         return mRemoteAddress;
     }
 
-    I_ServerTransport & UdpSessionState::getServerTransport()
+    ServerTransport & UdpSessionState::getServerTransport()
     {
         return mTransport;
     }
 
-    const I_RemoteAddress & UdpSessionState::getRemoteAddress()
+    const RemoteAddress & UdpSessionState::getRemoteAddress()
     {
         return mRemoteAddress;
     }
@@ -508,6 +507,11 @@ namespace RCF {
     int UdpSessionState::getNativeHandle() const
     {
         return mTransport.mFd;
+    }
+
+    bool UdpSessionState::isConnected()
+    {
+        return true;
     }
 
 } // namespace RCF

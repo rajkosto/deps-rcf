@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -36,6 +36,28 @@ namespace RCF {
 
     //****************************************
     // ClientStub
+
+#if defined(BOOST_WINDOWS) && RCF_FEATURE_OPENSSL==0
+
+    // Windows builds without OpenSSL.
+    SslImplementation gDefaultSslImplementation = Si_Schannel;
+
+#else
+
+    // All other builds.
+    SslImplementation gDefaultSslImplementation = Si_OpenSsl;
+
+#endif
+
+    void setDefaultSslImplementation(SslImplementation sslImplementation)
+    {
+        gDefaultSslImplementation = sslImplementation;
+    }
+
+    SslImplementation getDefaultSslImplementation()
+    {
+        return gDefaultSslImplementation;
+    }
 
     // 2s default connect timeout
     static unsigned int gClientConnectTimeoutMs = 1000*2;
@@ -160,7 +182,7 @@ namespace RCF {
         mTransportProtocol(Tp_Clear),
         mEnableCompression(false),
 
-        mPreferSchannel(false)
+        mSslImplementation(RCF::getDefaultSslImplementation())
     {
     }
 
@@ -214,7 +236,7 @@ namespace RCF {
         mTransportProtocol(Tp_Clear),
         mEnableCompression(false),
 
-        mPreferSchannel(false)
+        mSslImplementation(RCF::getDefaultSslImplementation())
     {
     }
 
@@ -262,7 +284,7 @@ namespace RCF {
         mBatchMessageCount(0),
         mSetTransportProtocol(false),        
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
         mFileProgressCb(rhs.mFileProgressCb),
         mTransferWindowS(rhs.mTransferWindowS),
 #endif
@@ -276,7 +298,7 @@ namespace RCF {
         mKerberosSpn(rhs.mKerberosSpn),
         mEnableCompression(rhs.mEnableCompression),
 
-        mPreferSchannel(rhs.mPreferSchannel)
+        mSslImplementation(rhs.mSslImplementation)
     {
         setEndpoint( rhs.getEndpoint() );
         if (rhs.mClientProgressPtr)
@@ -334,7 +356,7 @@ namespace RCF {
                     new ClientProgress(*rhs.mClientProgressPtr));
             }
 
-#ifdef RCF_USE_BOOST_FILESYSTEM
+#if RCF_FEATURE_FILETRANSFER==1
             mFileProgressCb = rhs.mFileProgressCb;
             mTransferWindowS = rhs.mTransferWindowS;
 #endif
@@ -345,7 +367,7 @@ namespace RCF {
             mPassword = rhs.mPassword;
             mKerberosSpn = rhs.mKerberosSpn;
             mEnableCompression = rhs.mEnableCompression;
-            mPreferSchannel = rhs.mPreferSchannel;
+            mSslImplementation = rhs.mSslImplementation;
         }
         return *this;
     }
@@ -431,7 +453,7 @@ namespace RCF {
         return mEnableSfPointerTracking;
     }
 
-    void ClientStub::setEndpoint(const I_Endpoint &endpoint)
+    void ClientStub::setEndpoint(const Endpoint &endpoint)
     {
         mEndpoint = endpoint.clone();
     }
@@ -446,27 +468,27 @@ namespace RCF {
         return mEndpoint;
     }
 
-    void ClientStub::setTransport(std::auto_ptr<I_ClientTransport> transport)
+    void ClientStub::setTransport(std::auto_ptr<ClientTransport> transport)
     {
         mTransport = transport;
         mConnected = mTransport.get() && mTransport->isConnected();
     }
 
-    std::auto_ptr<I_ClientTransport> ClientStub::releaseTransport()
+    std::auto_ptr<ClientTransport> ClientStub::releaseTransport()
     {
         instantiateTransport();
         return mTransport;
     }
 
-    I_ClientTransport& ClientStub::getTransport()
+    ClientTransport& ClientStub::getTransport()
     {
         instantiateTransport();
         return *mTransport;
     }
 
-    I_IpClientTransport &ClientStub::getIpTransport()
+    IpClientTransport &ClientStub::getIpTransport()
     {
-        return dynamic_cast<I_IpClientTransport &>(getTransport());
+        return dynamic_cast<IpClientTransport &>(getTransport());
     }
 
     void ClientStub::instantiateTransport()
@@ -488,7 +510,7 @@ namespace RCF {
 
             if (preferred)
             {
-                I_ServerTransport & transport = preferred->getServerTransport();
+                ServerTransport & transport = preferred->getServerTransport();
                 AsioServerTransport & asioTransport = dynamic_cast<AsioServerTransport &>(transport);
                 pIoService = & asioTransport.getIoService();
             }
@@ -660,13 +682,13 @@ namespace RCF {
                 disconnect();
             }
 
-            mAsyncException = pRcfRE->clone();
+            mAsyncException.reset( pRcfRE->clone().release() );
         }
         else if (pRcfE)
         {
             mEncodedByteBuffers.resize(0);
             disconnect();
-            mAsyncException = pRcfE->clone();
+            mAsyncException.reset( pRcfE->clone().release() );
         }
         else
         {
@@ -847,22 +869,11 @@ namespace RCF {
             boost::uint32_t timeSinceLastPingBackMs = 
                 timeNowMs - mPingBackTimeStamp;
 
-            if (mPingBackCheckIntervalMs == mPingBackIntervalMs)
-            {
-                // Checking for the first pingback.
-                RCF_VERIFY(
-                    mPingBackCount > 0,
-                    Exception(_RcfError_PingBackTimeout(mPingBackCheckIntervalMs)))
-                    (mPingBackCount);
-            }
-            else
-            {
-                // Checking for subsequent pingbacks.
-                RCF_VERIFY(
-                    timeSinceLastPingBackMs < mPingBackCheckIntervalMs,
-                    Exception(_RcfError_PingBackTimeout(mPingBackCheckIntervalMs)))
-                    (mPingBackCheckIntervalMs);
-            }
+            // Checking for subsequent pingbacks.
+            RCF_VERIFY(
+                timeSinceLastPingBackMs < mPingBackCheckIntervalMs,
+                Exception(_RcfError_PingBackTimeout(mPingBackCheckIntervalMs)))
+                (mPingBackCheckIntervalMs);
 
             // Setup polling for next pingback.
             mPingBackCheckIntervalMs = 3 * mPingBackIntervalMs;
@@ -908,23 +919,6 @@ namespace RCF {
         //}
 
     }
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-    void ClientStub::serialize(SF::Archive & ar)
-    {
-        ar  & mToken
-            & mDefaultCallingSemantics
-            & mProtocol
-            & mEndpointName
-            & mObjectName
-            & mInterfaceName
-            & mRemoteCallTimeoutMs
-            & mAutoReconnect
-            & mEndpoint;
-    }
-
-#endif
 
     //**************************************************************************
     // Synchronous create object calls.
@@ -1126,7 +1120,7 @@ namespace RCF {
 
         for (std::size_t i=0; i<filters.size(); ++i)
         {
-            filterIds.push_back( filters[i]->getFilterDescription().getId());
+            filterIds.push_back( filters[i]->getFilterId());
         }
 
         if (!isConnected())
@@ -1284,7 +1278,7 @@ namespace RCF {
 
         for (std::size_t i=0; i<filters.size(); ++i)
         {
-            filterIds.push_back( filters[i]->getFilterDescription().getId() );
+            filterIds.push_back( filters[i]->getFilterId() );
         }
 
         boost::shared_ptr<std::vector<FilterPtr> > filtersPtr(
@@ -1551,73 +1545,54 @@ namespace RCF {
         return mEnableCompression;
     }
 
-    void ClientStub::setSslCertificate(CertificatePtr certificatePtr)
+    void ClientStub::setCertificate(CertificatePtr certificatePtr)
     {
         mCertificatePtr = certificatePtr;
     }
 
-    CertificatePtr ClientStub::getSslCertificate()
+    CertificatePtr ClientStub::getCertificate()
     {
         return mCertificatePtr;
     }
 
-
-
-
-
-    void ClientStub::setSslCaCertificate(CertificatePtr caCertificatePtr)
+    void ClientStub::setCaCertificate(CertificatePtr caCertificatePtr)
     {
         mCaCertificatePtr = caCertificatePtr;
 
-        mOpenSslCertificateValidationCb.clear();
-        mSchannelCertificateValidationCb.clear();
-        mSchannelAutoCertificateValidation.clear();
+        mCertificateValidationCb.clear();
+        mSchannelCertificateValidation.clear();
     }
 
-    CertificatePtr ClientStub::getSslCaCertificate()
+    CertificatePtr ClientStub::getCaCertificate()
     {
         return mCaCertificatePtr;
     }
 
-    void ClientStub::setOpenSslCertificateValidationCb(
-        OpenSslCertificateValidationCb certificateValidationCb)
+    void ClientStub::setCertificateValidationCallback(
+        CertificateValidationCb certificateValidationCb)
     {
-        mOpenSslCertificateValidationCb = certificateValidationCb;
+        mCertificateValidationCb = certificateValidationCb;
 
         mCaCertificatePtr.reset();
+        mSchannelCertificateValidation.clear();
     }
 
-    const ClientStub::OpenSslCertificateValidationCb & ClientStub::getOpenSslCertificateValidationCb() const
+    const ClientStub::CertificateValidationCb & ClientStub::getCertificateValidationCallback() const
     {
-        return mOpenSslCertificateValidationCb;
+        return mCertificateValidationCb;
     }
 
-    void ClientStub::setSchannelCertificateValidationCb(SchannelCertificateValidationCb certificateValidationCb)
+    void ClientStub::setEnableSchannelCertificateValidation(const tstring & peerName)
     {
-        mSchannelCertificateValidationCb = certificateValidationCb;
+        mSchannelCertificateValidation = peerName;
 
         mCaCertificatePtr.reset();
-        mSchannelAutoCertificateValidation.clear();
+        mCertificateValidationCb.clear();
     }
 
-    const ClientStub::SchannelCertificateValidationCb & 
-    ClientStub::getSchannelCertificateValidationCb() const
+    tstring ClientStub::getEnableSchannelCertificateValidation() const
     {
-        return mSchannelCertificateValidationCb;
-    }
-
-    void ClientStub::setSchannelDefaultCertificateValidation(const tstring & peerName)
-    {
-        mSchannelAutoCertificateValidation = peerName;
-
-        mCaCertificatePtr.reset();
-        mOpenSslCertificateValidationCb.clear();
-        mSchannelCertificateValidationCb.clear();
-    }
-
-    tstring ClientStub::getSchannelDefaultCertificateValidation() const
-    {
-        return mSchannelAutoCertificateValidation;
+        return mSchannelCertificateValidation;
     }
 
     void ClientStub::setOpenSslCipherSuite(const std::string & cipherSuite)
@@ -1630,14 +1605,14 @@ namespace RCF {
         return mOpenSslCipherSuite;
     }
 
-    void ClientStub::setPreferSchannel(bool preferSchannel)
+    void ClientStub::setSslImplementation(SslImplementation sslImplementation)
     {
-        mPreferSchannel = preferSchannel;
+        mSslImplementation = sslImplementation;
     }
 
-    bool ClientStub::getPreferSchannel() const
+    SslImplementation ClientStub::getSslImplementation() const
     {
-        return mPreferSchannel;
+        return mSslImplementation;
     }
 
 #ifdef BOOST_WINDOWS

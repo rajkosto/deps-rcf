@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -26,14 +26,14 @@ namespace RCF {
 
     class RcfServer;
 
-    class RCF_EXPORT InProcessEndpoint : public I_Endpoint
+    class RCF_EXPORT InProcessEndpoint : public Endpoint
     {
     public:
         InProcessEndpoint(RCF::RcfServer & server);
         InProcessEndpoint(RCF::RcfServer & server, RCF::RcfServer & callbackServer);
 
-        std::auto_ptr<I_ServerTransport>    createServerTransport() const;
-        std::auto_ptr<I_ClientTransport>    createClientTransport() const;
+        std::auto_ptr<ServerTransport>    createServerTransport() const;
+        std::auto_ptr<ClientTransport>    createClientTransport() const;
         EndpointPtr                         clone() const;
         std::string                         asString() const;
 

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -229,7 +229,7 @@ namespace RCF {
 
         namespace fs = boost::filesystem;
 
-        I_SessionState & sessionState = getTlsRcfSession().getSessionState();
+        SessionState & sessionState = getTlsRcfSession().getSessionState();
         maxMessageLength = (boost::uint32_t) sessionState.getServerTransport().getMaxMessageLength();
 
         RCF::BandwidthQuotaPtr quotaPtr = mUploadQuotaCallback ? 
@@ -555,7 +555,7 @@ namespace RCF {
         RCF_UNUSED_VARIABLE(request);
         chunks.clear();
 
-        I_SessionState & sessionState = getTlsRcfSession().getSessionState();
+        SessionState & sessionState = getTlsRcfSession().getSessionState();
         maxMessageLength = (boost::uint32_t) sessionState.getServerTransport().getMaxMessageLength();
 
         if (mOnFileDownloadProgress)

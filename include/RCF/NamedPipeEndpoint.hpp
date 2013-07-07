@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -31,7 +31,7 @@
 
 namespace RCF {
 
-    class RCF_EXPORT NamedPipeEndpoint : public I_Endpoint
+    class RCF_EXPORT NamedPipeEndpoint : public Endpoint
     {
     public:
 
@@ -44,12 +44,6 @@ namespace RCF {
         EndpointPtr clone() const;
 
         std::string asString() const;
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-        void serialize(SF::Archive & ar);
-
-#endif
 
     private:
         tstring mPipeName;

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -27,6 +27,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <RCF/ByteBuffer.hpp>
+#include <RCF/Enums.hpp>
 #include <RCF/Export.hpp>
 
 namespace RCF {
@@ -44,47 +45,37 @@ namespace RCF {
 
     static const int RcfFilter_Xor                          = 101;
 
+    class Certificate;
+    typedef boost::shared_ptr<Certificate> CertificatePtr;
 
-    enum TransportProtocol
-    {
-        Tp_Unspecified,
-        Tp_Clear,
-        Tp_Ntlm,
-        Tp_Kerberos,
-        Tp_Negotiate,
-        Tp_Ssl
-    };
+    class Win32Certificate;
+    typedef boost::shared_ptr<Win32Certificate> Win32CertificatePtr;
 
-    std::string getTransportProtocolName(TransportProtocol protocol);
+    class X509Certificate;
+    typedef boost::shared_ptr<X509Certificate> X509CertificatePtr;
 
-    class I_Certificate
+    /// Base class of all certificate classes.
+    class RCF_EXPORT Certificate
     {
     public:
-        virtual ~I_Certificate()
+
+        // *** SWIG BEGIN ***
+
+        virtual CertificateImplementationType _getType();       
+
+        Win32CertificatePtr _downcastToWin32Certificate(CertificatePtr certPtr);
+        X509CertificatePtr _downcastToX509Certificate(CertificatePtr certPtr);
+
+        // *** SWIG END ***
+
+        virtual ~Certificate()
         {
         }
     };
 
-    typedef boost::shared_ptr<I_Certificate> CertificatePtr;
+    
 
-    // Runtime description of a filter.
-    class RCF_EXPORT FilterDescription
-    {
-    public:
-        FilterDescription(
-            const std::string &filterName,
-            int filterId,
-            bool removable);
-
-        const std::string &     getName() const;
-        int                     getId() const;
-        bool                    getRemovable() const;
-
-    private:
-        const std::string       mFilterName;
-        const int               mFilterId;
-        const bool              mRemovable;
-    };
+    typedef boost::shared_ptr<Certificate> CertificatePtr;
 
     class Filter;
 
@@ -111,7 +102,7 @@ namespace RCF {
 
         virtual void onWriteCompleted(std::size_t bytesTransferred) = 0;
 
-        virtual const FilterDescription &getFilterDescription() const = 0;
+        virtual int getFilterId() const = 0;
 
         void setPreFilter(Filter &preFilter);
         void setPostFilter(Filter &postFilter);
@@ -138,29 +129,7 @@ namespace RCF {
         void onReadCompleted(const ByteBuffer &byteBuffer);
         void onWriteCompleted(std::size_t bytesTransferred);
        
-        const FilterDescription &getFilterDescription() const;
-        static const FilterDescription &sGetFilterDescription();
-        static const FilterDescription *spFilterDescription;
-    };
-
-    class RCF_EXPORT XorFilter : public IdentityFilter
-    {
-    public:
-        static const FilterDescription *spFilterDescription;
-        static const FilterDescription &sGetFilterDescription();
-        const FilterDescription &getFilterDescription() const;
-       
-        XorFilter();
-        void read(const ByteBuffer &byteBuffer, std::size_t bytesRequested);
-        void write(const std::vector<ByteBuffer> &byteBuffers);
-        void onReadCompleted(const ByteBuffer &byteBuffer);
-        void onWriteCompleted(std::size_t bytesTransferred);
-
-    private:
-        std::size_t mTotalBytes;
-        std::vector<ByteBuffer> mByteBuffers;
-        std::vector<ByteBuffer> mTempByteBuffers;
-        char mMask;
+        virtual int getFilterId() const;
     };
    
     typedef boost::shared_ptr<Filter>                       FilterPtr;
@@ -177,24 +146,10 @@ namespace RCF {
 
         virtual FilterPtr createFilter(RcfServer & server) = 0;
 
-        virtual const FilterDescription &getFilterDescription() = 0;
+        virtual int getFilterId() = 0;
     };
 
     typedef boost::shared_ptr<FilterFactory> FilterFactoryPtr;
-
-    class RCF_EXPORT IdentityFilterFactory : public FilterFactory
-    {
-    public:
-        FilterPtr createFilter(RcfServer & server);
-        const FilterDescription &getFilterDescription();
-    };
-
-    class RCF_EXPORT XorFilterFactory : public FilterFactory
-    {
-    public:
-        FilterPtr createFilter(RcfServer & server);
-        const FilterDescription & getFilterDescription();
-    };
 
     RCF_EXPORT void connectFilters(const std::vector<FilterPtr> &filters);
 

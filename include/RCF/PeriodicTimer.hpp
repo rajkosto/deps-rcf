@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -19,6 +19,7 @@
 #ifndef INCLUDE_RCF_PERIODICTIMER_HPP
 #define INCLUDE_RCF_PERIODICTIMER_HPP
 
+#include <RCF/Export.hpp>
 #include <RCF/ThreadLibrary.hpp>
 #include <RCF/Timer.hpp>
 
@@ -42,7 +43,7 @@ namespace RCF {
 
     typedef boost::shared_ptr<TimerControlBlock> TimerControlBlockPtr;
 
-    class PeriodicTimer
+    class RCF_EXPORT PeriodicTimer
     {
     public:
         PeriodicTimer(I_Service & service, boost::uint32_t intervalMs);

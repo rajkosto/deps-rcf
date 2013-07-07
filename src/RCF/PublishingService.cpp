@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -118,8 +118,8 @@ namespace RCF {
                 }
             }            
 
-            I_ServerTransportEx &serverTransport =
-                dynamic_cast<I_ServerTransportEx &>(
+            ServerTransportEx &serverTransport =
+                dynamic_cast<ServerTransportEx &>(
                     rcfSession.getSessionState().getServerTransport());
 
             ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(
@@ -221,7 +221,7 @@ namespace RCF {
             PublisherPtr publisherPtr = mPublishers[ publisherName ].lock();
             if (publisherPtr)
             {
-                I_ClientTransport &clientTransport =
+                ClientTransport &clientTransport =
                     publisherPtr->mRcfClientPtr->getClientStub().getTransport();
 
                 MulticastClientTransport &multiCastClientTransport =
@@ -263,7 +263,7 @@ namespace RCF {
             {
                 PublisherBase & pub = * publisherPtr;
 
-                I_ClientTransport & transport = 
+                ClientTransport & transport = 
                     pub.mRcfClientPtr->getClientStub().getTransport();
 
                 MulticastClientTransport & multiTransport = 
@@ -288,7 +288,7 @@ namespace RCF {
             {
                 PublisherBase & pub = * publisherPtr;
 
-                I_ClientTransport & transport = 
+                ClientTransport & transport = 
                     pub.mRcfClientPtr->getClientStub().getTransport();
 
                 MulticastClientTransport & multiTransport = 
@@ -335,34 +335,6 @@ namespace RCF {
         mRcfClientPtr->getClientStub().setRemoteCallSemantics(Oneway);
         mRcfClientPtr->getClientStub().setTargetName("");
         mRcfClientPtr->getClientStub().setTargetToken( Token());
-    }
-
-    CallbackConnectionService::CallbackConnectionService() : mpServer(NULL)
-    {
-    }
-
-    void CallbackConnectionService::onServiceAdded(RcfServer & server)
-    {
-        server.bind<I_CreateCallbackConnection>(*this);
-    }
-
-    void CallbackConnectionService::onServiceRemoved(RcfServer & server)
-    {
-        server.unbind<I_CreateCallbackConnection>();
-    }
-
-    void CallbackConnectionService::onServerStart(RcfServer & server)
-    {
-        mOnCallbackConnectionCreated = server.getOnCallbackConnectionCreated();
-    }
-
-    void CallbackConnectionService::CreateCallbackConnection()
-    {
-        // TODO: regular error message.
-        // ...
-        RCF_ASSERT( mOnCallbackConnectionCreated );
-
-        RCF::convertRcfSessionToRcfClient( mOnCallbackConnectionCreated );
     }
 
 } // namespace RCF

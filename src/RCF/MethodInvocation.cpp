@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -605,13 +605,18 @@ namespace RCF {
         const std::string & targetName = getService();
         StubEntryPtr stubEntryPtr;
         RcfSession * pRcfSession = getTlsRcfSessionPtr();
+
+#if RCF_FEATURE_LEGACY==1
         if (targetToken != Token())
         {
             ObjectFactoryServicePtr ofsPtr = rcfServer.getObjectFactoryServicePtr();
             RCF_ASSERT(ofsPtr);
             stubEntryPtr = ofsPtr->getStubEntryPtr(targetToken);
         }
-        else if (!targetName.empty())
+        else
+#endif
+
+        if (!targetName.empty())
         {
             ReadLock readLock(rcfServer.mStubMapMutex);
             const std::string & servantName = getService();
@@ -745,7 +750,7 @@ namespace RCF {
             // Filter ids.
             for (std::size_t i=0; i<filters.size(); ++i)
             {
-                int filterId = filters[i]->getFilterDescription().getId();
+                int filterId = filters[i]->getFilterId();
                 SF::encodeInt(filterId, byteBuffer, pos);
             }
 
@@ -776,11 +781,11 @@ namespace RCF {
     {
         bool operator()(FilterPtr filterPtr, int filterId)
         {
-            return filterPtr->getFilterDescription().getId() == filterId;
+            return filterPtr->getFilterId() == filterId;
         }
     };
 
-#ifdef RCF_USE_PROTOBUF
+#if RCF_FEATURE_PROTOBUF==1
     static const bool SupportProtobufs = true;
 #else
     static const bool SupportProtobufs = false;

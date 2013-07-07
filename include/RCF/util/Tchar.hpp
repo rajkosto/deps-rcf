@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -73,19 +73,8 @@ namespace RCF {
 
 #endif
 
-#if defined(BOOST_NO_STD_WSTRING)
 
-    #ifdef UNICODE
-    #error RCF does not currently support Unicode builds without wstring support
-    #endif
-
-    #define RCF_T(x)                            x
-    typedef std::string                         tstring;
-    inline tstring toTstring(std::string s)     { return s; }
-    inline std::string toAstring(tstring s)      { return s; }
-
-
-#elif defined(UNICODE)
+#if !defined(BOOST_WINDOWS) || defined(UNICODE)
 
     #define RCF_T(x)                            L ## x                        
     typedef std::wstring                        tstring;

@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -18,11 +18,11 @@
 
 #include <RCF/HttpsClientTransport.hpp>
 
-#ifdef RCF_USE_OPENSSL
+#if RCF_FEATURE_OPENSSL==1
 #include <RCF/OpenSslEncryptionFilter.hpp>
 #endif
 
-#if defined(BOOST_WINDOWS)
+#if RCF_FEATURE_SSPI==1
 #include <RCF/Schannel.hpp>
 #endif
 
@@ -49,22 +49,23 @@ namespace RCF {
 
         FilterPtr sslFilterPtr;
 
-#if defined(BOOST_WINDOWS) && defined(RCF_USE_OPENSSL)
+#if RCF_FEATURE_SSPI==1 && RCF_FEATURE_OPENSSL==1
 
-        if (pClientStub->getPreferSchannel())
+        if (pClientStub->getSslImplementation() == Si_Schannel)
         {
             sslFilterPtr.reset( new SchannelFilter(pClientStub) );
         }
         else
         {
+            RCF_ASSERT(pClientStub->getSslImplementation() == Si_OpenSsl);
             sslFilterPtr.reset( new OpenSslEncryptionFilter(pClientStub) );
         }
 
-#elif defined(BOOST_WINDOWS)
+#elif RCF_FEATURE_SSPI==1
 
         sslFilterPtr.reset( new SchannelFilter(pClientStub) );
 
-#elif defined(RCF_USE_OPENSSL)
+#elif RCF_FEATURE_OPENSSL==1
 
         sslFilterPtr.reset( new OpenSslEncryptionFilter(pClientStub) );
 

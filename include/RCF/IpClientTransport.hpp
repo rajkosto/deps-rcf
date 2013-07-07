@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -26,10 +26,10 @@
 
 namespace RCF {
 
-    class RCF_EXPORT I_IpClientTransport
+    class RCF_EXPORT IpClientTransport
     {
     public:
-        virtual             ~I_IpClientTransport();
+        virtual             ~IpClientTransport();
         
         IpAddress           getLocalIp();
         void                setLocalIp(const IpAddress & localIp);

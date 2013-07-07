@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -32,25 +32,25 @@
 
 namespace RCF {
 
-    class RCF_EXPORT UnixLocalEndpoint : public I_Endpoint
+    /// Represents a UNIX local socket endpoint. Only available on UNIX platforms.
+    class RCF_EXPORT UnixLocalEndpoint : public Endpoint
     {
     public:
 
         UnixLocalEndpoint();
 
-        UnixLocalEndpoint(const std::string & pipeName);
+        // *** SWIG BEGIN ***
+
+        /// Constructs a UNIX local socket endpoint with the given name.
+        UnixLocalEndpoint(const std::string & socketName);
+
+        // *** SWIG END ***
 
         ServerTransportAutoPtr createServerTransport() const;
         ClientTransportAutoPtr createClientTransport() const;
         EndpointPtr clone() const;
 
         std::string asString() const;
-
-#ifdef RCF_USE_SF_SERIALIZATION
-
-        void serialize(SF::Archive &ar);
-
-#endif
 
         std::string getPipeName() const
         {

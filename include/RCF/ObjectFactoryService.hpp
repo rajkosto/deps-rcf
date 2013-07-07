@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -40,13 +40,13 @@ namespace RCF {
 
     class RcfServer;
     class StubEntry;
-    class I_StubFactory;
+    class StubFactory;
     class I_RcfClient;
     class Token;
     class TokenMapped;
 
     typedef boost::shared_ptr<StubEntry> StubEntryPtr;
-    typedef boost::shared_ptr<I_StubFactory> StubFactoryPtr;
+    typedef boost::shared_ptr<StubFactory> StubFactoryPtr;
     typedef boost::shared_ptr<TokenMapped> TokenMappedPtr;
 
     class RCF_EXPORT StubFactoryRegistry

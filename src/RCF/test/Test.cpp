@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2012, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -17,6 +17,9 @@
 //******************************************************************************
 
 #include <RCF/test/Test.hpp>
+
+#include <RCF/Tools.hpp>
+#include <RCF/Exception.hpp>
 
 // getcwd
 #ifdef _MSC_VER
@@ -319,11 +322,11 @@ bool TestEnv::didTestCaseRun()
 std::string getRelativePathToCheckoutRoot()
 {
     std::string testPath = ".";
-    std::string testFile = testPath  + "/license.txt";
+    std::string testFile = testPath  + "/.hgtags";
     while (!std::ifstream(testFile.c_str()).good() && testPath.size() < 100)
     {
         testPath = testPath + "/..";
-        testFile = testPath  + "/license.txt";
+        testFile = testPath  + "/.hgtags";
     }
 
     if (std::ifstream(testFile.c_str()).good())
