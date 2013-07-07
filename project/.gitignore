@@ -1,0 +1,7 @@
+/out/
+ipch/
+*.suo
+*.sdf
+*.opensdf
+*.aps
+*.user
