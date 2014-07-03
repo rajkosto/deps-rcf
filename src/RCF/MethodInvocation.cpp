@@ -23,7 +23,6 @@
 #include <boost/mpl/assert.hpp>
 
 #include <RCF/CurrentSession.hpp>
-#include <RCF/ObjectFactoryService.hpp>
 #include <RCF/RcfServer.hpp>
 #include <RCF/RcfSession.hpp>
 #include <RCF/SerializationProtocol.hpp>
@@ -254,7 +253,7 @@ namespace RCF {
         RCF_VERIFY(msgId == Descriptor_Request, Exception(_RcfError_Decoding()))(msgId);
         SF::decodeInt(messageVersion, buffer, pos);
             
-        if (messageVersion > 6)
+        if (messageVersion > 7)
         {
             return false;
         }
@@ -317,6 +316,17 @@ namespace RCF {
             SF::decodeBool(mUseNativeWstringSerialization, buffer, pos);
             SF::decodeBool(mEnableSfPointerTracking, buffer, pos);
         }
+        else if (messageVersion == 7)
+        {
+            SF::decodeInt(mRuntimeVersion, buffer, pos);
+            SF::decodeBool(ignoreRuntimeVersion, buffer, pos);
+            SF::decodeInt(mPingBackIntervalMs, buffer, pos);
+            SF::decodeInt(mArchiveVersion, buffer, pos);
+            SF::decodeByteBuffer(mRequestUserData, buffer, pos);
+            SF::decodeBool(mUseNativeWstringSerialization, buffer, pos);
+            SF::decodeBool(mEnableSfPointerTracking, buffer, pos);
+            SF::decodeByteBuffer(mOutOfBandRequest, buffer, pos);
+        }
             
         mToken = Token(tokenId);            
 
@@ -377,9 +387,13 @@ namespace RCF {
         {
             messageVersion = 1;
         }
-        else
+        else if (runtimeVersion <= 11)
         {
             messageVersion = 2;
+        }
+        else
+        {
+            messageVersion = 3;
         }
 
         std::size_t pos = 0;
@@ -396,6 +410,12 @@ namespace RCF {
         {
             SF::encodeByteBuffer(mResponseUserData, *mVecPtr, pos);
             SF::encodeBool(enableSfPointerTracking, *mVecPtr, pos);
+        }
+        else if (messageVersion == 3)
+        {
+            SF::encodeByteBuffer(mResponseUserData, *mVecPtr, pos);
+            SF::encodeBool(enableSfPointerTracking, *mVecPtr, pos);
+            SF::encodeByteBuffer(mOutOfBandResponse, *mVecPtr, pos);
         }
 
         mVecPtr->resize(pos);
@@ -443,9 +463,13 @@ namespace RCF {
         {
             messageVersion = 5;
         }
-        else
+        else if (runtimeVersion <= 11)
         {
             messageVersion = 6;
+        }
+        else
+        {
+            messageVersion = 7;
         }
 
         std::size_t pos = 0;
@@ -508,6 +532,17 @@ namespace RCF {
             SF::encodeBool(mUseNativeWstringSerialization, *mVecPtr, pos);
             SF::encodeBool(mEnableSfPointerTracking, *mVecPtr, pos);
         }
+        else if (messageVersion == 7)
+        {
+            SF::encodeInt(mRuntimeVersion, *mVecPtr, pos);
+            SF::encodeBool(mIgnoreRuntimeVersion, *mVecPtr, pos);
+            SF::encodeInt(mPingBackIntervalMs, *mVecPtr, pos);
+            SF::encodeInt(mArchiveVersion, *mVecPtr, pos);
+            SF::encodeByteBuffer(mRequestUserData, *mVecPtr, pos);
+            SF::encodeBool(mUseNativeWstringSerialization, *mVecPtr, pos);
+            SF::encodeBool(mEnableSfPointerTracking, *mVecPtr, pos);
+            SF::encodeByteBuffer(mOutOfBandRequest, *mVecPtr, pos);
+        }
 
         mVecPtr->resize(pos);
 
@@ -525,8 +560,7 @@ namespace RCF {
             filters);
     }
 
-    void MethodInvocationRequest::decodeResponse(
-        const ByteBuffer &message,
+    void MethodInvocationRequest::decodeResponse(const ByteBuffer &message,
         ByteBuffer &buffer,
         MethodInvocationResponse &response,
         const std::vector<FilterPtr> &filters)
@@ -571,7 +605,7 @@ namespace RCF {
         else
         {
             RCF_VERIFY(msgId == Descriptor_Response, Exception(_RcfError_Decoding()))(msgId);
-            RCF_VERIFY(ver <= 2, Exception(_RcfError_Decoding()))(ver);
+            RCF_VERIFY(ver <= 3, Exception(_RcfError_Decoding()))(ver);
 
             // For backwards compatibility.
             response.mEnableSfPointerTracking = true;
@@ -586,6 +620,12 @@ namespace RCF {
             {
                 SF::decodeByteBuffer(mResponseUserData, buffer, pos);
                 SF::decodeBool(response.mEnableSfPointerTracking, buffer, pos);
+            }
+            else if (ver == 3)
+            {
+                SF::decodeByteBuffer(mResponseUserData, buffer, pos);
+                SF::decodeBool(response.mEnableSfPointerTracking, buffer, pos);
+                SF::decodeByteBuffer(mOutOfBandResponse, buffer, pos);
             }
 
             response.mError = false;
@@ -606,17 +646,11 @@ namespace RCF {
         StubEntryPtr stubEntryPtr;
         RcfSession * pRcfSession = getTlsRcfSessionPtr();
 
-#if RCF_FEATURE_LEGACY==1
         if (targetToken != Token())
         {
-            ObjectFactoryServicePtr ofsPtr = rcfServer.getObjectFactoryServicePtr();
-            RCF_ASSERT(ofsPtr);
-            stubEntryPtr = ofsPtr->getStubEntryPtr(targetToken);
+            stubEntryPtr = rcfServer.findStubEntryForToken(targetToken);
         }
-        else
-#endif
-
-        if (!targetName.empty())
+        else if (!targetName.empty())
         {
             ReadLock readLock(rcfServer.mStubMapMutex);
             const std::string & servantName = getService();
@@ -894,6 +928,7 @@ namespace RCF {
                     filters);
 
                 RCF_ASSERT(bRet);
+                RCF_UNUSED_VARIABLE(bRet);
             }
         }
         else
@@ -925,9 +960,278 @@ namespace RCF {
             else
             {
                 Exception e(_RcfError_PayloadFilterMismatch());
-                RCF_THROW(e)(filterIds)(existingFilters);
+                RCF_THROW(e);
             }
         }
     }
+
+    // Out of band messages.
+
+    OobMessage::OobMessage(int runtimeVersion) : 
+        mRuntimeVersion(runtimeVersion), 
+        mResponseError(0)
+    {
+    }
+
+    OobMessage::~OobMessage()
+    {
+    }
+
+    void OobMessage::encodeResponse(ByteBuffer & buffer)
+    {
+        boost::shared_ptr< std::vector<char> > vecPtr( new std::vector<char>(50) );
+        std::size_t pos = 0;
+        encodeResponseCommon(vecPtr, pos);
+        vecPtr->resize(pos);
+        buffer = ByteBuffer(vecPtr);
+    }
+
+    void OobMessage::decodeResponse(const ByteBuffer & buffer)
+    {
+        std::size_t pos = 0;
+        decodeResponseCommon(buffer, pos);
+    }
+
+    void OobMessage::encodeRequestCommon(VecPtr vecPtr, std::size_t & pos)
+    {
+        int magicNumber = 65;
+        int msgType = getMessageType();
+        int msgVersion = mRuntimeVersion;
+
+        SF::encodeInt(magicNumber, *vecPtr, pos);
+        SF::encodeInt(msgType, *vecPtr, pos);
+        SF::encodeInt(msgVersion, *vecPtr, pos);
+    }
+
+    void OobMessage::encodeResponseCommon(VecPtr vecPtr, std::size_t & pos)
+    {
+        int magicNumber = 66;
+        int msgType = getMessageType();
+        int msgVersion = mRuntimeVersion;
+
+        SF::encodeInt(magicNumber, *vecPtr, pos);
+        SF::encodeInt(msgType, *vecPtr, pos);
+        SF::encodeInt(msgVersion, *vecPtr, pos);
+        SF::encodeInt(mResponseError, *vecPtr, pos);
+        SF::encodeString(mResponseErrorString, *vecPtr, pos);
+    }
+
+    void OobMessage::decodeResponseCommon(const ByteBuffer & buffer, std::size_t & pos)
+    {
+        int magicNumber = 0;
+        int msgType = 0;
+        int msgVersion = 0;
+
+        SF::decodeInt(magicNumber, buffer, pos);
+        RCF_VERIFY(magicNumber == 66, Exception(_RcfError_Decoding()));
+
+        SF::decodeInt(msgType, buffer, pos);
+        RCF_VERIFY(msgType == getMessageType(), Exception(_RcfError_Decoding()));
+
+        SF::decodeInt(msgVersion, buffer, pos);
+        RCF_VERIFY(msgVersion == mRuntimeVersion, Exception(_RcfError_Decoding()));
+
+        SF::decodeInt(mResponseError, buffer, pos);
+        SF::decodeString(mResponseErrorString, buffer, pos);
+    }
+
+    OobMessagePtr OobMessage::decodeRequestCommon(const ByteBuffer & buffer)
+    {
+        std::size_t pos = 0;
+
+        int magicNumber = 0;
+        int msgType = 0;
+        int msgVersion = 0;
+
+        SF::decodeInt(magicNumber, buffer, pos);
+        RCF_VERIFY(magicNumber == 65, Exception(_RcfError_Decoding()));
+
+        SF::decodeInt(msgType, buffer, pos);
+        SF::decodeInt(msgVersion, buffer, pos);
+
+        OobMessagePtr msgPtr;
+        switch (msgType) 
+        {
+        case Omt_RequestTransportFilters:
+            msgPtr.reset( new OobRequestTransportFilters(msgVersion) );
+            break;
+
+        case Omt_CreateCallbackConnection:
+            msgPtr.reset( new OobCreateCallbackConnection(msgVersion) );
+            break;
+
+        case Omt_RequestSubscription:
+            msgPtr.reset( new OobRequestSubscription(msgVersion) );
+            break;
+
+        default:
+            RCF_THROW( Exception(_RcfError_Decoding()) );
+        }
+
+        msgPtr->decodeRequest(buffer, pos);
+
+        return msgPtr;
+    }
+
+    // OobRequestTransportFilters
+
+    OobRequestTransportFilters::OobRequestTransportFilters(int runtimeVersion) :
+        OobMessage(runtimeVersion)
+    {
+    }
+
+    OobRequestTransportFilters::OobRequestTransportFilters(
+        int runtimeVersion, 
+        const std::vector<FilterPtr> &filters) : 
+            OobMessage(runtimeVersion)
+    {
+        for (std::size_t i=0; i<filters.size(); ++i)
+        {
+            mFilterIds.push_back( filters[i]->getFilterId() );
+        }
+    }
+
+    OobMessageType OobRequestTransportFilters::getMessageType()
+    {
+        return Omt_RequestTransportFilters;
+    }
+
+    void OobRequestTransportFilters::encodeRequest(ByteBuffer & buffer)
+    {
+        boost::shared_ptr< std::vector<char> > vecPtr( new std::vector<char>(50) );
+        std::size_t pos = 0;
+
+        encodeRequestCommon(vecPtr, pos);
+
+        if (mRuntimeVersion <= 12)
+        {
+            int filterCount = static_cast<int>(mFilterIds.size());
+            SF::encodeInt(filterCount, *vecPtr, pos);
+            for (std::size_t i=0; i<mFilterIds.size(); ++i)
+            {
+                SF::encodeInt(mFilterIds[i], *vecPtr, pos);
+            }
+        }
+
+        vecPtr->resize(pos);
+        buffer = ByteBuffer(vecPtr);
+    }
+
+    void OobRequestTransportFilters::decodeRequest(const ByteBuffer & buffer, std::size_t & pos)
+    {
+        if (mRuntimeVersion <= 12)
+        {
+            int filterCount = 0;
+            SF::decodeInt(filterCount, buffer, pos);
+            RCF_VERIFY(filterCount <= 10, Exception(_RcfError_Decoding()));
+
+            mFilterIds.clear();
+            for (int i=0; i<filterCount; ++i)
+            {
+                int filterId = 0;
+                SF::decodeInt(filterId, buffer, pos);
+                mFilterIds.push_back(filterId);
+            }
+        }
+    }
+
+    // OobCreateCallbackConnection
+
+    OobCreateCallbackConnection::OobCreateCallbackConnection(int runtimeVersion) :
+        OobMessage(runtimeVersion)
+    {
+    }
+
+    OobMessageType OobCreateCallbackConnection::getMessageType()
+    {
+        return Omt_CreateCallbackConnection;
+    }
+
+    void OobCreateCallbackConnection::encodeRequest(ByteBuffer & buffer)
+    {
+        boost::shared_ptr< std::vector<char> > vecPtr( new std::vector<char>(50) );
+        std::size_t pos = 0;
+        encodeRequestCommon(vecPtr, pos);
+        vecPtr->resize(pos);
+        buffer = ByteBuffer(vecPtr);
+    }
+
+    void OobCreateCallbackConnection::decodeRequest(
+        const ByteBuffer & buffer, 
+        std::size_t & pos)
+    {
+        RCF_UNUSED_VARIABLE(buffer);
+        RCF_UNUSED_VARIABLE(pos);
+    }
+
+    // OobRequestSubscription
+
+    OobRequestSubscription::OobRequestSubscription(int runtimeVersion) :
+        OobMessage(runtimeVersion),
+        mPublisherName(),
+        mSubToPubPingIntervalMs(0),
+        mPubToSubPingIntervalMs(0)
+    {
+    }
+
+    OobRequestSubscription::OobRequestSubscription(
+        int                     runtimeVersion,
+        const std::string &     publisherName, 
+        boost::uint32_t         subToPubPingIntervalMs) :
+            OobMessage(runtimeVersion),
+            mPublisherName(publisherName),
+            mSubToPubPingIntervalMs(subToPubPingIntervalMs),
+            mPubToSubPingIntervalMs(0)
+    {
+    }
+
+    OobMessageType OobRequestSubscription::getMessageType()
+    {
+        return Omt_RequestSubscription;
+    }
+
+    void OobRequestSubscription::encodeRequest(ByteBuffer & buffer)
+    {
+        boost::shared_ptr< std::vector<char> > vecPtr( new std::vector<char>(50) );
+        std::size_t pos = 0;
+        encodeRequestCommon(vecPtr, pos);
+
+        SF::encodeString(mPublisherName, *vecPtr, pos);
+        SF::encodeInt(mSubToPubPingIntervalMs, *vecPtr, pos);
+
+        vecPtr->resize(pos);
+        buffer = ByteBuffer(vecPtr);
+    }
+
+    void OobRequestSubscription::decodeRequest(
+        const ByteBuffer & buffer, 
+        std::size_t & pos)
+    {
+        if (mRuntimeVersion <= 12)
+        {
+            SF::decodeString(mPublisherName, buffer, pos);
+            SF::decodeInt(mSubToPubPingIntervalMs, buffer, pos);
+        }
+    }
+
+    void OobRequestSubscription::encodeResponse(ByteBuffer & buffer)
+    {
+        boost::shared_ptr< std::vector<char> > vecPtr( new std::vector<char>(50) );
+        std::size_t pos = 0;
+
+        encodeResponseCommon(vecPtr, pos);
+        SF::encodeInt(mPubToSubPingIntervalMs, *vecPtr, pos);
+
+        vecPtr->resize(pos);
+        buffer = ByteBuffer(vecPtr);
+        }
+
+    void OobRequestSubscription::decodeResponse(const ByteBuffer & buffer)
+    {
+        std::size_t pos = 0;
+        decodeResponseCommon(buffer, pos);
+        SF::decodeInt(mPubToSubPingIntervalMs, buffer, pos);
+    }
+
 
 } // namespace RCF

@@ -22,6 +22,7 @@
 #include <string>
 
 #include <boost/config.hpp>
+#include <boost/shared_ptr.hpp>
 
 #ifdef BOOST_WINDOWS
 #include <windows.h>

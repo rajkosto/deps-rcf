@@ -34,7 +34,7 @@
 
 #include <boost/version.hpp>
 
-#if defined(RCF_USE_BOOST_SERIALIZATION) && BOOST_VERSION > 103301
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
@@ -111,12 +111,11 @@ namespace RCF {
 
         std::string getErrorString() const;
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         void serialize(SF::Archive & ar);
-
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
         template<typename Archive>
         void serialize(Archive & ar, const unsigned int)
         {
@@ -126,7 +125,7 @@ namespace RCF {
 
     private:
 
-        std::string getRawErrorString() const;
+        const char * getRawErrorString() const;
 
         int                             mErrorId;
         std::vector<std::string>        mArgs;
@@ -274,6 +273,11 @@ namespace RCF {
     static const int RcfError_NotSupportedOnWindows             = 151;
     static const int RcfError_NotSupportedInThisBuild           = 152;
     static const int RcfError_NoLongerSupported                 = 153;
+    static const int RcfError_SslCertVerificationCustom         = 154;
+    static const int RcfError_ServerCallbacksNotSupported       = 155;
+    static const int RcfError_ServerUnsupportedFeature          = 156;
+    static const int RcfError_SyncPublishError                  = 157;
+    static const int RcfError_DeserializeVectorBool             = 158;
 
 
     static const int RcfError_User                              = 1001;
@@ -297,9 +301,9 @@ namespace RCF {
     template<typename T>
     std::string numberToString(T t)
     {
-        std::ostringstream os;
+        MemOstream os;
         os << t;
-        return os.str();
+        return os.string();
     }
 
     RCF_EXPORT std::string getOsErrorString(int osError);
@@ -438,7 +442,10 @@ namespace RCF {
         int tokenId)                                        { return Error(RcfError_DynamicObjectNotFound, numberToString(tokenId)); }
 
     inline Error _RcfError_VersionMismatch()                { return Error(RcfError_VersionMismatch); }
-    inline Error _RcfError_SslCertVerification()            { return Error(RcfError_SslCertVerification); }
+
+    inline Error _RcfError_SslCertVerification(
+        const std::string & openSslErr)                     { return Error(RcfError_SslCertVerification, openSslErr); }
+
     inline Error _RcfError_FiltersLocked()                  { return Error(RcfError_FiltersLocked); }
     inline Error _RcfError_Pipe()                           { return Error(RcfError_Pipe); }
 
@@ -650,6 +657,20 @@ namespace RCF {
     inline Error _RcfError_NoLongerSupported(
         const std::string & s)                              { return Error(RcfError_NoLongerSupported, s); }
 
+    inline Error _RcfError_SslCertVerificationCustom()      { return Error(RcfError_SslCertVerificationCustom); }
+
+    inline Error _RcfError_ServerCallbacksNotSupported()    { return Error(RcfError_ServerCallbacksNotSupported); }
+
+    inline Error _RcfError_ServerUnsupportedFeature(
+        const std::string & s)                              { return Error(RcfError_ServerUnsupportedFeature, s); }
+
+    inline Error _RcfError_SyncPublishError(
+        const std::string & s)                              { return Error(RcfError_SyncPublishError, s); }
+
+    inline Error _RcfError_DeserializeVectorBool(
+        boost::uint32_t bitCount,
+        boost::uint32_t bufferSize)                         { return Error(RcfError_DeserializeVectorBool, numberToString(bitCount), numberToString(bufferSize)); }
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -760,13 +781,13 @@ namespace RCF {
 
         std::string getRemoteExceptionType() const;
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
         void serialize(SF::Archive & ar);
 
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 
         template<typename Archive>
         void serialize(Archive &ar, const unsigned int)

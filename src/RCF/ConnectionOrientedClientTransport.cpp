@@ -113,6 +113,7 @@ namespace RCF {
         mBytesRead(),
         mBytesTotal(),
         mError(),
+        mNoTimeout(false),
         mEndTimeMs(),
 
         mPreState(Connecting),
@@ -141,6 +142,7 @@ namespace RCF {
             mBytesRead(),
             mBytesTotal(),
             mError(),
+            mNoTimeout(false),
             mEndTimeMs(),
 
             mPreState(Connecting),
@@ -353,8 +355,18 @@ namespace RCF {
         // This counter will be incremented as data passes to the network.
         mLastRequestSize = 0;
 
-        unsigned int startTimeMs = getCurrentTimeMs();
-        mEndTimeMs = startTimeMs + totalTimeoutMs;
+        if (totalTimeoutMs)
+        {
+            unsigned int startTimeMs = getCurrentTimeMs();
+            mEndTimeMs = startTimeMs + totalTimeoutMs;
+            mNoTimeout = false;
+        }
+        else
+        {
+            RCF_ASSERT(mAsync);
+            mEndTimeMs = 0;
+            mNoTimeout = true;
+        }
 
         mByteBuffers.resize(0);
         std::copy(data.begin(), data.end(), std::back_inserter(mByteBuffers));
@@ -408,8 +420,7 @@ namespace RCF {
 
                 RCF_VERIFY(
                     action != ClientProgress::Cancel,
-                    Exception(_RcfError_ClientCancel()))
-                    (mBytesSent)(mBytesTotal);
+                    Exception(_RcfError_ClientCancel()));
             }
 
             if (bytesToWrite == 0)
@@ -456,8 +467,7 @@ namespace RCF {
 
                 RCF_VERIFY(
                     action != ClientProgress::Cancel,
-                    Exception(_RcfError_ClientCancel()))
-                    (mBytesRead)(mBytesTotal);
+                    Exception(_RcfError_ClientCancel()));
             }
 
             if (bytesToRead == 0)
@@ -476,7 +486,17 @@ namespace RCF {
         // This counter will be incremented as data passes from the network.
         mLastResponseSize = 0;
 
-        mEndTimeMs = getCurrentTimeMs() + timeoutMs;
+        if (timeoutMs)
+        {
+            mEndTimeMs = getCurrentTimeMs() + timeoutMs;
+            mNoTimeout = false;
+        }
+        else
+        {
+            RCF_ASSERT(mAsync);
+            mEndTimeMs = 0;
+            mNoTimeout = true;
+        }
 
         mPreState = Reading;
         mReadBufferPos = 0;
@@ -710,7 +730,7 @@ namespace RCF {
 
         RecursiveLock lock(mOverlappedPtr->mMutex);
 
-        mOverlappedPtr->mOpType = OverlappedAmi::Wait;
+        mOverlappedPtr->mOpType = Wait;
 
         mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
 
@@ -778,8 +798,7 @@ namespace RCF {
 
                 RCF_VERIFY(
                     action != ClientProgress::Cancel,
-                    Exception(_RcfError_ClientCancel()))
-                    (mReadBufferPos)(mReadBuffer.getLength());
+                    Exception(_RcfError_ClientCancel()));
             }
             else if (mPreState == Writing)
             {
@@ -792,8 +811,7 @@ namespace RCF {
 
                 RCF_VERIFY(
                     action != ClientProgress::Cancel,
-                    Exception(_RcfError_ClientCancel()))
-                    (mWriteBufferPos)(lengthByteBuffers(mByteBuffers));
+                    Exception(_RcfError_ClientCancel()));
             }
 
         }

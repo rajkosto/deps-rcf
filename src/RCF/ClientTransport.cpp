@@ -44,17 +44,6 @@ namespace RCF {
     {
     }
 
-    bool ClientTransport::isInProcess()
-    {
-        return false;
-    }
-
-    void ClientTransport::doInProcessCall(ClientStub & clientStub)
-    {
-        RCF_UNUSED_VARIABLE(clientStub);
-        RCF_ASSERT(0);
-    }
-
     bool ClientTransport::isConnected()
     {
         return true;

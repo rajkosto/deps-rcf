@@ -18,9 +18,8 @@
 
 #define RCF_VERSION_MAJOR                   2
 #define RCF_VERSION_MINOR                   0
-#define RCF_VERSION_MINOR_MINOR             0
-#define RCF_VERSION_BUILD                   2683
-
+#define RCF_VERSION_MINOR_MINOR             1
+#define RCF_VERSION_BUILD                   100
 #define CAT_HELPER_1(s) #s
 #define CAT_HELPER_2(s) CAT_HELPER_1(s)
 

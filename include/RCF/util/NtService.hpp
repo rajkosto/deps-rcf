@@ -78,11 +78,11 @@ namespace RCF {
 
 #include <RCF/util/../../../src/RCF/util/NtService.cpp>
 
-class MyService : public util::NtService
+class MyService : public RCF::NtService
 {
 public:
 
-    MyService() : util::NtService("MyService", "My Really Useful Service")
+    MyService() : RCF::NtService("MyService", "My Really Useful Service")
     {
     }
 

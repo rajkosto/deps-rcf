@@ -258,106 +258,7 @@ namespace RCF {
                 setTlsUdpSessionStatePtr(sessionStatePtr);
             }
 
-            {
-                // read a message
-
-                ReallocBufferPtr &readVecPtr =
-                    sessionStatePtr->mReadVecPtr;
-
-                if (readVecPtr.get() == NULL || !readVecPtr.unique())
-                {
-                    readVecPtr.reset( new ReallocBuffer());
-                }
-                ReallocBuffer &buffer = *readVecPtr;
-
-                SockAddrStorage from;
-                int fromlen = sizeof(from);
-                memset(&from, 0, sizeof(from));
-                buffer.resize(4);
-
-                int len = Platform::OS::BsdSockets::recvfrom(
-                    mFd,
-                    &buffer[0],
-                    4,
-                    MSG_PEEK,
-                    (sockaddr *) &from,
-                    &fromlen);
-
-                err = Platform::OS::BsdSockets::GetLastError();
-
-                sessionStatePtr->mRemoteAddress.init(
-                    (sockaddr&) from, 
-                    fromlen, 
-                    mIpAddress.getType());
-
-                if (!isIpAllowed(sessionStatePtr->mRemoteAddress))
-                {
-                    RCF_LOG_2()(sessionStatePtr->mRemoteAddress.getIp()) 
-                        << "Client IP does not match server's IP access rules. Closing connection.";
-
-                    discardPacket(mFd);
-                }
-                else if (   len == 4 
-                        ||  (len == -1 && err == Platform::OS::BsdSockets::ERR_EMSGSIZE))
-                {
-                    unsigned int dataLength = 0;
-                    memcpy(&dataLength, &buffer[0], 4);
-                    networkToMachineOrder(&dataLength, 4, 1);
-
-                    if (getMaxMessageLength() && dataLength > getMaxMessageLength())
-                    {
-                        ByteBuffer byteBuffer;
-                        encodeServerError(getSessionManager(), byteBuffer, RcfError_ServerMessageLength);
-                        byteBuffer.expandIntoLeftMargin(4);
-
-                        * (boost::uint32_t *) ( byteBuffer.getPtr() ) =
-                            static_cast<boost::uint32_t>(byteBuffer.getLength()-4);
-
-                        RCF::machineToNetworkOrder(byteBuffer.getPtr(), 4, 1);
-
-                        char *buffer = byteBuffer.getPtr();
-                        std::size_t bufferLen = byteBuffer.getLength();
-
-                        sockaddr * pRemoteAddr = NULL;
-                        Platform::OS::BsdSockets::socklen_t remoteAddrSize = 0;
-                        sessionStatePtr->mRemoteAddress.getSockAddr(pRemoteAddr, remoteAddrSize);
-
-                        int len = sendto(
-                            mFd,
-                            buffer,
-                            static_cast<int>(bufferLen),
-                            0,
-                            pRemoteAddr,
-                            remoteAddrSize);
-
-                        RCF_UNUSED_VARIABLE(len);
-                        discardPacket(mFd);
-                    }
-                    else
-                    {
-                        buffer.resize(4+dataLength);
-                        memset(&from, 0, sizeof(from));
-                        fromlen = sizeof(from);
-
-                        len = Platform::OS::BsdSockets::recvfrom(
-                            mFd,
-                            &buffer[0],
-                            4+dataLength,
-                            0,
-                            (sockaddr *) &from,
-                            &fromlen);
-
-                        if (static_cast<unsigned int>(len) == 4+dataLength)
-                        {
-                            getSessionManager().onReadCompleted(sessionStatePtr->mSessionPtr);
-                        }
-                    }
-                }
-                else
-                {
-                    discardPacket(mFd);
-                }
-            }
+            tryReadMessage(sessionStatePtr);
         }
         else if (ret == 0)
         {
@@ -463,7 +364,122 @@ namespace RCF {
     {
         close();
     }
-   
+
+    void UdpServerTransport::tryReadMessage(SessionStatePtr sessionStatePtr)
+    {
+        // Try to read a message from the UDP socket.
+
+        int err = 0;
+
+        ReallocBufferPtr &readVecPtr =
+        sessionStatePtr->mReadVecPtr;
+
+        if (readVecPtr.get() == NULL || !readVecPtr.unique())
+        {
+            readVecPtr.reset(new ReallocBuffer());
+        }
+        ReallocBuffer &buffer = *readVecPtr;
+
+        SockAddrStorage from;
+        int fromlen = sizeof(from);
+        memset(&from, 0, sizeof(from));
+        buffer.resize(4);
+
+        // Peek at the first 4 bytes to see how long the message is.
+        int len = Platform::OS::BsdSockets::recvfrom(
+            mFd,
+            &buffer[0],
+            4,
+            MSG_PEEK,
+            (sockaddr *)&from,
+            &fromlen);
+
+        err = 0;
+        if (len < 0)
+        {
+            err = Platform::OS::BsdSockets::GetLastError();
+        }
+        if (err != Platform::OS::BsdSockets::ERR_EWOULDBLOCK)
+        {
+            sessionStatePtr->mRemoteAddress.init(
+                (sockaddr&)from,
+                fromlen,
+                mIpAddress.getType());
+
+            if (!isIpAllowed(sessionStatePtr->mRemoteAddress))
+            {
+                RCF_LOG_2()(sessionStatePtr->mRemoteAddress.getIp())
+                    << "Client IP does not match server's IP access rules. Closing connection.";
+
+                discardPacket(mFd);
+            }
+            else if (len == 4
+                || (len == -1 && err == Platform::OS::BsdSockets::ERR_EMSGSIZE))
+            {
+                unsigned int dataLength = 0;
+                memcpy(&dataLength, &buffer[0], 4);
+                networkToMachineOrder(&dataLength, 4, 1);
+
+                if (getMaxMessageLength() && dataLength > getMaxMessageLength())
+                {
+                    // Message too long - send an error message back.
+
+                    ByteBuffer byteBuffer;
+                    encodeServerError(getSessionManager(), byteBuffer, RcfError_ServerMessageLength);
+                    byteBuffer.expandIntoLeftMargin(4);
+
+                    *(boost::uint32_t *) (byteBuffer.getPtr()) =
+                        static_cast<boost::uint32_t>(byteBuffer.getLength() - 4);
+
+                    RCF::machineToNetworkOrder(byteBuffer.getPtr(), 4, 1);
+
+                    char *buffer = byteBuffer.getPtr();
+                    std::size_t bufferLen = byteBuffer.getLength();
+
+                    sockaddr * pRemoteAddr = NULL;
+                    Platform::OS::BsdSockets::socklen_t remoteAddrSize = 0;
+                    sessionStatePtr->mRemoteAddress.getSockAddr(pRemoteAddr, remoteAddrSize);
+
+                    int len = sendto(
+                        mFd,
+                        buffer,
+                        static_cast<int>(bufferLen),
+                        0,
+                        pRemoteAddr,
+                        remoteAddrSize);
+
+                    RCF_UNUSED_VARIABLE(len);
+                    discardPacket(mFd);
+                }
+                else
+                {
+                    // Read the message and pass it on to RcfServer.
+
+                    buffer.resize(4 + dataLength);
+                    memset(&from, 0, sizeof(from));
+                    fromlen = sizeof(from);
+
+                    len = Platform::OS::BsdSockets::recvfrom(
+                        mFd,
+                        &buffer[0],
+                        4 + dataLength,
+                        0,
+                        (sockaddr *)&from,
+                        &fromlen);
+
+                    if (static_cast<unsigned int>(len) == 4 + dataLength)
+                    {
+                        getSessionManager().onReadCompleted(sessionStatePtr->mSessionPtr);
+                    }
+                }
+            }
+            else
+            {
+                discardPacket(mFd);
+            }
+        }
+    }
+
     const RemoteAddress &UdpSessionState::getRemoteAddress() const
     {
         return mRemoteAddress;

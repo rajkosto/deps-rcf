@@ -20,7 +20,11 @@
 
 #include <RCF/Exception.hpp>
 #include <RCF/InitDeinit.hpp>
+#include <RCF/util/Log.hpp>
 #include <RCF/ThreadLibrary.hpp>
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 namespace RCF {
 
@@ -30,7 +34,7 @@ namespace RCF {
 #pragma warning(disable: 4996) // 'sprintf': This function or variable may be unsafe.
 #endif
 
-    ::util::DummyVariableArgMacroObject rcfThrow(const char * szFile, int line, const char * szFunc, const Exception & e)
+    DummyVariableArgMacroObject rcfThrow(const char * szFile, int line, const char * szFunc, const Exception & e)
     {
         std::string context = szFile;
         context += ":";
@@ -50,7 +54,7 @@ namespace RCF {
 
         e.throwSelf();
 
-        return ::util::DummyVariableArgMacroObject();
+        return DummyVariableArgMacroObject();
     }
 
 #if defined(_MSC_VER)
@@ -59,35 +63,11 @@ namespace RCF {
 
 }
 
-namespace std {
-
-    // Logging of type_info.
-    std::ostream &operator<<(std::ostream &os, const std::type_info &ti)
-    {
-        return os << ti.name();
-    }
-
-    // Logging of exception.
-    std::ostream &operator<<(std::ostream &os, const std::exception &e)
-    {
-        os << RCF::toString(e);
-        return os;
-    }
-
-    // Logging of RCF::Exception.
-    std::ostream &operator<<(std::ostream &os, const RCF::Exception &e)
-    {
-        os << RCF::toString(e);
-        return os;
-    }
-
-} // namespace std
-
 namespace RCF {
 
     std::string toString(const std::exception &e)
     {
-        std::ostringstream os;
+        MemOstream os;
 
         const RCF::Exception *pE = dynamic_cast<const RCF::Exception *>(&e);
         if (pE)
@@ -101,7 +81,7 @@ namespace RCF {
             os << "[What: " << e.what() << "]" ;
         }
 
-        return os.str();
+        return os.string();
     }
 
     // Generate a timeout value for the given ending time.
@@ -116,18 +96,38 @@ namespace RCF {
         return (timeoutMs <= MaxTimeoutMs) ? timeoutMs : 0;
     }
 
+#ifdef BOOST_WINDOWS
+
     boost::uint64_t fileSize(const std::string & path)
     {
-        // TODO: this may not work for files larger than 32 bits, on some 32 bit
-        // STL implementations. msvc for instance.
+        struct _stat fileInfo = {0};
+        int ret = _stat(path.c_str(), &fileInfo);
+        RCF_VERIFY(ret == 0, Exception(_RcfError_FileOpen(path)));
+        return fileInfo.st_size;
+    }
 
-        std::ifstream fin ( path.c_str() );
-        RCF_VERIFY(fin, Exception(_RcfError_FileOpen(path)));
-        std::size_t begin = static_cast<std::size_t>(fin.tellg());
-        fin.seekg (0, std::ios::end);
-        std::size_t end = static_cast<std::size_t>(fin.tellg());
-        fin.close();
-        return end - begin;
+#else
+
+    boost::uint64_t fileSize(const std::string & path)
+    {
+        struct stat fileInfo = { 0 };
+        int ret = stat(path.c_str(), &fileInfo);
+        RCF_VERIFY(ret == 0, Exception(_RcfError_FileOpen(path)));
+        return fileInfo.st_size;
+    }
+
+#endif
+
+    void rcfDtorCatchHandler(const std::exception & e)
+    {
+        if (!std::uncaught_exception())
+        {
+            throw;
+        }
+        else
+        {
+            RCF_LOG_1()(e);
+        }
     }
 
 } // namespace RCF

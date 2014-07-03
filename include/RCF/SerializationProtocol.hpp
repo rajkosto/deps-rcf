@@ -38,11 +38,11 @@
 #include <RCF/Config.hpp>
 #include <RCF/SerializationProtocol_Base.hpp>
 
-#if defined(RCF_USE_SF_SERIALIZATION)
+#if RCF_FEATURE_SF==1
 #include <RCF/SerializationProtocol_SF.hpp>
 #endif
 
-#if defined(RCF_USE_BOOST_SERIALIZATION) || defined(RCF_USE_BOOST_XML_SERIALIZATION)
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <RCF/SerializationProtocol_BS.hpp>
 #endif
 
@@ -62,7 +62,7 @@ namespace RCF {
         SerializationProtocolIn();
         ~SerializationProtocolIn();
 
-        std::istream& getIstream() { return mIs; }
+        MemIstream&     getIstream() { return mIs; }
 
         void            setSerializationProtocol(int protocol);
         int             getSerializationProtocol() const;
@@ -97,12 +97,7 @@ namespace RCF {
                 case 2: mInProtocol2 >> t; break;
                 case 3: mInProtocol3 >> t; break;
                 case 4: mInProtocol4 >> t; break;
-
-#ifdef RCF_USE_BOOST_XML_SERIALIZATION
-                case 5: mInProtocol5 >> boost::serialization::make_nvp("Dummy", t); break;
-#else
                 case 5: mInProtocol5 >> t; break;
-#endif
 
                 default: RCF_ASSERT(0)(mProtocol);
                 }
@@ -176,12 +171,7 @@ namespace RCF {
                 case 2: mOutProtocol2 << t; break;
                 case 3: mOutProtocol3 << t; break;
                 case 4: mOutProtocol4 << t; break;
-
-#ifdef RCF_USE_BOOST_XML_SERIALIZATION
-                case 5: mOutProtocol5 << boost::serialization::make_nvp("Dummy", t); break;
-#else
                 case 5: mOutProtocol5 << t; break;
-#endif
 
                 default: RCF_ASSERT(0)(mProtocol);
                 }
@@ -358,7 +348,7 @@ namespace RCF {
         T &t,
         boost::mpl::true_ *)
     {
-        std::istream & is = in.getIstream();
+        MemIstream & is = in.getIstream();
 
         char buffer[4];
         is.read(buffer, 4);

@@ -16,14 +16,4 @@
 //
 //******************************************************************************
 
-#ifdef RCF_SEPARATE_IDL_COMPILATION
-
-#include <RCF/Idl_DefineOnly.hpp>
-#include <RCF/ServerInterfaces_NoHeaderGuard.hpp>
-#include <RCF/Idl_DeclareOnly.hpp>
-
-#else
-
 #include <RCF/ServerInterfaces.hpp>
-
-#endif // RCF_SEPARATE_IDL_COMPILATION

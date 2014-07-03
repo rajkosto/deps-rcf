@@ -63,6 +63,7 @@ namespace RCF {
         //free(pointer);
         //return;
 
+        RCF_UNUSED_VARIABLE(size);
 
         Lock lock(mHandlerMutex);
         for (std::size_t i=0; i<mHandlerUsedList.size(); ++i)

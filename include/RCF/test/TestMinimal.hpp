@@ -19,8 +19,12 @@
 #ifndef INCLUDE_RCF_TEST_TESTMINIMAL_HPP
 #define INCLUDE_RCF_TEST_TESTMINIMAL_HPP
 
+#ifdef RCF_VLD
+#include <vld.h>
+#endif
+
 // Include valarray early so it doesn't get trampled by min/max macro definitions.
-#if defined(_MSC_VER) && _MSC_VER == 1310 && defined(RCF_USE_BOOST_SERIALIZATION)
+#if defined(_MSC_VER) && _MSC_VER == 1310 && RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <valarray>
 #endif
 
@@ -36,11 +40,8 @@
 #include <RCF/ThreadLibrary.hpp>
 #include <RCF/Tools.hpp>
 
-#include <RCF/test/PrintTestHeader.hpp>
 #include <RCF/test/ProgramTimeLimit.hpp>
-#include <RCF/test/SpCollector.hpp>
 #include <RCF/test/Test.hpp>
-#include <RCF/test/TransportFactories.hpp>
 
 #include <RCF/util/Platform/OS/BsdSockets.hpp>
 #include <RCF/util/Log.hpp>
@@ -63,17 +64,46 @@
 #endif
 #endif
 
+int gProcessReturnValue = 0;
+
+#if defined(RCF_VLD) && !defined(NDEBUG)
+
+int vldLeakReporter(int reportType, wchar_t * message, int * returnValue)
+{
+    // We allow one leak (for the root mutex).
+    int leakCount = VLDGetLeaksCount();
+    if (leakCount > 1)
+    {
+        std::wcout << L"VLD has detected " << leakCount << L" leaks. Call stacks follow." << std::endl;
+        VLDSetReportHook(VLD_RPTHOOK_REMOVE, vldLeakReporter);
+        VLDReportLeaks();
+        *returnValue = gProcessReturnValue + leakCount;
+        exit(*returnValue);
+    }
+    else
+    {
+        *returnValue = gProcessReturnValue;
+        exit(*returnValue);
+    }
+    return 0;
+}
+
+#endif // defined(RCF_VLD) && !defined(NDEBUG)
+
 int test_main(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
+
+#ifdef RCF_VLD
+    VLDSetReportHook(VLD_RPTHOOK_INSTALL, vldLeakReporter);
+#endif
+
     Platform::OS::BsdSockets::disableBrokenPipeSignals();
 
     RCF::RcfInitDeinit rcfInit;
 
     RCF::Timer testTimer;
-
-    RCF::initializeTransportFactories();
 
     std::cout << "Commandline: ";
     for (int i=0; i<argc; ++i)
@@ -85,22 +115,20 @@ int main(int argc, char **argv)
     bool shoudNotCatch = false;
 
     {
-        util::CommandLineOption<std::string>    clTestCase( "testcase",     "",     "Run a specific test case.");
-        util::CommandLineOption<bool>           clListTests("list",         false,  "List all test cases.");
-        util::CommandLineOption<bool>           clAssert(   "assert",       false,  "Enable assert popups, and assert on test failures.");
-        util::CommandLineOption<int>            clLogLevel( "loglevel",     1,      "Set RCF log level.");
-        util::CommandLineOption<bool>           clLogTime(  "logtime",      false,  "Set RCF time stamp logging.");
-        util::CommandLineOption<bool>           clLogTid(   "logtid",       false,  "Set RCF thread id logging.");
-        util::CommandLineOption<std::string>    clLogFormat("logformat",    "",     "Set RCF log format.");
-        util::CommandLineOption<bool>           clNoCatch(  "nocatch",      false,  "Don't catch exceptions at top level.");
-        util::CommandLineOption<unsigned int>   clTimeLimit("timelimit",    5*60,   "Set program time limit in seconds. 0 to disable.");
+        RCF::CommandLineOption<std::string>    clTestCase( "testcase",     "",     "Run a specific test case.");
+        RCF::CommandLineOption<bool>           clListTests("list",         false,  "List all test cases.");
+        RCF::CommandLineOption<bool>           clAssert(   "assert",       false,  "Enable assert popups, and assert on test failures.");
+        RCF::CommandLineOption<int>            clLogLevel( "loglevel",     1,      "Set RCF log level.");
+        RCF::CommandLineOption<std::string>    clLogFormat("logformat",    "",     "Set RCF log format.");
+        RCF::CommandLineOption<bool>           clNoCatch(  "nocatch",      false,  "Don't catch exceptions at top level.");
+        RCF::CommandLineOption<unsigned int>   clTimeLimit("timelimit",    5*60,   "Set program time limit in seconds. 0 to disable.");
 
 #ifdef _MSC_VER
-        util::CommandLineOption<bool>           clMinidump("minidump",      true,   "Enable minidump creation.");
+        RCF::CommandLineOption<bool>           clMinidump("minidump",      true,   "Enable minidump creation.");
 #endif
 
         bool exitOnHelp = false;
-        util::CommandLine::getSingleton().parse(argc, argv, exitOnHelp);
+        RCF::CommandLine::getSingleton().parse(argc, argv, exitOnHelp);
 
         // -testcase
         std::string testCase = clTestCase.get();
@@ -143,28 +171,11 @@ int main(int argc, char **argv)
         // -loglevel
         int logName = RCF::LogNameRcf;
         int logLevel = clLogLevel.get();
-        bool includeTid = clLogTid.get();
-        bool includeTimestamp = clLogTime.get();
 
         std::string logFormat = clLogFormat.get();
         if (logFormat.empty())
         {
-            if (!includeTid && !includeTimestamp)
-            {
-                logFormat = "%E(%F): %X";
-            }
-            if (includeTid && !includeTimestamp)
-            {
-                logFormat = "%E(%F): (Tid:%D): %X";
-            }
-            else if (!includeTid && includeTimestamp)
-            {
-                logFormat = "%E(%F): (Time:%H): %X";
-            }
-            else if (includeTid && includeTimestamp)
-            {
-                logFormat = "%E(%F): (Tid:%D)(Time::%H): %X";
-            }
+            logFormat = "%E(%F): [Thread: %D][Time: %H] %X";
         }
 
 #ifdef BOOST_WINDOWS
@@ -247,48 +258,12 @@ int main(int argc, char **argv)
 
     RCF::deinit();
 
-    // Check that there are no shared_ptr cycles.
-    checkNoCycles();
+    // Delete the time limit object and its thread, otherwise VLD reports allocations.
+    delete gpProgramTimeLimit;
+    gpProgramTimeLimit = NULL;
 
-    return ret + static_cast<int>(failCount);
-}
-
-namespace RCF {
-    std::string getFilterName(int filterId)
-    {
-        switch (filterId)
-        {
-        case RcfFilter_Unknown                      : return "Unknown";
-        case RcfFilter_Identity                     : return "Identity";
-        case RcfFilter_OpenSsl                      : return "OpenSSL";
-        case RcfFilter_ZlibCompressionStateless     : return "Zlib stateless";
-        case RcfFilter_ZlibCompressionStateful      : return "Zlib stateful";
-        case RcfFilter_SspiNtlm                     : return "NTLM";
-        case RcfFilter_SspiKerberos                 : return "Kerberos";
-        case RcfFilter_SspiNegotiate                : return "Negotiate";
-        case RcfFilter_SspiSchannel                 : return "Schannel";
-        case RcfFilter_Xor                          : return "Xor";
-        default                                     : return "Unknown";
-        }
-    }
-
-    bool isFilterRemovable(int filterId)
-    {
-        switch (filterId)
-        {
-        case RcfFilter_Unknown                      : return true;
-        case RcfFilter_Identity                     : return true;
-        case RcfFilter_OpenSsl                      : return true;
-        case RcfFilter_ZlibCompressionStateless     : return false;
-        case RcfFilter_ZlibCompressionStateful      : return false;
-        case RcfFilter_SspiNtlm                     : return true;
-        case RcfFilter_SspiKerberos                 : return true;
-        case RcfFilter_SspiNegotiate                : return true;
-        case RcfFilter_SspiSchannel                 : return true;
-        case RcfFilter_Xor                          : return true;
-        default                                     : return true;
-        }
-    }
+    gProcessReturnValue = ret + static_cast<int>(failCount);
+    return gProcessReturnValue;
 }
 
 // Minidump creation code, for Visual C++ 2003 and later.

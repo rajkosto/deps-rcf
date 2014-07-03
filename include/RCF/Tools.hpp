@@ -22,8 +22,6 @@
 // Various utilities
 
 #include <deque>
-#include <iosfwd>
-#include <iterator>
 #include <stdexcept>
 #include <typeinfo>
 #include <vector>
@@ -33,6 +31,7 @@
 
 #include <RCF/Export.hpp>
 #include <RCF/util/UnusedVariable.hpp>
+#include <RCF/util/VariableArgMacro.hpp>
 
 // Logging mechanism
 #include <RCF/util/Log.hpp>
@@ -52,6 +51,9 @@ namespace RCF {
 #define RCF_LOG_4() UTIL_LOG(RCF::LogNameRcf, RCF::LogLevel_4)
 
 // Assertion mechanism
+#ifndef NDEBUG
+
+// Debug build asserts.
 #include <RCF/util/Assert.hpp>
 #define RCF_ASSERT(x) UTIL_ASSERT(x, RCF::AssertionFailureException(), RCF::LogNameRcf, RCF::LogLevel_1)
 
@@ -64,59 +66,49 @@ namespace RCF {
 #define RCF_ASSERT_GT(a,b)      RCF_ASSERT(a > b)(a)(b)
 #define RCF_ASSERT_GTEQ(a,b)    RCF_ASSERT(a >= b)(a)(b)
 
+#else
+
+// Release build - strip out asserts.
+#define RCF_ASSERT(x)           DUMMY_VARIABLE_ARG_MACRO()
+
+#define RCF_ASSERT_EQ(a,b)      DUMMY_VARIABLE_ARG_MACRO()
+#define RCF_ASSERT_NEQ(a,b)     DUMMY_VARIABLE_ARG_MACRO()
+
+#define RCF_ASSERT_LT(a,b)      DUMMY_VARIABLE_ARG_MACRO()
+#define RCF_ASSERT_LTEQ(a,b)    DUMMY_VARIABLE_ARG_MACRO()
+
+#define RCF_ASSERT_GT(a,b)      DUMMY_VARIABLE_ARG_MACRO()
+#define RCF_ASSERT_GTEQ(a,b)    DUMMY_VARIABLE_ARG_MACRO()
+
+#endif
+
 // Throw mechanism
-#include <RCF/util/Throw.hpp>
+
 namespace RCF {
     class Exception;
-    RCF_EXPORT ::util::DummyVariableArgMacroObject rcfThrow(const char * szFile, int line, const char * szFunc, const Exception & e);
+    RCF_EXPORT DummyVariableArgMacroObject rcfThrow(const char * szFile, int line, const char * szFunc, const Exception & e);
 }
+
+#ifndef NDEBUG
+
+// Debug build throw - embed file and line info
 #define RCF_THROW(e)            RCF::rcfThrow(__FILE__, __LINE__, __FUNCTION__, e)
+
+#else
+
+// Release build throw.
+#define RCF_THROW(e)            RCF::rcfThrow(__FILE__, __LINE__, __FUNCTION__, e)
+//#define RCF_THROW(e)            RCF::rcfThrow(__FILE__, __LINE__, "", e)
+//#define RCF_THROW(e)            RCF::rcfThrow("", 0, "", e)
+//#define RCF_THROW(e)            throw e;
+
+#endif
 
 // Verification mechanism
 #define RCF_VERIFY(cond, e)     if (cond); else RCF_THROW(e)
 
-
 // Scope guard mechanism
 #include <boost/multi_index/detail/scope_guard.hpp>
-
-namespace RCF 
-{
-    class Exception;
-}
-
-// assorted tracing conveniences
-namespace std {
-
-    // Trace std::vector
-    template<typename T>
-    std::ostream &operator<<(std::ostream &os, const std::vector<T> &v)
-    {
-        os << "(";
-        std::copy(v.begin(), v.end(), std::ostream_iterator<T>(os, ", "));
-        os << ")";
-        return os;
-    }
-
-    // Trace std::deque
-    template<typename T>
-    std::ostream &operator<<(std::ostream &os, const std::deque<T> &d)
-    {
-        os << "(";
-        std::copy(d.begin(), d.end(), std::ostream_iterator<T>(os, ", "));
-        os << ")";
-        return os;
-    }
-
-    // Trace type_info
-    RCF_EXPORT std::ostream &operator<<(std::ostream &os, const std::type_info &ti);
-
-    // Trace exception
-    RCF_EXPORT std::ostream &operator<<(std::ostream &os, const std::exception &e);
-
-    // Trace exception
-    RCF_EXPORT std::ostream &operator<<(std::ostream &os, const RCF::Exception &e);
-
-} // namespace std
 
 namespace RCF {
 
@@ -143,7 +135,7 @@ namespace RCF {
 
 namespace RCF {
 
-    
+    RCF_EXPORT void rcfDtorCatchHandler(const std::exception & e);
 
 } // namespace RCF
 
@@ -155,14 +147,7 @@ namespace RCF {
     }                                               \
     catch (const std::exception &e)                 \
     {                                               \
-        if (!util::detail::uncaught_exception())    \
-        {                                           \
-            throw;                                  \
-        }                                           \
-        else                                        \
-        {                                           \
-            RCF_LOG_1()(e);                         \
-        }                                           \
+        RCF::rcfDtorCatchHandler(e);                \
     }
 
 //#if defined(_MSC_VER) && _MSC_VER < 1310

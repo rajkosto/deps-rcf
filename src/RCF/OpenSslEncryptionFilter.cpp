@@ -153,7 +153,10 @@ namespace RCF {
 
     OpenSslDll::OpenSslDll()
     {
+
+#ifndef RCF_OPENSSL_STATIC
         mDynamicLibPtr.reset( new DynamicLib( getGlobals().getOpenSslDllName() ) );
+#endif
 
         loadFunctionPtrs();
 
@@ -162,35 +165,56 @@ namespace RCF {
         pfn_SSL_load_error_strings(); // no return value
     }
 
+#ifdef RCF_OPENSSL_STATIC
+
+    // Load static function pointers.
+    // Requires linking to zlib or building with zlib source.
+#define RCF_OPENSSL_LOAD_FUNCTION RCF_LOAD_LIB_FUNCTION
+
+#else
+
+    // Load dynamic function pointers directly from zlib DLL.
+    // Requires zlib DLL to be present at runtime.
+    // Does not require linking to zlib.
+#define RCF_OPENSSL_LOAD_FUNCTION RCF_LOAD_DLL_FUNCTION
+
+#endif
+
     void OpenSslDll::loadFunctionPtrs()
     {
-        RCF_ASSERT(mDynamicLibPtr);
 
-        RCF_LOAD_DLL_FUNCTION(SSL_get_verify_result);
-        RCF_LOAD_DLL_FUNCTION(SSL_get_peer_certificate);
-        RCF_LOAD_DLL_FUNCTION(SSL_state);
-        RCF_LOAD_DLL_FUNCTION(SSL_set_bio);
-        RCF_LOAD_DLL_FUNCTION(SSL_set_connect_state);
-        RCF_LOAD_DLL_FUNCTION(SSL_set_accept_state);
-        RCF_LOAD_DLL_FUNCTION(SSL_set_verify);
-        RCF_LOAD_DLL_FUNCTION(SSL_new);
-        RCF_LOAD_DLL_FUNCTION(SSL_free);
-        RCF_LOAD_DLL_FUNCTION(SSL_CTX_new);
-        RCF_LOAD_DLL_FUNCTION(SSL_CTX_free);
-        RCF_LOAD_DLL_FUNCTION(SSLv23_method);
-        RCF_LOAD_DLL_FUNCTION(BIO_f_ssl);
-        RCF_LOAD_DLL_FUNCTION(SSL_CTX_use_PrivateKey);
-        RCF_LOAD_DLL_FUNCTION(SSL_CTX_use_certificate_chain_file);
-        RCF_LOAD_DLL_FUNCTION(SSL_CTX_load_verify_locations);
-        RCF_LOAD_DLL_FUNCTION(SSL_load_error_strings);
-        RCF_LOAD_DLL_FUNCTION(SSL_library_init);
+#ifndef RCF_OPENSSL_STATIC
+        RCF_ASSERT(mDynamicLibPtr);
+#endif
+
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_get_verify_result);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_get_peer_certificate);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_state);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_set_bio);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_set_connect_state);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_set_accept_state);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_set_verify);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_new);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_free);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_CTX_new);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_CTX_free);
+        RCF_OPENSSL_LOAD_FUNCTION(SSLv23_method);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_f_ssl);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_CTX_use_PrivateKey);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_CTX_use_certificate_chain_file);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_CTX_load_verify_locations);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_load_error_strings);
+        RCF_OPENSSL_LOAD_FUNCTION(SSL_library_init);
     }
 
     // OpenSslCryptoDll
 
     OpenSslCryptoDll::OpenSslCryptoDll()
     {
+
+#ifndef RCF_OPENSSL_STATIC
         mDynamicLibPtr.reset( new DynamicLib( getGlobals().getOpenSslCryptoDllName() ) );
+#endif
 
         loadFunctionPtrs();
 
@@ -202,34 +226,37 @@ namespace RCF {
 
     void OpenSslCryptoDll::loadFunctionPtrs()
     {
+
+#ifndef RCF_OPENSSL_STATIC
         RCF_ASSERT(mDynamicLibPtr);
+#endif
 
-        RCF_LOAD_DLL_FUNCTION(BIO_ctrl_pending);
-        RCF_LOAD_DLL_FUNCTION(BIO_write);
-        RCF_LOAD_DLL_FUNCTION(BIO_read);
-        RCF_LOAD_DLL_FUNCTION(BIO_nread0);
-        RCF_LOAD_DLL_FUNCTION(BIO_nwrite0);
-        RCF_LOAD_DLL_FUNCTION(BIO_ctrl_get_read_request);
-        RCF_LOAD_DLL_FUNCTION(BIO_nread);
-        RCF_LOAD_DLL_FUNCTION(BIO_nwrite);
-        RCF_LOAD_DLL_FUNCTION(BIO_ctrl);
-        RCF_LOAD_DLL_FUNCTION(BIO_new_bio_pair);
-        RCF_LOAD_DLL_FUNCTION(BIO_new);
-        RCF_LOAD_DLL_FUNCTION(BIO_free);
-        RCF_LOAD_DLL_FUNCTION(EVP_PKEY_free);
-        RCF_LOAD_DLL_FUNCTION(BIO_s_file);
-        RCF_LOAD_DLL_FUNCTION(ERR_print_errors_cb);
-        RCF_LOAD_DLL_FUNCTION(ERR_print_errors);
-        RCF_LOAD_DLL_FUNCTION(BIO_s_mem);
-        RCF_LOAD_DLL_FUNCTION(ERR_load_crypto_strings); 
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_ctrl_pending);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_write);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_read);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_nread0);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_nwrite0);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_ctrl_get_read_request);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_nread);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_nwrite);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_ctrl);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_new_bio_pair);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_new);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_free);
+        RCF_OPENSSL_LOAD_FUNCTION(EVP_PKEY_free);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_s_file);
+        RCF_OPENSSL_LOAD_FUNCTION(ERR_print_errors_cb);
+        RCF_OPENSSL_LOAD_FUNCTION(ERR_print_errors);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_s_mem);
+        RCF_OPENSSL_LOAD_FUNCTION(ERR_load_crypto_strings); 
 
-        RCF_LOAD_DLL_FUNCTION(BIO_test_flags);
-        RCF_LOAD_DLL_FUNCTION(X509_free);
-        RCF_LOAD_DLL_FUNCTION(PEM_read_bio_PrivateKey);
-        RCF_LOAD_DLL_FUNCTION(OPENSSL_add_all_algorithms_noconf);
-        RCF_LOAD_DLL_FUNCTION(X509_get_subject_name);
-        RCF_LOAD_DLL_FUNCTION(X509_get_issuer_name);
-        RCF_LOAD_DLL_FUNCTION(X509_NAME_print_ex);
+        RCF_OPENSSL_LOAD_FUNCTION(BIO_test_flags);
+        RCF_OPENSSL_LOAD_FUNCTION(X509_free);
+        RCF_OPENSSL_LOAD_FUNCTION(PEM_read_bio_PrivateKey);
+        RCF_OPENSSL_LOAD_FUNCTION(OPENSSL_add_all_algorithms_noconf);
+        RCF_OPENSSL_LOAD_FUNCTION(X509_get_subject_name);
+        RCF_OPENSSL_LOAD_FUNCTION(X509_get_issuer_name);
+        RCF_OPENSSL_LOAD_FUNCTION(X509_NAME_print_ex);
         
     }
 
@@ -254,6 +281,28 @@ namespace RCF {
         }
         return *mpOpenSslCryptoDll;
     }
+
+#if RCF_FEATURE_OPENSSL==1
+
+    void Globals::deleteOpenSslDll()
+    {
+        if (mpOpenSslDll)
+        {
+            delete mpOpenSslDll;
+            mpOpenSslDll = NULL;
+        }
+    }
+
+    void Globals::deleteOpenSslCryptoDll()
+    {
+        if (mpOpenSslCryptoDll)
+        {
+            delete mpOpenSslCryptoDll;
+            mpOpenSslCryptoDll = NULL;
+        }
+    }
+
+#endif
 
 #define SSL_get_verify_result                   mSslDll.pfn_SSL_get_verify_result
 #define SSL_get_peer_certificate                mSslDll.pfn_SSL_get_peer_certificate
@@ -370,6 +419,80 @@ namespace RCF {
 
         return std::string(&buffer[0], bytesRead);
     }
+
+    // Can't find any OpenSSL function to convert certificate validation error code into
+    // a readable string, so here we do it by hand.
+
+    static struct
+    {
+        int code;
+        const char* string;
+    }
+    X509_message_table[] =
+    {
+        { X509_V_OK                                         , "X509_V_OK" },
+        { X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT              , "X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT" },
+        { X509_V_ERR_UNABLE_TO_GET_CRL                      , "X509_V_ERR_UNABLE_TO_GET_CRL" },
+        { X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE       , "X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE" },
+        { X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE        , "X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE" },
+        { X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY     , "X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY" },
+        { X509_V_ERR_CERT_SIGNATURE_FAILURE                 , "X509_V_ERR_CERT_SIGNATURE_FAILURE" },
+        { X509_V_ERR_CRL_SIGNATURE_FAILURE                  , "X509_V_ERR_CRL_SIGNATURE_FAILURE" },
+        { X509_V_ERR_CERT_NOT_YET_VALID                     , "X509_V_ERR_CERT_NOT_YET_VALID" },
+        { X509_V_ERR_CERT_HAS_EXPIRED                       , "X509_V_ERR_CERT_HAS_EXPIRED" },
+        { X509_V_ERR_CRL_NOT_YET_VALID                      , "X509_V_ERR_CRL_NOT_YET_VALID" },
+        { X509_V_ERR_CRL_HAS_EXPIRED                        , "X509_V_ERR_CRL_HAS_EXPIRED" },
+        { X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD         , "X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD" },
+        { X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD          , "X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD" },
+        { X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD         , "X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD" },
+        { X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD         , "X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD" },
+        { X509_V_ERR_OUT_OF_MEM                             , "X509_V_ERR_OUT_OF_MEM" },
+        { X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT            , "X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT" },
+        { X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN              , "X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN" },
+        { X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY      , "X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY" },
+        { X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE        , "X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE" },
+        { X509_V_ERR_CERT_CHAIN_TOO_LONG                    , "X509_V_ERR_CERT_CHAIN_TOO_LONG" },
+        { X509_V_ERR_CERT_REVOKED                           , "X509_V_ERR_CERT_REVOKED" },
+        { X509_V_ERR_INVALID_CA                             , "X509_V_ERR_INVALID_CA" },
+        { X509_V_ERR_PATH_LENGTH_EXCEEDED                   , "X509_V_ERR_PATH_LENGTH_EXCEEDED" },
+        { X509_V_ERR_INVALID_PURPOSE                        , "X509_V_ERR_INVALID_PURPOSE" },
+        { X509_V_ERR_CERT_UNTRUSTED                         , "X509_V_ERR_CERT_UNTRUSTED" },
+        { X509_V_ERR_CERT_REJECTED                          , "X509_V_ERR_CERT_REJECTED" },
+        { X509_V_ERR_SUBJECT_ISSUER_MISMATCH                , "X509_V_ERR_SUBJECT_ISSUER_MISMATCH" },
+        { X509_V_ERR_AKID_SKID_MISMATCH                     , "X509_V_ERR_AKID_SKID_MISMATCH" },
+        { X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH            , "X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH" },
+        { X509_V_ERR_KEYUSAGE_NO_CERTSIGN                   , "X509_V_ERR_KEYUSAGE_NO_CERTSIGN" },
+        { X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER               , "X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER" },
+        { X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION           , "X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION" },
+        { X509_V_ERR_KEYUSAGE_NO_CRL_SIGN                   , "X509_V_ERR_KEYUSAGE_NO_CRL_SIGN" },
+        { X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION       , "X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION" },
+        { X509_V_ERR_INVALID_NON_CA                         , "X509_V_ERR_INVALID_NON_CA" },
+        { X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED             , "X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED" },
+        { X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE          , "X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE" },
+        { X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED         , "X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED" },
+        { X509_V_ERR_INVALID_EXTENSION                      , "X509_V_ERR_INVALID_EXTENSION" },
+        { X509_V_ERR_INVALID_POLICY_EXTENSION               , "X509_V_ERR_INVALID_POLICY_EXTENSION" },
+        { X509_V_ERR_NO_EXPLICIT_POLICY                     , "X509_V_ERR_NO_EXPLICIT_POLICY" },
+        { X509_V_ERR_UNNESTED_RESOURCE                      , "X509_V_ERR_UNNESTED_RESOURCE" }
+    };
+
+    #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+
+    const char* SSL_get_verify_result_string(int rc)
+    {
+        const char * ret = "Undefined OpenSSL result code.";
+
+        for (std::size_t i = 0; i < ARRAY_SIZE(X509_message_table); ++i)
+        {
+            if (X509_message_table[i].code == rc)
+            {
+                ret = X509_message_table[i].string;
+                break;
+            }
+        }
+        return ret;
+    }
+ 
 
     PemCertificate::PemCertificate(
         const std::string & pathToCert, 
@@ -826,8 +949,10 @@ namespace RCF {
 
                 if (!verifyOk)
                 {
+                    std::string openSslErr = SSL_get_verify_result_string(ret);
+
                     Exception e(
-                        _RcfError_SslCertVerification(), 
+                        _RcfError_SslCertVerification(openSslErr), 
                         ret, 
                         RcfSubsystem_OpenSsl);
 
@@ -850,7 +975,7 @@ namespace RCF {
                 if (!verifyOk)
                 {
                     Exception e(
-                        _RcfError_SslCertVerification());
+                        _RcfError_SslCertVerificationCustom());
 
                     RCF_THROW(e);
                 }

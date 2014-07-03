@@ -42,18 +42,62 @@ namespace detail {
 
 RCF_EXPORT unsigned int __stdcall win_thread_function(void* arg);
 
+class func_base
+{
+public:
+    func_base() : entry_event_(0), exit_event_(0)
+    {}
+
+    virtual ~func_base()
+    {
+        if (entry_event_)
+        {
+            ::CloseHandle(entry_event_);
+            entry_event_ = 0;
+        }
+        if (exit_event_)
+        {
+            ::CloseHandle(exit_event_);
+            exit_event_ = 0;
+        }
+    }
+
+    virtual void run() = 0;
+
+    ::HANDLE entry_event_;
+    ::HANDLE exit_event_;
+};
+
+template <typename Function>
+class func
+    : public func_base
+{
+public:
+    func(Function f)
+        : f_(f)
+    {
+    }
+
+    virtual void run()
+    {
+        f_();
+    }
+
+private:
+    Function f_;
+};
+
 class RCF_EXPORT  win_thread
-  : private noncopyable/*,
-    public win_thread_base<win_thread>*/
+  : private noncopyable
 {
 public:
   // Constructor.
   template <typename Function>
   win_thread(Function f, unsigned int stack_size = 0)
-    : thread_(0),
-      exit_event_(0)
+    : thread_(0)
   {
-    start_thread(new func<Function>(f), stack_size);
+    mArgPtr.reset(new func<Function>(f));
+    start_thread(stack_size);
   }
 
   // Destructor.
@@ -65,44 +109,11 @@ public:
 private:
   friend RCF_EXPORT unsigned int __stdcall win_thread_function(void* arg);
 
-  class func_base
-  {
-  public:
-    virtual ~func_base() {}
-    virtual void run() = 0;
-    ::HANDLE entry_event_;
-    ::HANDLE exit_event_;
-  };
-
-  struct auto_func_base_ptr
-  {
-    func_base* ptr;
-    ~auto_func_base_ptr() { delete ptr; }
-  };
-
-  template <typename Function>
-  class func
-    : public func_base
-  {
-  public:
-    func(Function f)
-      : f_(f)
-    {
-    }
-
-    virtual void run()
-    {
-      f_();
-    }
-
-  private:
-    Function f_;
-  };
-
-  void start_thread(func_base* arg, unsigned int stack_size);
+  void start_thread(unsigned int stack_size);
 
   ::HANDLE thread_;
-  ::HANDLE exit_event_;
+
+  boost::shared_ptr<func_base> mArgPtr;
 };
 
 } // namespace detail

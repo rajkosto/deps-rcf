@@ -69,6 +69,9 @@ namespace RCF {
 
     typedef std::pair<boost::uint32_t, RcfSessionWeakPtr>   PingBackTimerEntry;
 
+    class Certificate;
+    typedef boost::shared_ptr<Certificate> CertificatePtr;
+
     class AsioSessionState;
 
     template<
@@ -299,12 +302,6 @@ namespace RCF {
 
         bool            isOneway();
 
-        bool            getInProcess();
-        void            setInProcess(bool inProcess);
-        bool            isInProcess();
-
-        I_Parameters *  getInProcessParameters();
-
         void            cancelDownload();
 
 #if RCF_FEATURE_FILETRANSFER==1
@@ -363,8 +360,6 @@ namespace RCF {
 
         friend class StubAccess;
 
-        friend class InProcessTransport;
-
         RcfServer &                             mRcfServer;
 
         Mutex                                   mMutex;
@@ -389,9 +384,6 @@ namespace RCF {
 
         MethodInvocationRequest                 mRequest;
 
-        bool                                    mInProcess;
-        I_Parameters *                          mpInProcessParameters;
-
         bool                                    mCloseSessionAfterWrite;
         boost::uint32_t                         mPingTimestamp;
         boost::uint32_t                         mPingIntervalMs;
@@ -411,6 +403,7 @@ namespace RCF {
         void processJsonRpcRequest();
 
         void processRequest();
+        void processOobMessages();
         void invokeServant();
         
         void sendResponse();

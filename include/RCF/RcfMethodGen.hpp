@@ -1,21 +1,4 @@
 
-//******************************************************************************
-// RCF - Remote Call Framework
-//
-// Copyright (c) 2005 - 2013, Delta V Software. All rights reserved.
-// http://www.deltavsoft.com
-//
-// RCF is distributed under dual licenses - closed source or GPL.
-// Consult your particular license for conditions of use.
-//
-// If you have not purchased a commercial license, you are using RCF 
-// under GPL terms.
-//
-// Version: 2.0
-// Contact: support <at> deltavsoft.com 
-//
-//******************************************************************************
-
 #ifndef INCLUDE_RCF_RCFMETHODGEN_HPP
 #define INCLUDE_RCF_RCFMETHODGEN_HPP
 
@@ -76,29 +59,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R                                                         \
+                     > &p =                                                   \
+                    ::RCF::AllocateServerParameters<                          \
                         R                                                     \
-                         , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
-                            R                                                 \
-                             , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func(  ) );                                    \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R                                                     \
-                         > &p =                                               \
-                        ::RCF::AllocateServerParameters<                      \
-                            R                                                 \
-                             >()(session);                                    \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            ));                                               \
-                }                                                             \
+                         >()(session);                                        \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        ));                                                   \
             }
 
 // RCF_METHOD_R0_DECL
@@ -140,29 +110,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R                                                         \
+                     > &p =                                                   \
+                    ::RCF::AllocateServerParameters<                          \
                         R                                                     \
-                         , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
-                            R                                                 \
-                             , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func(  ) );                                    \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R                                                     \
-                         > &p =                                               \
-                        ::RCF::AllocateServerParameters<                      \
-                            R                                                 \
-                             >()(session);                                    \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            ));                                               \
-                }                                                             \
+                         >()(session);                                        \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        ));                                                   \
             }
 
 // RCF_METHOD_R0_DEF
@@ -256,30 +213,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V                                                     \
-                         , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V                                                         \
+                     > &p =                                                   \
+                        ::RCF::AllocateServerParameters<                      \
                             V                                                 \
-                             , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                         );                                                   \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V                                                     \
-                         > &p =                                               \
-                            ::RCF::AllocateServerParameters<                  \
-                                V                                             \
-                                 >()(session);                                \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        );                                                    \
-                }                                                             \
+                             >()(session);                                    \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    );                                                        \
             }
 
 // RCF_METHOD_V0_DECL
@@ -322,30 +264,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V                                                     \
-                         , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V                                                         \
+                     > &p =                                                   \
+                        ::RCF::AllocateServerParameters<                      \
                             V                                                 \
-                             , V,V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                         );                                                   \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V                                                     \
-                         > &p =                                               \
-                            ::RCF::AllocateServerParameters<                  \
-                                V                                             \
-                                 >()(session);                                \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        );                                                    \
-                }                                                             \
+                             >()(session);                                    \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    );                                                        \
             }
 
 // RCF_METHOD_V0_DEF
@@ -440,29 +367,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1 > &p =                                                 \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get() ) );                          \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1 > &p =                                             \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1 >()(session);                                  \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get()));                                     \
-                }                                                             \
+                        A1 >()(session);                                      \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get()));                                         \
             }
 
 // RCF_METHOD_R1_DECL
@@ -504,29 +418,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1 > &p =                                                 \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get() ) );                          \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1 > &p =                                             \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1 >()(session);                                  \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get()));                                     \
-                }                                                             \
+                        A1 >()(session);                                      \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get()));                                         \
             }
 
 // RCF_METHOD_R1_DEF
@@ -620,30 +521,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1 > &p =                                                 \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1 > &p =                                             \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1 >()(session);                              \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get());                                          \
-                }                                                             \
+                            A1 >()(session);                                  \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get());                                              \
             }
 
 // RCF_METHOD_V1_DECL
@@ -686,30 +572,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<  \
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1 > &p =                                                 \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1 , V,V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1 > &p =                                             \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1 >()(session);                              \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get());                                          \
-                }                                                             \
+                            A1 >()(session);                                  \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get());                                              \
             }
 
 // RCF_METHOD_V1_DEF
@@ -806,31 +677,17 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2 > &p =                                              \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast< \
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2 > &p =                                          \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2 >()(session);                               \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2 >()(session);                                   \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R2_DECL
@@ -875,31 +732,17 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2 > &p =                                              \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast< \
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2 > &p =                                          \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2 >()(session);                               \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2 >()(session);                                   \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R2_DEF
@@ -997,32 +840,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast< \
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2 > &p =                                              \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2 > &p =                                          \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2 >()(session);                           \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2 >()(session);                               \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V2_DECL
@@ -1068,32 +895,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast< \
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2 > &p =                                              \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2 , V,V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2 > &p =                                          \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2 >()(session);                           \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2 >()(session);                               \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V2_DEF
@@ -1194,33 +1005,18 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3 > &p =                                           \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3 > &p =                                       \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3 >()(session);                            \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3 >()(session);                                \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R3_DECL
@@ -1268,33 +1064,18 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3 > &p =                                           \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3 > &p =                                       \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3 >()(session);                            \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3 >()(session);                                \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R3_DEF
@@ -1396,34 +1177,17 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3 > &p =                                           \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3 > &p =                                       \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3 >()(session);                        \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3 >()(session);                            \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V3_DECL
@@ -1472,34 +1236,17 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3 > &p =                                           \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3 , V,V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3 > &p =                                       \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3 >()(session);                        \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3 >()(session);                            \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V3_DEF
@@ -1604,35 +1351,19 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4 > &p =                                        \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4 > &p =                                    \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4 >()(session);                         \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4 >()(session);                             \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R4_DECL
@@ -1683,35 +1414,19 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4 > &p =                                        \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4 > &p =                                    \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4 >()(session);                         \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4 >()(session);                             \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R4_DEF
@@ -1817,36 +1532,18 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4 > &p =                                        \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4 > &p =                                    \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4 >()(session);                     \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4 >()(session);                         \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V4_DECL
@@ -1898,36 +1595,18 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4 > &p =                                        \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4 , V,V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4 > &p =                                    \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4 >()(session);                     \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4 >()(session);                         \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V4_DEF
@@ -2036,37 +1715,20 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5 > &p =                                     \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5 > &p =                                 \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5 >()(session);                      \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5 >()(session);                          \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R5_DECL
@@ -2120,37 +1782,20 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5 > &p =                                     \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5 > &p =                                 \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5 >()(session);                      \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5 >()(session);                          \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R5_DEF
@@ -2260,38 +1905,19 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5 > &p =                                     \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5 > &p =                                 \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5 >()(session);                  \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5 >()(session);                      \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V5_DECL
@@ -2346,38 +1972,19 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5 > &p =                                     \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5 , V,V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5 > &p =                                 \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5 >()(session);                  \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5 >()(session);                      \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V5_DEF
@@ -2490,39 +2097,21 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6 > &p =                                  \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6 > &p =                              \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6 >()(session);                   \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6 >()(session);                       \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R6_DECL
@@ -2579,39 +2168,21 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6 > &p =                                  \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6 > &p =                              \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6 >()(session);                   \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6 >()(session);                       \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R6_DEF
@@ -2725,40 +2296,20 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6 > &p =                                  \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6 > &p =                              \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6 >()(session);               \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6 >()(session);                   \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V6_DECL
@@ -2816,40 +2367,20 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6 > &p =                                  \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6 , V,V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6 > &p =                              \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6 >()(session);               \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6 >()(session);                   \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V6_DEF
@@ -2966,41 +2497,22 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7 > &p =                               \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 > &p =                           \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7 >()(session);                \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7 >()(session);                    \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get(),                                           \
                         p.a7.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R7_DECL
@@ -3060,41 +2572,22 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7 > &p =                               \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 > &p =                           \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7 >()(session);                \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7 >()(session);                    \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get(),                                           \
                         p.a7.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R7_DEF
@@ -3212,42 +2705,21 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7 > &p =                               \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 > &p =                           \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7 >()(session);            \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7 >()(session);                \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get(),                                           \
                         p.a7.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V7_DECL
@@ -3308,42 +2780,21 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7 > &p =                               \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7 , V,V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7 > &p =                           \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7 >()(session);            \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7 >()(session);                \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
                         p.a5.get(),                                           \
                         p.a6.get(),                                           \
                         p.a7.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V7_DEF
@@ -3464,35 +2915,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8 > &p =                            \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 > &p =                        \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8 >()(session);             \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8 >()(session);                 \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -3500,7 +2932,6 @@
                         p.a6.get(),                                           \
                         p.a7.get(),                                           \
                         p.a8.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R8_DECL
@@ -3563,35 +2994,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8 > &p =                            \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 > &p =                        \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8 >()(session);             \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8 >()(session);                 \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -3599,7 +3011,6 @@
                         p.a6.get(),                                           \
                         p.a7.get(),                                           \
                         p.a8.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R8_DEF
@@ -3721,36 +3132,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8 > &p =                            \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 > &p =                        \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8 >()(session);         \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8 >()(session);             \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -3758,7 +3148,6 @@
                         p.a6.get(),                                           \
                         p.a7.get(),                                           \
                         p.a8.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V8_DECL
@@ -3822,36 +3211,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8 > &p =                            \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8 , V,V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8 > &p =                        \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8 >()(session);         \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8 >()(session);             \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -3859,7 +3227,6 @@
                         p.a6.get(),                                           \
                         p.a7.get(),                                           \
                         p.a8.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V8_DEF
@@ -3984,36 +3351,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                         \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                     \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);          \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);              \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4022,7 +3369,6 @@
                         p.a7.get(),                                           \
                         p.a8.get(),                                           \
                         p.a9.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R9_DECL
@@ -4088,36 +3434,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                         \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get() ) );                                       \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                     \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);          \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);              \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4126,7 +3452,6 @@
                         p.a7.get(),                                           \
                         p.a8.get(),                                           \
                         p.a9.get()));                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_R9_DEF
@@ -4252,37 +3577,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                         \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                     \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);      \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);          \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4291,7 +3594,6 @@
                         p.a7.get(),                                           \
                         p.a8.get(),                                           \
                         p.a9.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V9_DECL
@@ -4358,37 +3660,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                         \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9 , V,V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get() );                                         \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9 > &p =                     \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);      \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9 >()(session);          \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4397,7 +3677,6 @@
                         p.a7.get(),                                           \
                         p.a8.get(),                                           \
                         p.a9.get());                                          \
-                }                                                             \
             }
 
 // RCF_METHOD_V9_DEF
@@ -4526,37 +3805,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                     \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                 \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);      \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);          \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4566,7 +3824,6 @@
                         p.a8.get(),                                           \
                         p.a9.get(),                                           \
                         p.a10.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R10_DECL
@@ -4635,37 +3892,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                     \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                 \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);      \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);          \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4675,7 +3911,6 @@
                         p.a8.get(),                                           \
                         p.a9.get(),                                           \
                         p.a10.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R10_DEF
@@ -4805,38 +4040,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                     \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                 \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);  \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);      \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4846,7 +4058,6 @@
                         p.a8.get(),                                           \
                         p.a9.get(),                                           \
                         p.a10.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V10_DECL
@@ -4916,38 +4127,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                     \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 , V,V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 > &p =                 \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);  \
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10 >()(session);      \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -4957,7 +4145,6 @@
                         p.a8.get(),                                           \
                         p.a9.get(),                                           \
                         p.a10.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V10_DEF
@@ -5090,38 +4277,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =                 \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =             \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);  \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);      \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -5132,7 +4297,6 @@
                         p.a9.get(),                                           \
                         p.a10.get(),                                          \
                         p.a11.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R11_DECL
@@ -5204,38 +4368,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =                 \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =             \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);  \
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);      \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -5246,7 +4388,6 @@
                         p.a9.get(),                                           \
                         p.a10.get(),                                          \
                         p.a11.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R11_DEF
@@ -5380,39 +4521,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =                 \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =             \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);  \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -5423,7 +4540,6 @@
                         p.a9.get(),                                           \
                         p.a10.get(),                                          \
                         p.a11.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V11_DECL
@@ -5496,39 +4612,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =                 \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 , V,V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 > &p =             \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11 >()(session);  \
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -5539,7 +4631,6 @@
                         p.a9.get(),                                           \
                         p.a10.get(),                                          \
                         p.a11.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V11_DEF
@@ -5676,39 +4767,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =             \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =         \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);  \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -5720,7 +4788,6 @@
                         p.a10.get(),                                          \
                         p.a11.get(),                                          \
                         p.a12.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R12_DECL
@@ -5795,39 +4862,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =             \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =         \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);  \
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -5839,7 +4883,6 @@
                         p.a10.get(),                                          \
                         p.a11.get(),                                          \
                         p.a12.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R12_DEF
@@ -5977,40 +5020,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =             \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =         \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -6022,7 +5040,6 @@
                         p.a10.get(),                                          \
                         p.a11.get(),                                          \
                         p.a12.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V12_DECL
@@ -6098,40 +5115,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =             \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 , V,V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 > &p =         \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -6143,7 +5135,6 @@
                         p.a10.get(),                                          \
                         p.a11.get(),                                          \
                         p.a12.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V12_DEF
@@ -6284,40 +5275,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =         \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =     \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -6330,7 +5297,6 @@
                         p.a11.get(),                                          \
                         p.a12.get(),                                          \
                         p.a13.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R13_DECL
@@ -6408,40 +5374,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =         \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =     \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -6454,7 +5396,6 @@
                         p.a11.get(),                                          \
                         p.a12.get(),                                          \
                         p.a13.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R13_DEF
@@ -6596,41 +5537,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =         \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =     \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -6643,7 +5558,6 @@
                         p.a11.get(),                                          \
                         p.a12.get(),                                          \
                         p.a13.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V13_DECL
@@ -6722,41 +5636,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =         \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 , V,V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 > &p =     \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -6769,7 +5657,6 @@
                         p.a11.get(),                                          \
                         p.a12.get(),                                          \
                         p.a13.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V13_DEF
@@ -6914,41 +5801,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p =     \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p = \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -6962,7 +5824,6 @@
                         p.a12.get(),                                          \
                         p.a13.get(),                                          \
                         p.a14.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R14_DECL
@@ -7043,41 +5904,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p =     \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p = \
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -7091,7 +5927,6 @@
                         p.a12.get(),                                          \
                         p.a13.get(),                                          \
                         p.a14.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R14_DEF
@@ -7237,42 +6072,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p =     \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p = \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -7286,7 +6094,6 @@
                         p.a12.get(),                                          \
                         p.a13.get(),                                          \
                         p.a14.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V14_DECL
@@ -7368,42 +6175,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p =     \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 , V > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 > &p = \
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -7417,7 +6197,6 @@
                         p.a12.get(),                                          \
                         p.a13.get(),                                          \
                         p.a14.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V14_DEF
@@ -7566,42 +6345,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p = \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get(),                                          \
-                        p.a15.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p =\
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -7616,7 +6369,6 @@
                         p.a13.get(),                                          \
                         p.a14.get(),                                          \
                         p.a15.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R15_DECL
@@ -7700,42 +6452,16 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
+                ::RCF::ServerParameters<                                      \
+                    R ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p = \
+                    ::RCF::AllocateServerParameters<                          \
                         R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &>(* session.getInProcessParameters());\
-                    p.r.set( t.func( p.a1.get(),                              \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get(),                                          \
-                        p.a15.get() ) );                                      \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        R ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p =\
-                        ::RCF::AllocateServerParameters<                      \
-                            R ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
-                    p.r.set(                                                  \
-                        session.getAutoSend(),                                \
-                        t.func(                                               \
-                            p.a1.get(),                                       \
+                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
+                p.r.set(                                                      \
+                    session.getAutoSend(),                                    \
+                    t.func(                                                   \
+                        p.a1.get(),                                           \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -7750,7 +6476,6 @@
                         p.a13.get(),                                          \
                         p.a14.get(),                                          \
                         p.a15.get()));                                        \
-                }                                                             \
             }
 
 // RCF_METHOD_R15_DEF
@@ -7900,43 +6625,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p = \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get(),                                          \
-                        p.a15.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p =\
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -7951,7 +6648,6 @@
                         p.a13.get(),                                          \
                         p.a14.get(),                                          \
                         p.a15.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V15_DECL
@@ -8036,43 +6732,15 @@
                 ::RCF::RcfSession &session,                                   \
                 T &t)                                                         \
             {                                                                 \
-                if (session.isInProcess())                                    \
-                {                                                             \
-                    ::RCF::ClientParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &p = static_cast<\
-                            ::RCF::ClientParameters<                          \
+                ::RCF::ServerParameters<                                      \
+                    V ,                                                       \
+                    A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p = \
+                        ::RCF::AllocateServerParameters<                      \
                             V ,                                               \
-                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15   > &>(* session.getInProcessParameters());\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
-                        p.a2.get(),                                           \
-                        p.a3.get(),                                           \
-                        p.a4.get(),                                           \
-                        p.a5.get(),                                           \
-                        p.a6.get(),                                           \
-                        p.a7.get(),                                           \
-                        p.a8.get(),                                           \
-                        p.a9.get(),                                           \
-                        p.a10.get(),                                          \
-                        p.a11.get(),                                          \
-                        p.a12.get(),                                          \
-                        p.a13.get(),                                          \
-                        p.a14.get(),                                          \
-                        p.a15.get() );                                        \
-                }                                                             \
-                else                                                          \
-                {                                                             \
-                    ::RCF::ServerParameters<                                  \
-                        V ,                                                   \
-                        A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 > &p =\
-                            ::RCF::AllocateServerParameters<                  \
-                                V ,                                           \
-                                A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
-                    RCF_UNUSED_VARIABLE(p);                                   \
-                    t.func(                                                   \
-                        p.a1.get(),                                           \
+                            A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,A11,A12,A13,A14,A15 >()(session);\
+                RCF_UNUSED_VARIABLE(p);                                       \
+                t.func(                                                       \
+                    p.a1.get(),                                               \
                         p.a2.get(),                                           \
                         p.a3.get(),                                           \
                         p.a4.get(),                                           \
@@ -8087,7 +6755,6 @@
                         p.a13.get(),                                          \
                         p.a14.get(),                                          \
                         p.a15.get());                                         \
-                }                                                             \
             }
 
 // RCF_METHOD_V15_DEF

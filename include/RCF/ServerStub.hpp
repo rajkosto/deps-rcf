@@ -49,13 +49,6 @@ namespace RCF {
     };
 
     template<typename T>
-    class DerefPtr
-    {
-    public:
-        typedef boost::shared_ptr< I_Deref<T> > type;
-    };
-
-    template<typename T>
     class DerefObj : public I_Deref<T>
     {
     public:
@@ -89,54 +82,11 @@ namespace RCF {
         boost::shared_ptr<T> mTPtr;
     };
 
-    template<typename T>
-    class DerefWeakPtr : public I_Deref<T>
-    {
-    public:
-        DerefWeakPtr(boost::weak_ptr<T> tWeakPtr) :
-            mTWeakPtr(tWeakPtr)
-        {}
-
-        T &deref()
-        {
-            boost::shared_ptr<T> tPtr(mTWeakPtr);
-            if (tPtr.get())
-            {
-                return *tPtr;
-            }
-            Exception e(_RcfError_ServerStubExpired());
-            RCF_THROW(e);
-        }
-
-    private:
-        boost::weak_ptr<T> mTWeakPtr;
-    };
-
-    template<typename T>
-    class DerefAutoPtr : public I_Deref<T>
-    {
-    public:
-        DerefAutoPtr(const std::auto_ptr<T> &tAutoPtr) :
-            mTAutoPtr( const_cast<std::auto_ptr<T> &>(tAutoPtr))
-        {}
-
-        T &deref()
-        {
-            return *mTAutoPtr;
-        }
-
-    private:
-        std::auto_ptr<T> mTAutoPtr;
-    };
-
-    typedef boost::function2<
-        void,
-        int,
-        RcfSession &> InvokeFunctor;
-
-    typedef std::map<std::string,  InvokeFunctor> InvokeFunctorMap;
-
-    RCF_EXPORT void setCurrentCallDesc(std::string& desc, RCF::MethodInvocationRequest& request, const char * szFunc, const char * szArity);
+    RCF_EXPORT void setCurrentCallDesc(
+        std::string &                   desc, 
+        RCF::MethodInvocationRequest &  request, 
+        const char *                    szFunc, 
+        const char *                    szArity);
 
     class StubAccess
     {
@@ -154,7 +104,12 @@ namespace RCF {
             RcfSession &                session,
             ImplementationT &           t)
         {
-            setCurrentCallDesc(session.mCurrentCallDesc, session.mRequest, interface_.getFunctionName(id), interface_.getArity(id));
+            setCurrentCallDesc(
+                session.mCurrentCallDesc, 
+                session.mRequest, 
+                interface_.getFunctionName(id), 
+                interface_.getArity(id));
+
             RCF_LOG_2() << "RcfServer - begin remote call. " << session.mCurrentCallDesc;
             interface_.invoke(id, session, t);
         }
@@ -170,154 +125,6 @@ namespace RCF {
             DerefPtrT                   derefPtr)
         {
             interface_.registerInvokeFunctors(invokeFunctorMap, derefPtr);
-        }
-
-        template<typename InheritT, typename InterfaceT, typename DerefPtrT>
-        void registerParentInvokeFunctors(
-            InheritT *,
-            InterfaceT &                interface_,
-            InvokeFunctorMap &          invokeFunctorMap,
-            DerefPtrT                   derefPtr,
-            boost::mpl::false_ *)
-        {
-            typedef typename GetInterface<InheritT>::type ParentInterfaceT;
-            interface_.ParentInterfaceT::registerInvokeFunctors(
-                invokeFunctorMap,
-                derefPtr);
-        }
-
-        template<typename InheritT, typename InterfaceT, typename DerefPtrT>
-        void registerParentInvokeFunctors(
-            InheritT *,
-            InterfaceT &,
-            InvokeFunctorMap &,
-            DerefPtrT,
-            boost::mpl::true_*)
-        {}
-
-        template<typename InheritT, typename InterfaceT, typename DerefPtrT>
-        void registerParentInvokeFunctors(
-            InheritT *                  i,
-            InterfaceT &                interface_,
-            InvokeFunctorMap &          invokeFunctorMap,
-            DerefPtrT                   derefPtr)
-        {
-
-            typedef BOOST_DEDUCED_TYPENAME boost::is_same<
-                InheritT,
-                BOOST_DEDUCED_TYPENAME GetInterface<InheritT>::type >::type type;
-
-            registerParentInvokeFunctors(
-                i,
-                interface_,
-                invokeFunctorMap,
-                derefPtr,
-                (type *) NULL);
-        }
-
-        template<typename InheritT, typename InterfaceT>
-        void setClientStubPtr(
-            InheritT *,
-            InterfaceT &interface_,
-            boost::mpl::false_ *)
-        {
-            typedef typename InheritT::RcfClientT ParentInterfaceT;
-            interface_.ParentInterfaceT::setClientStubPtr(
-                interface_.mClientStubPtr);
-        }
-
-        template<typename InheritT, typename InterfaceT>
-        void setClientStubPtr(
-            InheritT *,
-            InterfaceT &,
-            boost::mpl::true_ *)
-        {}
-
-        template<typename InheritT, typename InterfaceT>
-        void setClientStubPtr(
-            InheritT *i,
-            InterfaceT &interface_)
-        {
-
-            typedef BOOST_DEDUCED_TYPENAME boost::is_same<
-                InheritT,
-                BOOST_DEDUCED_TYPENAME GetInterface<InheritT>::type >::type type;
-
-            setClientStubPtr(i, interface_, (type *) NULL);
-        }
-
-        template<typename Archive, typename RcfClientT>
-        void serialize(
-            Archive &                           ar, 
-            RcfClientT &                        rcfClient)
-        {
-            if (ar.isWrite())
-            {
-                rcfClient.mClientStubPtr ?
-                    ar & true & rcfClient.getClientStub() :
-                    ar & false;
-            }
-            else //if (ar.isRead())
-            {
-                bool hasClientStub = false;
-                ar & hasClientStub;
-                if (hasClientStub)
-                {
-                    if (!rcfClient.mClientStubPtr)
-                    {
-                        typedef typename RcfClientT::Interface Interface;
-                        std::string interfaceName = getInterfaceName( (Interface*) 0);
-                        ClientStubPtr clientStubPtr(new ClientStub(interfaceName));
-                        rcfClient.setClientStubPtr(clientStubPtr);
-                    }
-                    ar & rcfClient.getClientStub();
-                }
-                else
-                {
-                    rcfClient.setClientStubPtr( ClientStubPtr());
-                }
-            }
-        }
-
-        template<typename Archive, typename RcfClientT>
-        void serialize(
-            Archive &                           ar, 
-            RcfClientT &                        rcfClient,
-            const unsigned int)
-        {
-            typedef typename Archive::is_saving IsSaving;
-            const bool isSaving = IsSaving::value;
-
-            if (isSaving)
-            {
-                bool hasClientStub = rcfClient.mClientStubPtr;
-                ar & hasClientStub;
-                if (hasClientStub)
-                {
-                    ar & rcfClient.getClientStub();
-                }
-            }
-            else //if (ar.isRead())
-            {
-                bool hasClientStub = false;
-                ar & hasClientStub;
-                
-                if (hasClientStub)
-                {
-                    if (!rcfClient.mClientStubPtr)
-                    {
-                        typedef typename RcfClientT::Interface Interface;
-                        std::string interfaceName = getInterfaceName( (Interface*) 0);
-                        ClientStubPtr clientStubPtr(new ClientStub(interfaceName));
-                        rcfClient.setClientStubPtr(clientStubPtr);
-                    }
-                    ar & rcfClient.getClientStub();
-                }
-                else
-                {
-                    rcfClient.setClientStubPtr( ClientStubPtr());
-                }
-            }
         }
 
         template<typename RcfClientT>
@@ -603,8 +410,6 @@ namespace RCF {
                 derefPtr);
         }
 
-        void merge(RcfClientPtr rcfClientPtr);
-
     private:
 
         friend class RcfServer;
@@ -621,7 +426,6 @@ namespace RCF {
 
         // TODO: too much overhead per server stub?
         InvokeFunctorMap                mInvokeFunctorMap;
-        std::vector<RcfClientPtr>       mMergedStubs;
 
         CbAccessControl                 mCbAccessControl;
     };

@@ -24,8 +24,6 @@
 #include <RCF/ClientTransport.hpp>
 #include <RCF/ServerTransport.hpp>
 
-#include <SF/SerializeParent.hpp>
-
 #include <RCF/util/Tchar.hpp>
 #include <tchar.h>
 

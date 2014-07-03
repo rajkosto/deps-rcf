@@ -32,29 +32,71 @@ namespace RCF {
 
     class ClientStub;
     class ServerBinding;
+    class RcfSession;
 
     typedef boost::shared_ptr<ClientStub> ClientStubPtr;
     typedef boost::shared_ptr<ServerBinding> ServerBindingPtr;
 
+    typedef boost::function2<
+        void,
+        int,
+        RcfSession &> InvokeFunctor;
+
+    typedef std::map<std::string,  InvokeFunctor> InvokeFunctorMap;
+
     RCF_EXPORT void setCurrentCallDesc(std::string& desc, RCF::MethodInvocationRequest& request, const char * szFunc, const char * szArity);
 
     // Base class of all RcfClient<> templates.
-    class I_RcfClient
+    class RCF_EXPORT I_RcfClient
     {
     public:
 
-        virtual ~I_RcfClient()
-        {}
+        virtual ~I_RcfClient();
 
-        // Returns a reference to the contained client stub, if one is available, i.e. if the RcfClient<> template is configured as a client stub.
-        virtual ClientStub &getClientStub() = 0;
-        virtual const ClientStub &getClientStub() const = 0;
+        I_RcfClient(const std::string & interfaceName);
 
-        // Returns a reference to the contained server stub, if one is available, i.e. if the RcfClient<> template is configured as a server stub.
-        virtual ServerBinding &getServerStub() = 0;
+        I_RcfClient(
+            const std::string &     interfaceName, 
+            ServerBindingPtr        serverStubPtr);
 
-        virtual ClientStubPtr getClientStubPtr() const = 0;
-        virtual ServerBindingPtr getServerStubPtr() const = 0;
+        I_RcfClient(
+            const std::string &     interfaceName, 
+            const Endpoint &        endpoint, 
+            const std::string &     targetName_ = "");
+
+        I_RcfClient(
+            const std::string &     interfaceName, 
+            ClientTransportAutoPtr  clientTransportAutoPtr, 
+            const std::string &     targetName_ = "");
+
+        I_RcfClient(
+            const std::string &     interfaceName, 
+            const ClientStub &      clientStub, 
+            const std::string &     targetName_ = "");
+
+        I_RcfClient(
+            const std::string &     interfaceName, 
+            const I_RcfClient &     rhs);
+
+        I_RcfClient & operator=(const I_RcfClient & rhs);
+
+        void                swap(I_RcfClient & rhs);
+
+        void                setClientStubPtr(ClientStubPtr clientStubPtr);
+
+        ClientStub &        getClientStub();
+        const ClientStub &  getClientStub() const;
+        ClientStubPtr       getClientStubPtr() const;
+        ServerBindingPtr    getServerStubPtr() const;
+        ServerBinding &     getServerStub();
+
+    protected:
+
+        ClientStubPtr                   mClientStubPtr;
+        ServerBindingPtr                mServerStubPtr;
+        std::string                     mInterfaceName;
+
+        typedef Void                    V;
     };
 
     typedef boost::shared_ptr<I_RcfClient> RcfClientPtr;

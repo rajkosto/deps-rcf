@@ -172,11 +172,13 @@ namespace RCF {
         ByteBuffer              mResponseUserData;
         bool                    mUseNativeWstringSerialization;
         bool                    mEnableSfPointerTracking;
+        ByteBuffer              mOutOfBandRequest;
+        ByteBuffer              mOutOfBandResponse;
 
         boost::shared_ptr<std::vector<char> >   mVecPtr;
         
 
-        friend std::ostream& operator<<(std::ostream& os, const MethodInvocationRequest& r)
+        friend RCF::MemOstream& operator<<(RCF::MemOstream& os, const MethodInvocationRequest& r)
         {
             os
                 << NAMEVALUE(r.mToken)
@@ -223,7 +225,7 @@ namespace RCF {
         int                 mArg1;
         bool                mEnableSfPointerTracking;
 
-        friend std::ostream& operator<<(std::ostream& os, const MethodInvocationResponse& r)
+        friend RCF::MemOstream& operator<<(RCF::MemOstream& os, const MethodInvocationResponse& r)
         {
             os    << NAMEVALUE(r.mException);
             if (r.mExceptionPtr.get())
@@ -242,6 +244,102 @@ namespace RCF {
             return os;
         }
     };
+
+    // Out of band messages
+
+    enum OobMessageType
+    {
+        Omt_RequestTransportFilters = 1,
+        Omt_CreateCallbackConnection = 2,
+        Omt_RequestSubscription = 3
+    };
+
+    class OobMessage;
+    typedef boost::shared_ptr<OobMessage> OobMessagePtr;
+    typedef boost::shared_ptr< std::vector<char> > VecPtr;
+
+    class RCF_EXPORT OobMessage
+    {
+    public:
+
+        OobMessage(int runtimeVersion);
+        virtual ~OobMessage();
+
+        virtual OobMessageType  getMessageType() = 0;
+
+        virtual void            encodeRequest(ByteBuffer & buffer) = 0;
+        virtual void            decodeRequest(const ByteBuffer & buffer, std::size_t & pos) = 0;
+
+        virtual void            encodeResponse(ByteBuffer & buffer);
+        virtual void            decodeResponse(const ByteBuffer & buffer);
+
+    protected:
+        void                    encodeRequestCommon(VecPtr vecPtr, std::size_t & pos);
+
+    public:
+        static OobMessagePtr    decodeRequestCommon(const ByteBuffer & buffer);
+
+    protected:
+        void                    encodeResponseCommon(VecPtr vecPtr, std::size_t & pos);
+        void                    decodeResponseCommon(const ByteBuffer & buffer, std::size_t & pos);
+
+        int                     mRuntimeVersion;
+
+    public:
+
+        // Common return values.
+        boost::uint32_t         mResponseError;
+        std::string             mResponseErrorString;
+    };
+
+    class RCF_EXPORT OobRequestTransportFilters : public OobMessage
+    {
+    public:
+        OobRequestTransportFilters(int runtimeVersion);
+
+        OobRequestTransportFilters(
+            int runtimeVersion, 
+            const std::vector<FilterPtr> &filters);
+
+        virtual OobMessageType  getMessageType();
+        virtual void            encodeRequest(ByteBuffer & buffer);
+        virtual void            decodeRequest(const ByteBuffer & buffer, std::size_t & pos);
+
+        std::vector<boost::int32_t>        mFilterIds;
+    };
+
+    class RCF_EXPORT OobCreateCallbackConnection : public OobMessage
+    {
+    public:
+        OobCreateCallbackConnection(int runtimeVersion);
+
+        virtual OobMessageType  getMessageType();
+        virtual void            encodeRequest(ByteBuffer & buffer);
+        virtual void            decodeRequest(const ByteBuffer & buffer, std::size_t & pos);
+    };
+
+    class RCF_EXPORT OobRequestSubscription : public OobMessage
+    {
+    public:
+        OobRequestSubscription(int runtimeVersion);
+
+        OobRequestSubscription(
+            int                     runtimeVersion, 
+            const std::string &     publisherName, 
+            boost::uint32_t         subToPubPingIntervalMs);
+
+        virtual OobMessageType  getMessageType();
+        virtual void            encodeRequest(ByteBuffer & buffer);
+        virtual void            decodeRequest(const ByteBuffer & buffer, std::size_t & pos);
+        virtual void            encodeResponse(ByteBuffer & buffer);
+        virtual void            decodeResponse(const ByteBuffer & buffer);
+
+
+        std::string             mPublisherName;
+        boost::uint32_t         mSubToPubPingIntervalMs;
+        boost::uint32_t         mPubToSubPingIntervalMs;
+    };
+
 
 } // namespace RCF
 

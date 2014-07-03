@@ -21,12 +21,19 @@
 
 #include <SF/Stream.hpp>
 
+namespace RCF {
+    class MemIstream;
+}
+
 namespace SF {
 
     class ITextStream : public IStream
     {
     public:
         ITextStream() : IStream()
+        {}
+
+        ITextStream(RCF::MemIstream &is) : IStream(is)
         {}
 
         ITextStream(std::istream &is) : IStream(is)

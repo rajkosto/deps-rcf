@@ -54,6 +54,9 @@ namespace RCF {
 
     Globals::~Globals()
     {
+        deleteZlibDll();
+        deleteOpenSslCryptoDll();
+        deleteOpenSslDll();
     }
 
     void Globals::setZlibDllName(const std::string & dllName)
@@ -86,6 +89,27 @@ namespace RCF {
         return mOpenSslCryptoDllName;
     }
 
+#if RCF_FEATURE_ZLIB==0
 
+    void Globals::deleteZlibDll()
+    {
+        RCF_ASSERT(!mpZlibDll);
+    }
+
+#endif
+
+#if RCF_FEATURE_OPENSSL==0
+
+    void Globals::deleteOpenSslDll()
+    {
+        RCF_ASSERT(!mpOpenSslDll);
+    }
+
+    void Globals::deleteOpenSslCryptoDll()
+    {
+        RCF_ASSERT(!mpOpenSslCryptoDll);
+    }
+
+#endif
 
 } // namespace RCF

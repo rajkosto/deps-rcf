@@ -27,6 +27,10 @@
 
 #include <boost/enable_shared_from_this.hpp>
 
+#if RCF_FEATURE_FILETRANSFER==1
+#include <RCF/FileUpload.hpp>
+#endif
+
 namespace RCF {
 
     class ThreadLocalData;
@@ -48,6 +52,45 @@ namespace RCF {
         ~ThreadLocalData()
         {
             RCF_DTOR_BEGIN
+
+                for(std::size_t i=0; i<mByteBufferVecCache.size(); ++i)
+                {
+                    delete mByteBufferVecCache[i];
+                    mByteBufferVecCache[i] = NULL;
+                }
+
+                for(std::size_t i=0; i<mIntVecCache.size(); ++i)
+                {
+                    delete mIntVecCache[i];
+                    mIntVecCache[i] = NULL;
+                }
+
+                for(std::size_t i=0; i<mWsabufVecCache.size(); ++i)
+                {
+                    delete mWsabufVecCache[i];
+                    mWsabufVecCache[i] = NULL;
+                }
+
+                for(std::size_t i=0; i<mFilterVecPtr.size(); ++i)
+                {
+                    delete mFilterVecPtr[i];
+                    mFilterVecPtr[i] = NULL;
+                }
+
+                for(std::size_t i=0; i<mRcfSessionCbVecCache.size(); ++i)
+                {
+                    delete mRcfSessionCbVecCache[i];
+                    mRcfSessionCbVecCache[i] = NULL;
+                }
+
+#if RCF_FEATURE_FILETRANSFER==1
+                for(std::size_t i=0; i<mFileUploadVecCache.size(); ++i)
+                {
+                    delete mFileUploadVecCache[i];
+                    mFileUploadVecCache[i] = NULL;
+                }
+#endif
+
                 for (std::size_t i=0; i<mExitHandlers.size(); ++i)
                 {
                     mExitHandlers[i]();

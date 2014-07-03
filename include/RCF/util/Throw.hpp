@@ -26,14 +26,9 @@
 
 #include "VariableArgMacro.hpp"
 
-namespace util {
+namespace RCF {
 
     namespace detail {
-
-        inline bool uncaught_exception()
-        {
-            return std::uncaught_exception();
-        }
 
         class I_InvokeThrow
         {
@@ -143,7 +138,7 @@ namespace util {
                 std::string context = mHeader->str();
                 context += args;
 
-                if (!util::detail::uncaught_exception())
+                if (!std::uncaught_exception())
                 {
                     mInvokeThrow->invoke(context, args, mLogName, mLogLevel, mFile, mLine, mFunc);
                 }
@@ -165,7 +160,7 @@ namespace util {
 #endif
 
 #if defined(__GNUC__) && (__GNUC__ < 3 || (__GNUC__ == 3 && __GNUC_MINOR__ < 4))
-#define UTIL_THROW_GCC_33_HACK (const util::VariableArgMacro<util::ThrowFunctor> &)
+#define UTIL_THROW_GCC_33_HACK (const RCF::VariableArgMacro<RCF::ThrowFunctor> &)
 #else
 #define UTIL_THROW_GCC_33_HACK
 #endif
@@ -174,14 +169,14 @@ DECLARE_VARIABLE_ARG_MACRO( UTIL_THROW, ThrowFunctor );
 #define UTIL_THROW(e, logName, logLevel)                                    \
     while (true)                                                            \
         UTIL_THROW_GCC_33_HACK                                              \
-        util::VariableArgMacro<util::ThrowFunctor>(e, logName, logLevel)    \
+        RCF::VariableArgMacro<RCF::ThrowFunctor>(e, logName, logLevel)    \
             .init(                                                          \
                 "",                                                         \
                 "",                                                         \
                 __FILE__,                                                   \
                 __LINE__,                                                   \
                 BOOST_CURRENT_FUNCTION)                                     \
-            .cast( (util::VariableArgMacro<util::ThrowFunctor> *) NULL)     \
+            .cast( (RCF::VariableArgMacro<RCF::ThrowFunctor> *) NULL)     \
             .UTIL_THROW_A
 
 
@@ -196,6 +191,6 @@ DECLARE_VARIABLE_ARG_MACRO( UTIL_THROW, ThrowFunctor );
 
 #define UTIL_VERIFY(cond, e, logName, logLevel)       if (cond); else UTIL_THROW(e, logName, logLevel)
 
-} // namespace util
+} // namespace RCF
 
 #endif // ! INCLUDE_UTIL_THROW_HPP

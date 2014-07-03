@@ -64,14 +64,14 @@ namespace RCF {
 
     std::string TcpEndpoint::asString() const
     {
-        std::ostringstream os;
+        MemOstream os;
         std::string ip = getIp();
         if (ip.empty())
         {
             ip = "127.0.0.1";
         }
         os << "TCP endpoint " << ip << ":" << getPort();
-        return os.str();
+        return os.string();
     }
 
     IpAddress TcpEndpoint::getIpAddress() const

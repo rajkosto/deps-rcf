@@ -56,18 +56,12 @@ namespace RCF {
         static unsigned int i = 0;
         while (true)
         {
-
-#ifdef UNICODE
-            typedef std::wostringstream     tostringstream;
-#else
-            typedef std::ostringstream      tostringstream;
-#endif
-            tostringstream tos;
-            tos 
-                << pipePrefix
+            MemOstream os;
+            os 
+                << toAstring(pipePrefix)
                 << ++i;
 
-            tstring candidateName = tos.str();
+            tstring candidateName = toTstring(os.string());
 
             DWORD dwOpenMode = 
                     PIPE_ACCESS_DUPLEX 
@@ -103,9 +97,9 @@ namespace RCF {
 
     std::string Win32NamedPipeEndpoint::asString() const
     {
-        std::ostringstream os;
+        MemOstream os;
         os << "Named pipe endpoint \"" << RCF::toAstring(mPipeName) << "\"";
-        return os.str();
+        return os.string();
     }
 
     tstring Win32NamedPipeEndpoint::getPipeName()

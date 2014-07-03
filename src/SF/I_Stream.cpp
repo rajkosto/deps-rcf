@@ -24,6 +24,7 @@
 
 #include <RCF/ByteOrdering.hpp>
 #include <RCF/Exception.hpp>
+#include <RCF/MemStream.hpp>
 
 namespace SF {
 
@@ -70,14 +71,14 @@ namespace SF {
         T *             t, 
         int             nCount)
     {
-        std::ostringstream ostr;
+        RCF::MemOstream ostr;
         ostr << t[0];
         for (int i=1; i<nCount; i++)
         {
             ostr.put(chSeparator);
             ostr << t[i];
         }
-        std::string s = ostr.str();
+        std::string s = ostr.string();
         data.assign(
             reinterpret_cast<const Byte8 *>(s.c_str()), 
             static_cast<UInt32>(s.length()));
@@ -94,8 +95,7 @@ namespace SF {
             RCF::Exception e(RCF::_SfError_DataFormat());
             RCF_THROW(e);
         }
-        std::string strData(reinterpret_cast<char *>(data.get()), data.length());
-        std::istringstream istr(strData);
+        RCF::MemIstream istr(data.get(), data.length());
         istr >> t[0];
         for (int i=1; i<nCount; i++)
         {
@@ -272,6 +272,7 @@ namespace SF {
         UInt32 nBufferSize = sizeof(T) * nCount;
         UInt32 nAlloc = data.allocate(nBufferSize);
         RCF_ASSERT_EQ(nAlloc , nBufferSize);
+        RCF_UNUSED_VARIABLE(nAlloc);
         T *buffer = reinterpret_cast<T *>(data.get());
         memcpy(buffer, t, nBufferSize);
         RCF::machineToNetworkOrder(buffer, sizeof(T), nCount);

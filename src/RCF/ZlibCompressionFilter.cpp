@@ -68,38 +68,35 @@ namespace RCF {
         loadFunctionPtrs();
     }
 
+#ifdef RCF_ZLIB_STATIC
+
+// Load static function pointers.
+// Requires linking to zlib or building with zlib source.
+#define RCF_ZLIB_LOAD_FUNCTION RCF_LOAD_LIB_FUNCTION
+
+#else
+
+// Load dynamic function pointers directly from zlib DLL.
+// Requires zlib DLL to be present at runtime.
+// Does not require linking to zlib.
+#define RCF_ZLIB_LOAD_FUNCTION RCF_LOAD_DLL_FUNCTION
+
+#endif
+
     void ZlibDll::loadFunctionPtrs()
     {
 
-#ifdef RCF_ZLIB_STATIC
-
-        // Load static function pointers.
-        // Requires linking to zlib or building with zlib source.
-
-        RCF_LOAD_LIB_FUNCTION(deflateInit_)
-        RCF_LOAD_LIB_FUNCTION(deflate)
-        RCF_LOAD_LIB_FUNCTION(deflateEnd)
-
-        RCF_LOAD_LIB_FUNCTION(inflateInit_)
-        RCF_LOAD_LIB_FUNCTION(inflate)
-        RCF_LOAD_LIB_FUNCTION(inflateEnd)
-
-#else
+#ifndef RCF_ZLIB_STATIC
         RCF_ASSERT(mDynamicLibPtr);
-
-        // Load dynamic function pointers directly from zlib DLL.
-        // Requires zlib DLL to be present at runtime.
-        // Does not require linking to zlib.
-
-        RCF_LOAD_DLL_FUNCTION(deflateInit_)
-        RCF_LOAD_DLL_FUNCTION(deflate)
-        RCF_LOAD_DLL_FUNCTION(deflateEnd)
-
-        RCF_LOAD_DLL_FUNCTION(inflateInit_)
-        RCF_LOAD_DLL_FUNCTION(inflate)
-        RCF_LOAD_DLL_FUNCTION(inflateEnd)
-
 #endif
+
+        RCF_ZLIB_LOAD_FUNCTION(deflateInit_)
+        RCF_ZLIB_LOAD_FUNCTION(deflate)
+        RCF_ZLIB_LOAD_FUNCTION(deflateEnd)
+
+        RCF_ZLIB_LOAD_FUNCTION(inflateInit_)
+        RCF_ZLIB_LOAD_FUNCTION(inflate)
+        RCF_ZLIB_LOAD_FUNCTION(inflateEnd)
 
     }
 
@@ -113,6 +110,19 @@ namespace RCF {
         }
         return *mpZlibDll;
     }
+
+#if RCF_FEATURE_ZLIB==1
+
+    void Globals::deleteZlibDll()
+    {
+        if (mpZlibDll)
+        {
+            delete mpZlibDll;
+            mpZlibDll = NULL;
+        }
+    }
+
+#endif
 
     class ZlibCompressionReadFilter
     {

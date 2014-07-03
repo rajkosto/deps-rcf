@@ -85,6 +85,7 @@ namespace RCF {
         // close the current connection
         implClose();
 
+        RCF_ASSERT(!mAsync);
 
         setupSocket();
 
@@ -174,7 +175,7 @@ namespace RCF {
 
         RCF_ASSERT(mLocalSocketPtr);
 
-        mOverlappedPtr->mOpType = OverlappedAmi::Connect;
+        mOverlappedPtr->mOpType = Connect;
 
         mLocalSocketPtr->async_connect( 
             endpoint, 

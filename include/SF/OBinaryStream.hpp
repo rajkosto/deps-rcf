@@ -29,6 +29,9 @@ namespace SF {
         OBinaryStream() : OStream()
         {}
 
+        OBinaryStream(RCF::MemOstream &os) : OStream(os)
+        {}
+
         OBinaryStream(std::ostream &os) : OStream(os)
         {}
 

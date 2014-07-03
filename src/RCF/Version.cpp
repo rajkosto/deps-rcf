@@ -27,7 +27,7 @@ namespace RCF {
 
     // Runtime versioning.
 
-    const boost::uint32_t gRuntimeVersionInherent = 11;
+    const boost::uint32_t gRuntimeVersionInherent = 12;
 
     boost::uint32_t gRuntimeVersionDefault = gRuntimeVersionInherent;
 

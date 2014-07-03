@@ -34,144 +34,54 @@
 #define RCF_MAX_METHOD_COUNT 100
 #endif
 
-#if !defined(RCF_USE_SF_SERIALIZATION) && !defined(RCF_USE_BOOST_SERIALIZATION) && !defined(RCF_USE_BOOST_XML_SERIALIZATION)
-#define RCF_USE_SF_SERIALIZATION
-#endif
-
 // On Cygwin, need to compile against external Boost.Asio.
 #if defined(__CYGWIN__) && !defined(RCF_USE_BOOST_ASIO)
 #define RCF_USE_BOOST_ASIO
 #endif
 
+// C++11 requires us to mark some destructors as throwing. Boost.Config needs to 
+// be from a fairly recent version of Boost to detect whether the compiler has 
+// noexcept() support.
+#if BOOST_VERSION >= 104900
+
+#ifdef BOOST_NO_NOEXCEPT
+#define RCF_DTOR_THROWS
+#else
+#define RCF_DTOR_THROWS noexcept(false)
+#endif
+
+#else
+
+#define RCF_DTOR_THROWS
+
+#endif
+
 //------------------------------------------------------------------------------
 // Determine which features to compile.
 
-// Check for predefined feature sets.
-
-#if defined(RCF_BUILD_MIN)
-
-//------------------------------------------------------------------------------
-// Minimum build features.
-
-#undef RCF_FEATURE_ZLIB
-#undef RCF_FEATURE_OPENSSL
-#undef RCF_FEATURE_IPV6
-#undef RCF_FEATURE_PROTOBUF
-#undef RCF_FEATURE_FILETRANSFER
-#undef RCF_FEATURE_JSON
-#undef RCF_FEATURE_CUSTOM_ALLOCATOR
-#undef RCF_FEATURE_SSPI
-#undef RCF_FEATURE_SERVER
-#undef RCF_FEATURE_PUBSUB
-#undef RCF_FEATURE_LEGACY
-#undef RCF_FEATURE_HTTP
-#undef RCF_FEATURE_UDP
-#undef RCF_FEATURE_NAMEDPIPE
-#undef RCF_FEATURE_LOCALSOCKET
-#undef RCF_FEATURE_INPROCESS
-#undef RCF_FEATURE_TCP
-
-#define RCF_FEATURE_ZLIB                0
-#define RCF_FEATURE_OPENSSL             0
-#define RCF_FEATURE_IPV6                0
-#define RCF_FEATURE_PROTOBUF            0
-#define RCF_FEATURE_FILETRANSFER        0
-#define RCF_FEATURE_JSON                0
-#define RCF_FEATURE_CUSTOM_ALLOCATOR    0
-#define RCF_FEATURE_SSPI                0
-#define RCF_FEATURE_SERVER              0
-#define RCF_FEATURE_PUBSUB              0
-#define RCF_FEATURE_LEGACY              0
-#define RCF_FEATURE_HTTP                0
-#define RCF_FEATURE_UDP                 0
-#define RCF_FEATURE_NAMEDPIPE           0
-#define RCF_FEATURE_LOCALSOCKET         0
-#define RCF_FEATURE_INPROCESS           0
-#define RCF_FEATURE_TCP                 1
-
-#elif defined(RCF_BUILD_REGULAR)
-
-//------------------------------------------------------------------------------
-// Regular build features.
-
-#undef RCF_FEATURE_ZLIB
-#undef RCF_FEATURE_OPENSSL
-#undef RCF_FEATURE_IPV6
-#undef RCF_FEATURE_PROTOBUF
-#undef RCF_FEATURE_FILETRANSFER
-#undef RCF_FEATURE_JSON
-#undef RCF_FEATURE_CUSTOM_ALLOCATOR
-#undef RCF_FEATURE_SSPI
-#undef RCF_FEATURE_SERVER
-#undef RCF_FEATURE_PUBSUB
-#undef RCF_FEATURE_LEGACY
-#undef RCF_FEATURE_HTTP
-#undef RCF_FEATURE_UDP
-#undef RCF_FEATURE_NAMEDPIPE
-#undef RCF_FEATURE_LOCALSOCKET
-#undef RCF_FEATURE_INPROCESS
-#undef RCF_FEATURE_TCP
-
-#define RCF_FEATURE_ZLIB                0
-#define RCF_FEATURE_OPENSSL             0
-#define RCF_FEATURE_IPV6                0
-#define RCF_FEATURE_PROTOBUF            0
-#define RCF_FEATURE_FILETRANSFER        0
-#define RCF_FEATURE_JSON                0
-#define RCF_FEATURE_CUSTOM_ALLOCATOR    0
-#define RCF_FEATURE_SSPI                1
-#define RCF_FEATURE_SERVER              1
-#define RCF_FEATURE_PUBSUB              1
-#define RCF_FEATURE_LEGACY              1
-#define RCF_FEATURE_HTTP                1
-#define RCF_FEATURE_UDP                 1
-#define RCF_FEATURE_NAMEDPIPE           1
-#define RCF_FEATURE_LOCALSOCKET         1
-#define RCF_FEATURE_INPROCESS           1
-#define RCF_FEATURE_TCP                 1
-
-#elif defined(RCF_BUILD_MAX)
-
-//------------------------------------------------------------------------------
-// Maximum build features.
-
-#undef RCF_FEATURE_ZLIB
-#undef RCF_FEATURE_OPENSSL
-#undef RCF_FEATURE_IPV6
-#undef RCF_FEATURE_PROTOBUF
-#undef RCF_FEATURE_FILETRANSFER
-#undef RCF_FEATURE_JSON
-#undef RCF_FEATURE_CUSTOM_ALLOCATOR
-#undef RCF_FEATURE_SSPI
-#undef RCF_FEATURE_SERVER
-#undef RCF_FEATURE_PUBSUB
-#undef RCF_FEATURE_LEGACY
-#undef RCF_FEATURE_HTTP
-#undef RCF_FEATURE_UDP
-#undef RCF_FEATURE_NAMEDPIPE
-#undef RCF_FEATURE_LOCALSOCKET
-#undef RCF_FEATURE_INPROCESS
-#undef RCF_FEATURE_TCP
-
-#define RCF_FEATURE_ZLIB                1
-#define RCF_FEATURE_OPENSSL             1
-#define RCF_FEATURE_IPV6                1
-#define RCF_FEATURE_PROTOBUF            1
-#define RCF_FEATURE_FILETRANSFER        1
-#define RCF_FEATURE_JSON                1
-#define RCF_FEATURE_CUSTOM_ALLOCATOR    1
-#define RCF_FEATURE_SSPI                1
-#define RCF_FEATURE_SERVER              1
-#define RCF_FEATURE_PUBSUB              1
-#define RCF_FEATURE_LEGACY              1
-#define RCF_FEATURE_HTTP                1
-#define RCF_FEATURE_UDP                 1
-#define RCF_FEATURE_NAMEDPIPE           1
-#define RCF_FEATURE_LOCALSOCKET         1
-#define RCF_FEATURE_INPROCESS           1
-#define RCF_FEATURE_TCP                 1
-
+#ifndef RCF_PRO
+#define RCF_PRO 1
 #endif
+
+// For a minimum build.
+//#define RCF_FEATURE_ZLIB                0
+//#define RCF_FEATURE_OPENSSL             0
+//#define RCF_FEATURE_IPV6                0
+//#define RCF_FEATURE_PROTOBUF            0
+//#define RCF_FEATURE_FILETRANSFER        0
+//#define RCF_FEATURE_JSON                0
+//#define RCF_FEATURE_CUSTOM_ALLOCATOR    0
+//#define RCF_FEATURE_SSPI                0
+//#define RCF_FEATURE_SERVER              0
+//#define RCF_FEATURE_PUBSUB              0
+//#define RCF_FEATURE_LEGACY              0
+//#define RCF_FEATURE_HTTP                0
+//#define RCF_FEATURE_UDP                 0
+//#define RCF_FEATURE_NAMEDPIPE           0
+//#define RCF_FEATURE_LOCALSOCKET         0
+//#define RCF_FEATURE_TCP                 1
+//#define RCF_FEATURE_SF                  1
+//#define RCF_FEATURE_BOOST_SERIALIZATION 0
 
 // RCF_FEATURE_LOCALSOCKET not supported on Windows platforms.
 #if defined(RCF_FEATURE_LOCALSOCKET) && defined(BOOST_WINDOWS)
@@ -212,8 +122,9 @@
 #endif
 #endif
 
+// SSPI feature.
 #ifndef RCF_FEATURE_SSPI
-#ifdef BOOST_WINDOWS
+#if defined(BOOST_WINDOWS) && RCF_PRO == 1
 #define RCF_FEATURE_SSPI                1
 #else
 #define RCF_FEATURE_SSPI                0
@@ -272,11 +183,6 @@
 #endif
 #endif
 
-// In process transport feature.
-#ifndef RCF_FEATURE_INPROCESS
-#define RCF_FEATURE_INPROCESS       1
-#endif
-
 // TCP feature.
 #ifndef RCF_FEATURE_TCP
 #define RCF_FEATURE_TCP             1
@@ -294,7 +200,11 @@
 
 // Protocol Buffers feature
 #ifndef RCF_FEATURE_PROTOBUF
-#define RCF_FEATURE_PROTOBUF        0
+#ifdef RCF_USE_PROTOBUF
+#define RCF_FEATURE_PROTOBUF    1
+#else
+#define RCF_FEATURE_PROTOBUF    0
+#endif
 #endif
 
 // Custom allocator feature.
@@ -304,6 +214,33 @@
 #else
 #define RCF_FEATURE_CUSTOM_ALLOCATOR    0
 #endif
+#endif
+
+
+// RCF_FEATURE_SF / RCF_FEATURE_BOOST_SERIALIZATION.
+// Need to be able to interpret older macros RCF_USE_SF_SERIALIZATION / RCF_USE_BOOST_SERIALIZATION.
+
+// If nothing defined, then enable SF.
+#if !defined(RCF_USE_SF_SERIALIZATION) && !defined(RCF_USE_BOOST_SERIALIZATION) && !defined(RCF_FEATURE_SF) && !defined(RCF_FEATURE_BOOST_SERIALIZATION)
+#define RCF_FEATURE_SF                      1
+#endif
+
+#if RCF_FEATURE_SF==1
+#define RCF_FEATURE_SF                      1
+#endif
+
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
+#define RCF_FEATURE_BOOST_SERIALIZATION     1
+#endif
+
+// SF feature
+#ifndef RCF_FEATURE_SF
+#define RCF_FEATURE_SF                      1
+#endif
+
+// Boost.Serialization feature.
+#ifndef RCF_FEATURE_BOOST_SERIALIZATION
+#define RCF_FEATURE_BOOST_SERIALIZATION     0
 #endif
 
 //------------------------------------------------------------------------------

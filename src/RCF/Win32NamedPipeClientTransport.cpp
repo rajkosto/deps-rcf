@@ -290,7 +290,7 @@ namespace RCF {
 
         RecursiveLock lock(mOverlappedPtr->mMutex);
 
-        mOverlappedPtr->mOpType = OverlappedAmi::Connect;
+        mOverlappedPtr->mOpType = Connect;
 
         if (hPipe != INVALID_HANDLE_VALUE)
         {
@@ -440,12 +440,13 @@ namespace RCF {
         const ByteBuffer &byteBuffer,
         std::size_t bytesRequested)
     {
-        
         mAsyncMode = true;
 
         RecursiveLock lock(mOverlappedPtr->mMutex);
 
-        mOverlappedPtr->mOpType = OverlappedAmi::Read;
+        mOverlappedPtr->ensureLifetime(byteBuffer);
+
+        mOverlappedPtr->mOpType = Read;
 
         // Construct an OVERLAPPED-derived object to contain the handler.
         ASIO_NS::windows::overlapped_ptr overlapped(
@@ -484,11 +485,18 @@ namespace RCF {
             overlapped.release();
 
             // Set timer.
-            boost::uint32_t nowMs = getCurrentTimeMs();
-            boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
-            mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
-
-            mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+            if (mNoTimeout)
+            {
+                // Timeouts are being handled at a higher level (MulticastClientTransport).
+                // ...
+            }
+            else
+            {
+                boost::uint32_t nowMs = getCurrentTimeMs();
+                boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
+                mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
+                mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+            }
         }
         else
         {
@@ -549,14 +557,16 @@ namespace RCF {
 
         RecursiveLock lock(mOverlappedPtr->mMutex);
 
-        mOverlappedPtr->mOpType = OverlappedAmi::Write;
+        const ByteBuffer & byteBuffer = byteBuffers.front();
+
+        mOverlappedPtr->ensureLifetime(byteBuffer);
+
+        mOverlappedPtr->mOpType = Write;
 
         // Construct an OVERLAPPED-derived object to contain the handler.
         ASIO_NS::windows::overlapped_ptr overlapped(
             mSocketPtr->get_io_service(), 
             AmiIoHandler(mOverlappedPtr));
-
-        const ByteBuffer & byteBuffer = byteBuffers.front();
 
         DWORD dwBytesWritten = 0;
 
@@ -569,7 +579,7 @@ namespace RCF {
             &dwBytesWritten,
             overlapped.get());
 
-        DWORD dwErr = GetLastError();;
+        DWORD dwErr = GetLastError();
 
         if (!ok &&  (
                     dwErr == ERROR_IO_PENDING 
@@ -590,11 +600,18 @@ namespace RCF {
             overlapped.release();
 
             // Set timer.
-            boost::uint32_t nowMs = getCurrentTimeMs();
-            boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
-            mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
-
-            mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+            if (mNoTimeout)
+            {
+                // Timeouts are being handled at a higher level (MulticastClientTransport).
+                // ...
+            }
+            else
+            {
+                boost::uint32_t nowMs = getCurrentTimeMs();
+                boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
+                mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
+                mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+            }
         }
         else
         {

@@ -69,6 +69,11 @@ namespace RCF {
 
     extern Globals * gpGlobals;
 
+    std::size_t getInitRefCount()
+    {
+        return gInitRefCount;
+    }
+
     bool init(RcfConfigT *)
     {
         Lock lock(getRootMutex());
@@ -94,7 +99,7 @@ namespace RCF {
 #endif
 
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
             initRegistrySingleton();
 #endif
 
@@ -160,7 +165,7 @@ namespace RCF {
 #endif
 
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
             deinitRegistrySingleton();
 #endif
 

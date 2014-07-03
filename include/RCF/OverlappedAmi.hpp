@@ -22,6 +22,8 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <RCF/Asio.hpp>
+#include <RCF/Enums.hpp>
 #include <RCF/ThreadLibrary.hpp>
 
 namespace RCF {
@@ -38,7 +40,7 @@ namespace RCF {
         void clear();
 
     private:
-        Cb                  mCb;
+        Cb          mCb;
         MutexPtr   mMutexPtr;
         LockPtr    mLockPtr;
     };
@@ -53,15 +55,6 @@ namespace RCF {
         public boost::enable_shared_from_this<OverlappedAmi>
     {
     public:
-
-        enum AsyncOpType
-        {
-            None,
-            Wait,
-            Connect,
-            Write,
-            Read
-        };
 
         OverlappedAmi(ConnectionOrientedClientTransport *pTcpClientTransport) : 
             mpTransport(pTcpClientTransport),
@@ -83,12 +76,22 @@ namespace RCF {
             std::size_t index,
             const AsioErrorCode & ec);
 
+        void ensureLifetime(const ByteBuffer & byteBuffer);
+        void ensureLifetime(const std::vector<ByteBuffer> & byteBuffers);
+
+        // TODO: should make these private.
+
         RecursiveMutex                      mMutex;
         ConnectionOrientedClientTransport * mpTransport;
         std::size_t                         mIndex;
         AsyncOpType                         mOpType;
-    };
 
+    private:
+
+        // This is the underlying memory for the asio buffers. This memory has to
+        // be held on to, until the async op completes.
+        std::vector<ByteBuffer>             mByteBuffers;   
+    };
 
 } // namespace RCF
 

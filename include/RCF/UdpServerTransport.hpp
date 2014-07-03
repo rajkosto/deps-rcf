@@ -90,6 +90,11 @@ namespace RCF {
         public I_Service,
         boost::noncopyable
     {
+    private:
+
+        typedef UdpSessionState SessionState;
+        typedef UdpSessionStatePtr SessionStatePtr;
+
     public:
 
         UdpServerTransport(
@@ -110,6 +115,8 @@ namespace RCF {
         void        close();
         void        cycle(int timeoutMs);
 
+        void        tryReadMessage(SessionStatePtr sessionStatePtr);
+
         void        cycleTransportAndServer(int timeoutMs);
 
         UdpServerTransport & enableSharedAddressBinding();
@@ -120,11 +127,6 @@ namespace RCF {
         void        onServiceRemoved(RcfServer &server);
         void        onServerStart(RcfServer &server);
         void        onServerStop(RcfServer &server);
-
-    private:
-
-        typedef UdpSessionState SessionState;
-        typedef UdpSessionStatePtr SessionStatePtr;
 
         RcfServer *         mpRcfServer;
         IpAddress           mIpAddress;

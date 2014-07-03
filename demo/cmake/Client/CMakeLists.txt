@@ -4,7 +4,7 @@ ADD_DEFINITIONS( ${RCF_DEFINES} )
 INCLUDE_DIRECTORIES( ${RCF_INCLUDES} )
 
 ADD_EXECUTABLE(
-    Client
+    DemoClient
     ${RCF_ROOT}/demo/Client.cpp)
 
-TARGET_LINK_LIBRARIES( Client RcfLib ${RCF_LIBS} )
+TARGET_LINK_LIBRARIES( DemoClient RcfLib ${RCF_LIBS} )

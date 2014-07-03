@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-namespace util {
+namespace RCF {
 
     class Scan {
     public:
@@ -108,7 +108,6 @@ namespace util {
         bool ok_;
     };
 
-} // namespace util
-
+} // namespace RCF
 
 #endif // ! INCLUDE_UTIL_SCAN_HPP

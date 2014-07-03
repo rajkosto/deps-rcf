@@ -86,12 +86,12 @@ private:
     bool mEnumerateOnly;
 };
 
-class RCF_TEST_EXPORT TestCase
+class RCF_TEST_EXPORT TestCaseSentry
 {
 public:
-                TestCase(const std::string & name);
-                TestCase(std::size_t n);
-                ~TestCase();
+                TestCaseSentry(const std::string & name);
+                TestCaseSentry(std::size_t n);
+                ~TestCaseSentry();
 
     bool        shouldRun();
     void        setHasRun();
@@ -105,7 +105,7 @@ private:
 
 #define TEST_CASE(name) TEST_CASE_IMPL(name, BOOST_PP_CAT(testCase, __LINE__))
 #define TEST_CASE_IMPL(name, instName)  \
-    for (RCF::TestCase instName((name)); instName.shouldRun(); instName.setHasRun())
+    for (RCF::TestCaseSentry instName((name)); instName.shouldRun(); instName.setHasRun())
 
 class RCF_TEST_EXPORT TestEnv
 {
@@ -132,7 +132,7 @@ public:
 
 private:
 
-    friend class TestCase;
+    friend class TestCaseSentry;
 
     TestHierarchy mTestHierarchy;
 
@@ -152,7 +152,7 @@ RCF_TEST_EXPORT TestEnv & gTestEnv();
 
 // RCF_CHECK
 
-class RcfCheckFunctor : public util::VariableArgMacroFunctor
+class RcfCheckFunctor : public RCF::VariableArgMacroFunctor
 {
 public:
 

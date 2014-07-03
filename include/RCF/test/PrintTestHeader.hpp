@@ -117,37 +117,27 @@ inline void printTestHeader(const char *file)
 
 #endif
     
-#ifdef BOOST_SP_ENABLE_DEBUG_HOOKS
-    std::cout << "BOOST_SP_ENABLE_DEBUG_HOOKS" << std::endl;
-#endif 
-
     std::cout << "RCF_MAX_METHOD_COUNT: " << RCF_MAX_METHOD_COUNT << std::endl;
 
-#ifdef RCF_USE_SF_SERIALIZATION
-    std::cout << "RCF_USE_SF_SERIALIZATION" << std::endl;
-#endif
+    std::cout << "RCF_FEATURE_LEGACY:               : " << RCF_FEATURE_LEGACY << std::endl;
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
-    std::cout << "RCF_USE_BOOST_SERIALIZATION" << std::endl;
-#endif
+    std::cout << "RCF_FEATURE_SF:                   : " << RCF_FEATURE_SF << std::endl;
 
-#ifdef RCF_USE_BOOST_XML_SERIALIZATION
-    std::cout << "RCF_USE_BOOST_XML_SERIALIZATION" << std::endl;
-#endif
+    std::cout << "RCF_FEATURE_BOOST_SERIALIZATION   : " << RCF_FEATURE_BOOST_SERIALIZATION << std::endl;
 
-    std::cout << "RCF_FEATURE_ZLIB             : " << RCF_FEATURE_ZLIB << std::endl;
+    std::cout << "RCF_FEATURE_ZLIB                  : " << RCF_FEATURE_ZLIB << std::endl;
 
-    std::cout << "RCF_FEATURE_OPENSSL          : " << RCF_FEATURE_OPENSSL << std::endl;
+    std::cout << "RCF_FEATURE_OPENSSL               : " << RCF_FEATURE_OPENSSL << std::endl;
 
-    std::cout << "RCF_FEATURE_FILETRANSFER     : " << RCF_FEATURE_FILETRANSFER << std::endl;
+    std::cout << "RCF_FEATURE_FILETRANSFER          : " << RCF_FEATURE_FILETRANSFER << std::endl;
 
-    std::cout << "RCF_FEATURE_JSON             : " << RCF_FEATURE_JSON << std::endl;
+    std::cout << "RCF_FEATURE_JSON                  : " << RCF_FEATURE_JSON << std::endl;
 
-    std::cout << "RCF_FEATURE_IPV6             : " << RCF_FEATURE_IPV6 << std::endl;
+    std::cout << "RCF_FEATURE_IPV6                  : " << RCF_FEATURE_IPV6 << std::endl;
 
-    std::cout << "RCF_FEATURE_PROTOBUF         : " << RCF_FEATURE_PROTOBUF << std::endl;
+    std::cout << "RCF_FEATURE_PROTOBUF              : " << RCF_FEATURE_PROTOBUF << std::endl;
 
-    std::cout << "RCF_FEATURE_CUSTOM_ALLOCATOR : " << RCF_FEATURE_CUSTOM_ALLOCATOR << std::endl;
+    std::cout << "RCF_FEATURE_CUSTOM_ALLOCATOR      : " << RCF_FEATURE_CUSTOM_ALLOCATOR << std::endl;
 
     std::cout << "*********************\n\n";
 }

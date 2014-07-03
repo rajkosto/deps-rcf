@@ -24,7 +24,7 @@
 
 namespace RCF {
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
     const SerializationProtocol DefaultSerializationProtocol = Sp_SfBinary;
 #else
     const SerializationProtocol DefaultSerializationProtocol = Sp_BsBinary;
@@ -120,7 +120,7 @@ namespace RCF {
         setSerializationProtocol(protocol);
         bindProtocol();
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         if (protocol == Sp_SfBinary)
         {
             mInProtocol1.getIStream().setEnablePointerTracking(enableSfPointerTracking);
@@ -166,31 +166,8 @@ namespace RCF {
         }
         else
         {
-            std::size_t pos = static_cast<std::size_t>(mIs.tellg());
-
-#ifdef _MSC_VER
-
-            std::size_t newPos = static_cast<std::size_t>(mIs.rdbuf()->pubseekoff(
-                static_cast<std::basic_streambuf<char>::off_type>(len),
-                std::ios::cur,
-                std::ios::in));
-
-#else
-
-            std::size_t newPos = mIs.rdbuf()->pubseekoff(
-                len,
-                std::ios::cur,
-                std::ios::in);
-
-#endif
-
-            RCF_VERIFY(
-                newPos != std::size_t(-1),
-                RCF::SerializationException(
-                _RcfError_ExtractSlice(pos, len, mByteBuffer.getLength()),
-                "extractSlice()"))
-                (pos)(len)(mByteBuffer.getLength() );
-
+            std::size_t pos = static_cast<std::size_t>(mIs.getReadPos());
+            mIs.moveReadPos(pos+len);
             byteBuffer = ByteBuffer(mByteBuffer, pos, len);
         }
     }
@@ -207,7 +184,7 @@ namespace RCF {
 
     std::size_t SerializationProtocolIn::getRemainingArchiveLength()
     {
-        std::size_t pos = static_cast<std::size_t>(mIs.tellg());
+        std::size_t pos = static_cast<std::size_t>(mIs.getReadPos());
         std::size_t len = mByteBuffer.getLength();
         RCF_ASSERT_LTEQ(pos , len);
         return len - pos;
@@ -260,7 +237,7 @@ namespace RCF {
         else
         {
             mOsPtr->clear(); // freezing may have set error state
-            mOsPtr->rdbuf()->pubseekoff(0, std::ios::beg, std::ios::out);
+            mOsPtr->rewind();
         }
 
         // set up margin
@@ -284,7 +261,7 @@ namespace RCF {
         }
         bindProtocol();
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         if (protocol == Sp_SfBinary)
         {
             mOutProtocol1.getOStream().setEnablePointerTracking(enableSfPointerTracking);

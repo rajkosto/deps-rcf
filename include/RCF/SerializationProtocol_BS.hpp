@@ -21,16 +21,11 @@
 
 #include <RCF/SerializationProtocol_Base.hpp>
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#endif
-
-#ifdef RCF_USE_BOOST_XML_SERIALIZATION
-#include <boost/archive/xml_iarchive.hpp>
-#include <boost/archive/xml_oarchive.hpp>
 #endif
 
 #include <boost/serialization/base_object.hpp>
@@ -40,7 +35,7 @@
 
 namespace RCF {   
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 
     template<> 
     class Protocol< boost::mpl::int_<BsBinary> > :
@@ -61,21 +56,6 @@ namespace RCF {
         static std::string getName()
         {
             return "Boost.Serialization text serialization protocol.";
-        }
-    };
-
-#endif
-
-#ifdef RCF_USE_BOOST_XML_SERIALIZATION
-
-    template<> 
-    class Protocol< boost::mpl::int_<BsXml> > :
-        public ProtocolImpl_BSer<boost::archive::xml_iarchive, boost::archive::xml_oarchive>
-    {
-    public:
-        static std::string getName()
-        {
-            return "Boost.Serialization xml serialization protocol.";
         }
     };
 

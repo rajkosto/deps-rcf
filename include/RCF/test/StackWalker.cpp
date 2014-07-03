@@ -1219,6 +1219,12 @@ void StackWalker::OnSymInit(LPCSTR szSearchPath, DWORD symOptions, LPCSTR szUser
     OnOutput(buffer);
   }
 #else
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // warning C4996: 'GetVersionExA': was declared deprecated
+#endif
+
   OSVERSIONINFOEXA ver;
   ZeroMemory(&ver, sizeof(OSVERSIONINFOEXA));
   ver.dwOSVersionInfoSize = sizeof(ver);
@@ -1229,6 +1235,11 @@ void StackWalker::OnSymInit(LPCSTR szSearchPath, DWORD symOptions, LPCSTR szUser
       ver.szCSDVersion, ver.wSuiteMask, ver.wProductType);
     OnOutput(buffer);
   }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
 #endif
 }
 

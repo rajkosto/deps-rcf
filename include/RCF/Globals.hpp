@@ -36,20 +36,24 @@ namespace RCF {
         Globals();
         ~Globals();
 
-        void setZlibDllName(const std::string & dllName);
-        std::string getZlibDllName() const;
+        void                setZlibDllName(const std::string & dllName);
+        std::string         getZlibDllName() const;
 
-        void setOpenSslDllName(const std::string & dllName);
-        std::string getOpenSslDllName() const;
+        void                setOpenSslDllName(const std::string & dllName);
+        std::string         getOpenSslDllName() const;
 
-        void setOpenSslCryptoDllName(const std::string & dllName);
-        std::string getOpenSslCryptoDllName() const;
+        void                setOpenSslCryptoDllName(const std::string & dllName);
+        std::string         getOpenSslCryptoDllName() const;
         
         ZlibDll &           getZlibDll();
         OpenSslDll &        getOpenSslDll();
         OpenSslCryptoDll &  getOpenSslCryptoDll();
 
     private:
+
+        void                deleteZlibDll();
+        void                deleteOpenSslDll();
+        void                deleteOpenSslCryptoDll();
 
         ZlibDll *           mpZlibDll;
         OpenSslDll *        mpOpenSslDll;

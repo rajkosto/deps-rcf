@@ -60,6 +60,8 @@ namespace RCF {
         void setAsyncDispatcher(RcfServer & server);
         RcfServer * getAsyncDispatcher();
 
+        virtual bool isClientStub() const { return false; }
+
     private:
         RcfServer * mpAsyncDispatcher;
     };
@@ -164,9 +166,6 @@ namespace RCF {
 
         virtual void associateWithIoService(AsioIoService & ioService);
         virtual bool isAssociatedWithIoService();
-
-        virtual bool isInProcess();
-        virtual void doInProcessCall(ClientStub & clientStub);
 
         virtual bool supportsTransportFilters()
         {

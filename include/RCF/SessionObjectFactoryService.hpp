@@ -19,6 +19,12 @@
 #ifndef INCLUDE_RCF_SESSIONOBJECTFACTORYSERVICE_HPP
 #define INCLUDE_RCF_SESSIONOBJECTFACTORYSERVICE_HPP
 
+#include <RCF/Config.hpp>
+
+#if RCF_FEATURE_LEGACY==0
+#error This header is only supported in builds with RCF_FEATURE_LEGACY=1.
+#endif
+
 #include <RCF/ObjectFactoryService.hpp>
 
 namespace RCF {

@@ -358,6 +358,28 @@ namespace SF {
         return archive;
     }
 
+    template<typename T, typename U>
+    inline void serializeAs(Archive & ar, T &t)
+    {
+        if (ar.isWrite())
+        {
+            U u = static_cast<U>(t);
+            ar & u;
+        }
+        else
+        {
+            U u;
+            ar & u;
+            t = static_cast<T>(u);
+        }
+    }
+
+#define SF_SERIALIZE_ENUM_CLASS(EnumType, BaseType)             \
+    void serialize(SF::Archive & ar, EnumType & e)              \
+    {                                                           \
+        SF::serializeAs<EnumType, BaseType>(ar, e);             \
+    }
+
 }
 
 #include <SF/Registry.hpp>

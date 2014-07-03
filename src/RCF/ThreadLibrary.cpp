@@ -101,6 +101,7 @@ namespace RCF {
         Lock lock(mx);
         Condition cond;
         bool timedOut = !cond.timed_wait(lock, msec);
+        RCF_UNUSED_VARIABLE(timedOut);
         RCF_ASSERT(timedOut);
     }
 

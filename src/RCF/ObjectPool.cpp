@@ -60,11 +60,19 @@ namespace RCF {
         for (std::size_t i=0; i<mOsPool.size(); ++i)
         {
             delete mOsPool[i];
+            mOsPool[i] = NULL;
+        }
+
+        for (std::size_t i=0; i<mRbPool.size(); ++i)
+        {
+            delete mRbPool[i];
+            mRbPool[i] = NULL;
         }
 
         for (std::size_t i=0; i<mCbPool.size(); ++i)
         {
             delete [] (char *) mCbPool[i];
+            mCbPool[i] = NULL;
         }
 
         ObjPool::iterator iter;
@@ -143,7 +151,7 @@ namespace RCF {
         std::auto_ptr<MemOstream> osPtr(pOs);
         std::size_t bufferSize = osPtr->capacity();
         pOs->clear(); // freezing may have set error state
-        pOs->rdbuf()->pubseekoff(0, std::ios::beg, std::ios::out);
+        pOs->rewind();
 
         // Check buffer count limit and buffer size limit.
         Lock lock(mOsPoolMutex);

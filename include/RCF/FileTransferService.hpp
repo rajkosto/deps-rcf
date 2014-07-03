@@ -32,7 +32,7 @@
 
 #include <boost/filesystem/path.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
 namespace SF {
 
@@ -42,7 +42,7 @@ namespace SF {
 
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 
 #include <boost/config.hpp>
 #include <boost/version.hpp>

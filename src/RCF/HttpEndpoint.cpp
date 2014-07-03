@@ -35,14 +35,14 @@ namespace RCF {
 
     std::string HttpEndpoint::asString() const
     {
-        std::ostringstream os;
+        MemOstream os;
         std::string ip = getIp();
         if (ip.empty())
         {
             ip = "127.0.0.1";
         }
         os << "HTTP endpoint " << ip << ":" << getPort();
-        return os.str();
+        return os.string();
     }
 
     ServerTransportAutoPtr HttpEndpoint::createServerTransport() const

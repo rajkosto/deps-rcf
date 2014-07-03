@@ -26,6 +26,9 @@ namespace SF {
     class ONativeBinaryStream : public OStream
     {
     public:
+        ONativeBinaryStream(RCF::MemOstream &os) : OStream(os)
+        {}
+
         ONativeBinaryStream(std::ostream &os) : OStream(os)
         {}
 

@@ -29,6 +29,9 @@ namespace SF {
         IBinaryStream() : IStream()
         {}
 
+        IBinaryStream(RCF::MemIstream &is) : IStream(is)
+        {}
+
         IBinaryStream(std::istream &is) : IStream(is)
         {}
 

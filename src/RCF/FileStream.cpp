@@ -91,7 +91,7 @@ namespace RCF {
         return mImplPtr->mTransferRateBps;
     }
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
     void FileStream::serialize(SF::Archive & ar)
     {

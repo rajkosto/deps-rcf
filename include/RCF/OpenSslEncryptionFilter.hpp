@@ -26,6 +26,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <RCF/Certificate.hpp>
 #include <RCF/Filter.hpp>
 #include <RCF/Export.hpp>
 

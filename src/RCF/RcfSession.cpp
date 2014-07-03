@@ -23,7 +23,6 @@
 #include <RCF/PerformanceData.hpp>
 #include <RCF/RcfServer.hpp>
 #include <RCF/SerializationProtocol.hpp>
-
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/Version.hpp>
 
@@ -31,6 +30,7 @@
 
 #if RCF_FEATURE_SSPI==1
 #include <RCF/Schannel.hpp>
+#include <RCF/Win32Certificate.hpp>
 #endif
 
 #if RCF_FEATURE_OPENSSL==1
@@ -53,8 +53,6 @@ namespace RCF {
         mEnableSfPointerTracking(false),
         mTransportFiltersLocked(),
         mFiltered(),
-        mInProcess(false),
-        mpInProcessParameters(NULL),
         mCloseSessionAfterWrite(),
         mPingTimestamp(),
         mPingIntervalMs(),
@@ -92,26 +90,6 @@ namespace RCF {
                 mOnDestroyCallback(*this);
             }
         RCF_DTOR_END
-    }
-
-    void RcfSession::setInProcess(bool inProcess)
-    {
-        mInProcess = inProcess;
-    }
-
-    bool RcfSession::getInProcess()
-    {
-        return mInProcess;
-    }
-
-    bool RcfSession::isInProcess()
-    {
-        return getInProcess();
-    }
-
-    I_Parameters * RcfSession::getInProcessParameters()
-    {
-        return mpInProcessParameters;
     }
 
     SessionState & RcfSession::getSessionState() const

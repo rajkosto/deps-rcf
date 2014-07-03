@@ -77,6 +77,11 @@ namespace RCF {
     // 2012-09-05   - version number 11
     //      - FileInfo serialization includes last-modified timestamp. 
 
+    // 2013-09-01   - version number 12
+    //      - Request and response headers include out of band request and response.
+    //      - Request of transport filters done through out of band message.
+ 
+
     // Inherent runtime version - can't be changed.
     RCF_EXPORT boost::uint32_t  getLibraryVersion();
 

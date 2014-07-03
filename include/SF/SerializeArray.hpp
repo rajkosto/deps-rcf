@@ -39,8 +39,10 @@ namespace SF {
             ar & count;
 
             RCF_VERIFY(
-                count == a.size(), 
-                RCF::Exception(RCF::_RcfError_RcfError_ArraySizeMismatch(a.size(), count)));
+                static_cast<std::size_t>(count) == a.size(), 
+                RCF::Exception(RCF::_RcfError_RcfError_ArraySizeMismatch( 
+                    static_cast<unsigned int>(a.size()), 
+                    count)));
 
             for (std::size_t i=0; i<a.size(); ++i)
             {
@@ -49,7 +51,7 @@ namespace SF {
         }
         else if (ar.isWrite())
         {
-            unsigned int count = a.size();
+            unsigned int count = static_cast<unsigned int>(a.size());
             ar & count;
 
             for (std::size_t i=0; i<a.size(); ++i)

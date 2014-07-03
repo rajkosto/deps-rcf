@@ -16,16 +16,22 @@
 //
 //******************************************************************************
 
+#include <RCF/Config.hpp>
+
+#if RCF_FEATURE_LEGACY==0
+#error This header is only supported in builds with RCF_FEATURE_LEGACY=1.
+#endif
+
 #include <RCF/Idl.hpp>
 #include <RCF/SerializationProtocol.hpp>
 #include <RCF/TypeTraits.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 #include <SF/string.hpp>
 #include <SF/vector.hpp>
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 #endif
@@ -254,3 +260,4 @@ namespace RCF {
 } // namespace RCF
 
 #endif // RCF_FEATURE_FILETRANSFER
+

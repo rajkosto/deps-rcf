@@ -24,7 +24,6 @@
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/Tools.hpp>
 
-#include <iostream>
 #include <stdlib.h>
 #include <time.h>
 
@@ -81,21 +80,21 @@ namespace RCF {
         defaultLoggerPtr.reset();
     }
 
-    void printToOstream(std::ostream & os, boost::uint16_t n)
+    void printToOstream(RCF::MemOstream & os, boost::uint16_t n)
     {
         char buffer[50] = {0};
         sprintf(buffer, "%u", boost::uint32_t(n));
         os << buffer;
     }
 
-    void printToOstream(std::ostream & os, boost::uint32_t n)
+    void printToOstream(RCF::MemOstream & os, boost::uint32_t n)
     {
         char buffer[50] = {0};
         sprintf(buffer, "%u", n);
         os << buffer;
     }
 
-    void printToOstream(std::ostream & os, boost::uint64_t n)
+    void printToOstream(RCF::MemOstream & os, boost::uint64_t n)
     {
         char buffer[50] = {0};
 
@@ -111,7 +110,7 @@ namespace RCF {
 
     LogManager::LogManager() : 
         mLoggersMutex(WriterPriority), 
-        DefaultLogFormat("%E(%F): %X")
+        DefaultLogFormat("%E(%F): [Thread: %D][Time: %H] %X")
     {
     }
 
@@ -254,10 +253,10 @@ namespace RCF {
 
         {
             Lock lock(sIoMutex);
-            std::cout.write(output.getPtr(), static_cast<std::streamsize>(output.getLength() - 1));
+            fwrite(output.getPtr(), sizeof(char), output.getLength() - 1, stdout);
             if (mFlush)
             {
-                std::cout.flush();
+                fflush(stdout);
             }
         }
 
@@ -323,6 +322,7 @@ namespace RCF {
     LogToFile::LogToFile(const std::string & filePath, bool flushAfterEachWrite) : 
         mFilePath(filePath), 
         mOpened(false), 
+        mFp(NULL),
         mFlush(flushAfterEachWrite)
     {
     }
@@ -330,8 +330,18 @@ namespace RCF {
     LogToFile::LogToFile(const LogToFile & rhs) : 
         mFilePath(rhs.mFilePath), 
         mOpened(false), 
+        mFp(NULL),
         mFlush(rhs.mFlush)
     {
+    }
+
+    LogToFile::~LogToFile()
+    {
+        if (mFp)
+        {
+            fclose(mFp);
+            mFp = NULL;
+        }
     }
 
     LogTarget * LogToFile::clone() const
@@ -345,8 +355,8 @@ namespace RCF {
 
         if (!mOpened)
         {
-            mFout.open(mFilePath.c_str(), std::ios::app);
-            if (!mFout.is_open())
+            mFp = fopen(mFilePath.c_str(), "a");
+            if (!mFp)
             {
                 std::string errMsg = "Unable to open log file for appending. File: " + mFilePath;
                 throw std::runtime_error(errMsg);
@@ -356,11 +366,11 @@ namespace RCF {
 
         output.getPtr()[output.getLength() - 2] = '\n';
 
-        mFout.write(output.getPtr(), static_cast<std::streamsize>(output.getLength() - 1));
+        fwrite(output.getPtr(), sizeof(char), output.getLength() - 1, mFp);
 
         if (mFlush)
         {
-            mFout.flush();
+            fflush(mFp);
         }
 
         output.getPtr()[output.getLength() - 2] = '\0';
@@ -417,7 +427,7 @@ namespace RCF {
         LogBuffers & logBuffers = getTlsLogBuffers();
         mpOstream = & logBuffers.mTlsUserBuffer;
         mpOstream->clear();
-        mpOstream->rdbuf()->pubseekoff(0, std::ios::beg, std::ios::out);
+        mpOstream->rewind();
     }
 
     LogEntry::LogEntry(int name, int level, const char * szFile, int line, const char * szFunc) : 
@@ -437,12 +447,12 @@ namespace RCF {
         LogBuffers & logBuffers = getTlsLogBuffers();
         mpOstream = & logBuffers.mTlsUserBuffer;
         mpOstream->clear();
-        mpOstream->rdbuf()->pubseekoff(0, std::ios::beg, std::ios::out);
+        mpOstream->rewind();
     }
 
     LogEntry::~LogEntry()
     {
-        *mpOstream << std::ends;
+        *mpOstream << '\0';
         LogManager::instance().writeToLoggers(*this);
     }
 
@@ -590,8 +600,6 @@ namespace RCF {
 
     // %E(%F): [Thread id: %D][Log: %A][Log level: %B]
 
-    const std::string DefaultLogFormat = "%E(%F): %X";
-
     void Logger::write(const LogEntry & logEntry)
     {
         // Format the log entry info into a string.
@@ -609,7 +617,7 @@ namespace RCF {
             LogBuffers & logBuffers = getTlsLogBuffers();
             RCF::MemOstream & os = logBuffers.mTlsLoggerBuffer;
             os.clear();
-            os.rdbuf()->pubseekoff(0, std::ios::beg, std::ios::out);
+            os.rewind();
 
             tm * ts = NULL;
             char timeBuffer[80] = {0};
@@ -690,7 +698,7 @@ namespace RCF {
             }
 
             // Terminate the string with two zeros, that way the log targets can insert a newline if they want.
-            os << std::ends << std::ends;
+            os << '\0' << '\0';
 
             output = RCF::ByteBuffer(os.str(), static_cast<std::size_t>(os.tellp()));
         }
@@ -727,10 +735,6 @@ namespace RCF {
         LogManager::deinit();
     }
 
-} // namespace RCF
-
-namespace util {
-
     VariableArgMacroFunctor::VariableArgMacroFunctor() :
         mFile(NULL),
         mLine(0),
@@ -741,10 +745,10 @@ namespace util {
         mArgs = & logBuffers.mTlsVarArgBuffer2;
 
         mHeader->clear();
-        mHeader->rdbuf()->pubseekoff(0, std::ios::beg, std::ios::out);
+        mHeader->rewind();
 
         mArgs->clear();
-        mArgs->rdbuf()->pubseekoff(0, std::ios::beg, std::ios::out);
+        mArgs->rewind();
     }
 
     VariableArgMacroFunctor::~VariableArgMacroFunctor()
@@ -770,9 +774,34 @@ namespace util {
             << ": Thread-id=" << threadid
             << " : Timestamp(ms)=" << timestamp << ": "
             << label << msg << ": "
-            << std::ends;
+            << '\0';
 
         return *this;
+    }
+
+    void printToOstream(RCF::MemOstream & os, const std::exception &e)
+    {
+        os << RCF::toString(e);
+    }
+
+    void printToOstream(RCF::MemOstream & os, const RCF::Exception &e)
+    {
+        os << RCF::toString(e);
+    }
+
+    void printToOstream(RCF::MemOstream & os, const RCF::RemoteException &e)
+    {
+        os << RCF::toString(e);
+    }
+
+    void printToOstream(RCF::MemOstream & os, const RCF::SerializationException &e)
+    {
+        os << RCF::toString(e);
+    }
+
+    void printToOstream(RCF::MemOstream & os, const std::type_info &ti)
+    {
+        os << ti.name();
     }
 
 } // namespace RCF

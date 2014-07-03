@@ -19,6 +19,12 @@
 #ifndef INCLUDE_RCF_OBJECTFACTORYSERVICE_HPP
 #define INCLUDE_RCF_OBJECTFACTORYSERVICE_HPP
 
+#include <RCF/Config.hpp>
+
+#if RCF_FEATURE_LEGACY==0
+#error This header is only supported in builds with RCF_FEATURE_LEGACY=1.
+#endif
+
 #include <map>
 #include <string>
 #include <vector>
@@ -63,24 +69,6 @@ namespace RCF {
             return bind( (I1 *) NULL, (ImplementationT **) NULL, name_);
         }
 
-        template<typename I1, typename I2, typename ImplementationT>
-        bool bind(const std::string &name_ = "")
-        {
-            return bind( (I1 *) NULL, (I2 *) NULL, (ImplementationT **) NULL, name_);
-        }
-
-        template<typename I1, typename I2, typename I3, typename ImplementationT>
-        bool bind(const std::string &name_ = "")
-        {
-            return bind( (I1 *) NULL, (I2 *) NULL, (I3 *) NULL, (ImplementationT **) NULL, name_);
-        }
-
-        template<typename I1, typename I2, typename I3, typename I4, typename ImplementationT>
-        bool bind(const std::string &name_ = "")
-        {
-            return bind( (I1 *) NULL, (I2 *) NULL, (I3 *) NULL, (I4 *) NULL, (ImplementationT **) NULL, name_);
-        }
-
         template<typename I1, typename ImplementationT>
         bool bind(I1 *, ImplementationT **, const std::string &name_ = "")
         {
@@ -90,48 +78,6 @@ namespace RCF {
 
             StubFactoryPtr stubFactoryPtr(
                 new RCF::StubFactory_1<ImplementationT, I1>());
-
-            std::string desc;
-            return insertStubFactory(name, desc, stubFactoryPtr);
-        }
-
-        template<typename I1, typename I2, typename ImplementationT>
-        bool bind(I1 *, I2 *, ImplementationT **, const std::string &name_ = "")
-        {
-            const std::string &name = (name_ == "") ?
-                getInterfaceName((I1 *) NULL) :
-                name_;
-
-            StubFactoryPtr stubFactoryPtr(
-                new RCF::StubFactory_2<ImplementationT, I1, I2>());
-
-            std::string desc;
-            return insertStubFactory(name, desc, stubFactoryPtr);
-        }
-
-        template<typename I1, typename I2, typename I3, typename ImplementationT>
-        bool bind(I1 *, I2 *, I3 *, ImplementationT **, const std::string &name_ = "")
-        {
-            const std::string &name = (name_ == "") ?
-                getInterfaceName((I1 *) NULL) :
-                name_;
-
-            StubFactoryPtr stubFactoryPtr(
-                new RCF::StubFactory_3<ImplementationT, I1, I2, I3>());
-
-            std::string desc;
-            return insertStubFactory(name, desc, stubFactoryPtr);
-        }
-
-        template<typename I1, typename I2, typename I3, typename I4, typename ImplementationT>
-        bool bind(I1 *, I2 *, I3 *, I4 *, ImplementationT **, const std::string &name_ = "")
-        {
-            const std::string &name = (name_ == "") ?
-                getInterfaceName((I1 *) NULL) :
-                name_;
-
-            StubFactoryPtr stubFactoryPtr(
-                new RCF::StubFactory_4<ImplementationT, I1, I2, I3, I4>());
 
             std::string desc;
             return insertStubFactory(name, desc, stubFactoryPtr);

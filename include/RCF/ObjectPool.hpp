@@ -78,6 +78,7 @@ namespace RCF {
         {
             BOOST_STATIC_ASSERT( sizeof(T) <= CbSize );
             RCF_ASSERT_EQ(cnt , 1);
+            RCF_UNUSED_VARIABLE(cnt);
             return reinterpret_cast<pointer>(CbAllocatorBase::allocate());
         }
 

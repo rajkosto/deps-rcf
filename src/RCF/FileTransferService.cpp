@@ -927,7 +927,7 @@ namespace RCF {
         server.unbind<I_FileTransferService>();
     }
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
     void FileManifest::serialize(SF::Archive & ar) 
     {

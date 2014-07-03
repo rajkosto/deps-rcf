@@ -130,32 +130,32 @@ namespace RCF {
             mContextRequirements(),
             mServer(server),
             mPreState(Ready),
-            mBytesRequestedOrig(),
-            mWriteBuffer(),
-            mWriteBufferPos(),
-            mWriteBufferLen(),
-            mReadBuffer(),
-            mReadBufferPos(),
-            mReadBufferLen(),
+            mBytesRequestedOrig(0),
+            mWriteBuffer(0),
+            mWriteBufferPos(0),
+            mWriteBufferLen(0),
+            mReadBuffer(0),
+            mReadBufferPos(0),
+            mReadBufferLen(0),
             mPostState(Ready),
-            mHaveContext(),
-            mHaveCredentials(),
+            mHaveContext(false),
+            mHaveCredentials(false),
             mImplicitCredentials(true),
             mContext(),
             mCredentials(),
+            mPkgInfo(),
             mContextState(AuthContinue),
             mEvent(ReadIssued),
             mLimitRecursion(!server),
             mSchannel(schannel),
             mMaxMessageLength(),
             mReadAheadChunkSize(schannel ? 0x10000 : 4),
-            mRemainingDataPos()
+            mRemainingDataPos(0),
+            mEnabledProtocols(0)
     {
         memset(&mContext, 0, sizeof(mContext));
         memset(&mCredentials, 0, sizeof(mCredentials));
-
-        mPkgInfo.Name = NULL;
-        mPkgInfo.Comment = NULL;
+        memset(&mPkgInfo, 0, sizeof(mPkgInfo));
 
         init();
     }
@@ -188,13 +188,15 @@ namespace RCF {
             mImplicitCredentials(true),
             mContext(),
             mCredentials(),
+            mPkgInfo(),
             mContextState(AuthContinue),
             mEvent(ReadIssued),
             mLimitRecursion(!server),
             mSchannel(schannel),
             mMaxMessageLength(),
             mReadAheadChunkSize(schannel ? 0x10000 : 4),
-            mRemainingDataPos()
+            mRemainingDataPos(),
+            mEnabledProtocols(0)
     {
         memset(&mContext, 0, sizeof(mContext));
         memset(&mCredentials, 0, sizeof(mCredentials));
@@ -233,13 +235,15 @@ namespace RCF {
             mImplicitCredentials(),
             mContext(),
             mCredentials(),
+            mPkgInfo(),
             mContextState(AuthContinue),
             mEvent(ReadIssued),
             mLimitRecursion(!server),
             mSchannel(false),
             mMaxMessageLength(),
             mReadAheadChunkSize(4),
-            mRemainingDataPos()
+            mRemainingDataPos(),
+            mEnabledProtocols(0)
     {
 
         memset(&mContext, 0, sizeof(mContext));
@@ -441,21 +445,22 @@ namespace RCF {
         if (byteBuffers.size() > 1)
         {
             // Check if we have small enough buffers to merge.
-            std::vector<ByteBuffer> mergeBufferList;
-            sliceByteBuffers(mergeBufferList, byteBuffers, 0, MaxMergeBufferLen);
-            if (mergeBufferList.size() > 1)
+            //std::vector<ByteBuffer> mergeBufferList;
+            mMergeBufferList.resize(0);
+            sliceByteBuffers(mMergeBufferList, byteBuffers, 0, MaxMergeBufferLen);
+            if (mMergeBufferList.size() > 1)
             {
                 // Allocate merge buffer.
                 ReallocBufferPtr mergeVecPtr = getObjectPool().getReallocBufferPtr();
                 mergeVecPtr->resize( RCF_MIN(MaxMergeBufferLen, lengthByteBuffers(byteBuffers)) );
 
                 // Copy to merge buffer.
-                copyByteBuffers(mergeBufferList, &(*mergeVecPtr)[0]);
-                std::size_t mergeLength = lengthByteBuffers(mergeBufferList);
+                copyByteBuffers(mMergeBufferList, &(*mergeVecPtr)[0]);
+                std::size_t mergeLength = lengthByteBuffers(mMergeBufferList);
                 mergeVecPtr->resize(mergeLength);
                 mergeBuffer = ByteBuffer(mergeVecPtr);
 
-                mergeBufferList.resize(0);
+                mMergeBufferList.resize(0);
             }
         }
 

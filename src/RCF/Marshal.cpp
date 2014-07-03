@@ -24,10 +24,11 @@
 
 #include <RCF/AmiThreadPool.hpp>
 #include <RCF/ClientProgress.hpp>
+#include <RCF/Future.hpp>
 #include <RCF/InitDeinit.hpp>
+#include <RCF/OverlappedAmi.hpp>
 #include <RCF/RcfServer.hpp>
 #include <RCF/SerializationProtocol.hpp>
-#include <RCF/ServerInterfaces.hpp>
 #include <RCF/ThreadLocalData.hpp>
 
 namespace RCF {
@@ -131,25 +132,22 @@ namespace RCF {
 
         ::RCF::CurrentClientStubSentry sentry(*this);
 
-        if (!getTransport().isInProcess())
+        mOut.reset(
+            getSerializationProtocol(),
+            32,
+            mRequest.encodeRequestHeader(),
+            mRuntimeVersion,
+            mArchiveVersion,
+            mEnableSfPointerTracking);
+
+        bool asyncParameters = false;
+        mpParameters->write(mOut);
+        mFutures.clear();
+        asyncParameters = mpParameters->enrolFutures(this);
+
+        if (asyncParameters)
         {
-            mOut.reset(
-                getSerializationProtocol(),
-                32,
-                mRequest.encodeRequestHeader(),
-                mRuntimeVersion,
-                mArchiveVersion,
-                mEnableSfPointerTracking);
-
-            bool asyncParameters = false;
-            mpParameters->write(mOut);
-            mFutures.clear();
-            asyncParameters = mpParameters->enrolFutures(this);
-
-            if (asyncParameters)
-            {
-                setAsync(true);
-            }
+            setAsync(true);
         }
     }
 
@@ -194,7 +192,7 @@ namespace RCF {
             }
             mTransport->disconnect(connectTimeoutMs);
 
-            mAsyncOpType = OverlappedAmi::Connect;
+            mAsyncOpType = Connect;
 
             mTransport->connect(*this, connectTimeoutMs);
         }
@@ -225,7 +223,7 @@ namespace RCF {
         mTransport->setAsync(mAsync);
         setAsyncCallback(onCompletion);
 
-        mAsyncOpType = OverlappedAmi::Wait;
+        mAsyncOpType = Wait;
         mTransport->setTimer(timeoutMs, this);
     }
 
@@ -343,7 +341,7 @@ namespace RCF {
 
         if (mAsync)
         {
-            mAsyncOpType = OverlappedAmi::Write;
+            mAsyncOpType = Write;
         }
 
         // Add framing (4 byte length prefix).
@@ -383,7 +381,7 @@ namespace RCF {
         {
             if (mAsync)
             {
-                mAsyncOpType = OverlappedAmi::None;
+                mAsyncOpType = None;
             }
 
             std::vector<FilterPtr> filters;
@@ -506,7 +504,7 @@ namespace RCF {
 
             if (mAsync)
             {
-                mAsyncOpType = OverlappedAmi::None;
+                mAsyncOpType = None;
                 scheduleAmiNotification();
             }
         }
@@ -532,7 +530,7 @@ namespace RCF {
 
         if (mAsync)
         {
-            mAsyncOpType = OverlappedAmi::Read;
+            mAsyncOpType = Read;
         }
 
         unsigned int timeoutMs = generateTimeoutMs(mEndTimeMs);
@@ -558,7 +556,7 @@ namespace RCF {
     {
         if (mAsync)
         {
-            mAsyncOpType = OverlappedAmi::None;
+            mAsyncOpType = None;
         }
 
         ByteBuffer unfilteredByteBuffer;
@@ -621,19 +619,15 @@ namespace RCF {
                 RCF_VERIFY(
                         serverRuntimeVersion < clientRuntimeVersion 
                     ||  serverArchiveVersion < clientArchiveVersion,
-                    Exception(_RcfError_Encoding()))
-                        (serverRuntimeVersion)(serverArchiveVersion)
-                        (clientRuntimeVersion)(clientArchiveVersion);
+                    Exception(_RcfError_Encoding()));
 
                 RCF_VERIFY(
                     serverRuntimeVersion <= clientRuntimeVersion, 
-                    Exception(_RcfError_Encoding()))
-                        (serverRuntimeVersion)(clientRuntimeVersion);
+                    Exception(_RcfError_Encoding()));
 
                 RCF_VERIFY(
                     serverArchiveVersion <= clientArchiveVersion, 
-                    Exception(_RcfError_Encoding()))
-                        (serverArchiveVersion)(clientArchiveVersion);
+                    Exception(_RcfError_Encoding()));
 
                 if (getAutoVersioning() && getTries() == 0)
                 {
@@ -924,14 +918,37 @@ namespace RCF {
     }
 
     void createCallbackConnectionImpl(
-        ClientStub & clientStub, 
+        ClientStub & clientStubOrig, 
         ServerTransport & callbackServer)
     {
-        RcfClient<I_CreateCallbackConnection> client(clientStub);
-        client.getClientStub().setTransport( clientStub.releaseTransport() );
-        client.CreateCallbackConnection();
+        if (clientStubOrig.getRuntimeVersion() <= 11)
+        {
+            createCallbackConnectionImpl_Legacy(clientStubOrig, callbackServer);
+        }
+        else
+        {
+            I_RcfClient client("", clientStubOrig);
+            ClientStub & stub = client.getClientStub();
+            stub.setTransport( clientStubOrig.releaseTransport() );
 
-        convertRcfClientToRcfSession(client.getClientStub(), callbackServer);
+            OobCreateCallbackConnection msg(clientStubOrig.getRuntimeVersion());
+            ByteBuffer controlRequest;
+            msg.encodeRequest(controlRequest);
+            stub.setOutofBandRequest(controlRequest);
+
+            stub.ping(RCF::Twoway);
+
+            // Get OOB response.
+            ByteBuffer controlResponse = stub.getOutOfBandResponse();
+            stub.setOutofBandRequest(ByteBuffer());
+            stub.setOutofBandResponse(ByteBuffer());
+            msg.decodeResponse(controlResponse);
+
+            int ret = msg.mResponseError; 
+            RCF_VERIFY(ret == RcfError_Ok, RemoteException( Error(ret) ));
+
+            convertRcfClientToRcfSession(client.getClientStub(), callbackServer);
+        }
     }
 
     void createCallbackConnectionImpl(
@@ -940,7 +957,6 @@ namespace RCF {
     {
         createCallbackConnectionImpl(clientStub, callbackServer.getServerTransport());
     }
-
 
     void setCurrentCallDesc(
         std::string& desc, 

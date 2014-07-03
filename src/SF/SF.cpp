@@ -18,6 +18,7 @@
 
 #include "Archive.cpp"
 #include "DataPtr.cpp"
+#include "bitset.cpp"
 #include "deque.cpp"
 #include "Encoding.cpp"
 #include "I_Stream.cpp"

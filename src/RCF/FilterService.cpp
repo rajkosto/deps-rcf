@@ -23,7 +23,10 @@
 #include <RCF/CurrentSession.hpp>
 #include <RCF/RcfServer.hpp>
 #include <RCF/RcfSession.hpp>
+
+#if RCF_FEATURE_LEGACY==1
 #include <RCF/ServerInterfaces.hpp>
+#endif
 
 namespace RCF {
 
@@ -34,12 +37,20 @@ namespace RCF {
 
     void FilterService::onServerStart(RcfServer & server)
     {
+
+#if RCF_FEATURE_LEGACY==1
         server.bind<I_RequestTransportFilters>(*this);
+#endif
+
     }
 
     void FilterService::onServerStop(RcfServer & server)
     {
+
+#if RCF_FEATURE_LEGACY==1
         server.unbind<I_RequestTransportFilters>();
+#endif
+
     }
 
     void FilterService::addFilterFactory(FilterFactoryPtr filterFactoryPtr)
@@ -61,9 +72,10 @@ namespace RCF {
     }
 
     // remotely accessible
-    boost::int32_t FilterService::QueryForTransportFilters(const std::vector<boost::int32_t> &filterIds)
+    boost::int32_t FilterService::QueryForTransportFilters(const std::vector<boost::int32_t> & filterIds)
     {
         RCF_THROW( _RcfError_NoLongerSupported("FilterService::QueryForTransportFilters()") );
+        RCF_UNUSED_VARIABLE(filterIds);
         return RcfError_Ok;
     }
 

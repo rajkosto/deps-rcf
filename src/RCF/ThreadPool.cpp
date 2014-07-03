@@ -28,10 +28,14 @@
 
 // Setting thread names for debuggers etc.
 
-#if defined(BOOST_WINDOWS)
+#if defined(BOOST_WINDOWS) && !defined(__MINGW32__)
 
 // Windows
 namespace RCF {
+
+    // The magic code to set thread names comes from MSDN: http://msdn.microsoft.com/en-us/library/xcb2z8hs.aspx
+
+    const DWORD MS_VC_EXCEPTION = 0x406D1388;
 
     typedef struct tagTHREADNAME_INFO
     {
@@ -52,7 +56,7 @@ namespace RCF {
 
         __try
         {
-            RaiseException( 0x406D1388, 0, sizeof(info)/sizeof(DWORD), (ULONG_PTR*)&info );
+            RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
         }
         __except(EXCEPTION_CONTINUE_EXECUTION)
         {
@@ -177,6 +181,7 @@ namespace RCF {
         void cycle(int timeoutMs)
         {
             RCF_ASSERT_GTEQ(timeoutMs , -1);
+            RCF_UNUSED_VARIABLE(timeoutMs);
 
             mIoService.run_one();
         }
@@ -636,6 +641,8 @@ namespace RCF {
 
             bool ok = launchThread(mThreadMinCount);
             RCF_ASSERT(ok);
+            RCF_UNUSED_VARIABLE(ok);
+
             mStarted = true;
         }
     }

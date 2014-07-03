@@ -43,11 +43,16 @@ namespace RCF {
 #include <RCF/thread/event.hpp>
 #include <RCF/thread/mutex.hpp>
 #include <RCF/thread/thread.hpp>
+
+#ifdef RCF_USE_BOOST_TLS
+#include <boost/thread/tss.hpp>
+#else
 #include <RCF/thread/tss_ptr.hpp>
+#endif
 
 namespace RCF {
 
-    // Multithreading primitives, based on the ones in asio.
+    // Multi-threading primitives, based on the ones in asio.
 
     typedef RCF::detail::thread                 Thread;
     typedef RCF::detail::mutex                  Mutex;
@@ -60,6 +65,15 @@ namespace RCF {
     typedef pthread_t                           ThreadId;
 #endif
     
+#ifdef RCF_USE_BOOST_TLS
+
+    template<typename T>
+    class ThreadSpecificPtr : public boost::thread_specific_ptr<T>
+    {
+    };
+
+#else
+
     template<typename T>
     class ThreadSpecificPtr : public RCF::detail::tss_ptr<T>
     {
@@ -81,6 +95,8 @@ namespace RCF {
 
         typedef ThreadSpecificPtr Val;
     };
+
+#endif
 
     // Simple read-write mutex.
 

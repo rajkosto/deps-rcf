@@ -77,38 +77,24 @@ namespace RCF {
 
     typedef ASIO_NS::const_buffer                       AsioConstBuffer;
 
-    // This adapter around a std::vector prevents asio from making a deep copy
-    // of the buffer list, when sending multiple buffers. The deep copy would
-    // involve making memory allocations.
-    class AsioBuffers
-    {
-    public:
+    typedef AsioSocket                              TcpSocket;
+    typedef boost::shared_ptr<TcpSocket>            TcpSocketPtr;
 
-        typedef std::vector<AsioConstBuffer>            BufferVec;
-        typedef boost::shared_ptr<BufferVec>            BufferVecPtr;
+#ifdef RCF_HAS_LOCAL_SOCKETS
 
-        typedef AsioConstBuffer                         value_type;
-        typedef BufferVec::const_iterator               const_iterator;
+    using ASIO_NS::local::stream_protocol;
+    typedef stream_protocol::socket                 UnixLocalSocket;
+    typedef boost::shared_ptr<UnixLocalSocket>      UnixLocalSocketPtr;
 
-        AsioBuffers()
-        {
-            mVecPtr.reset( new std::vector<AsioConstBuffer>() );
-        }
+#else
 
-        const_iterator begin() const
-        {
-            return mVecPtr->begin();
-        }
+    typedef TcpSocket                               UnixLocalSocket;
+    typedef TcpSocketPtr                            UnixLocalSocketPtr;
 
-        const_iterator end() const
-        {
-            return mVecPtr->end();
-        }
-
-        BufferVecPtr mVecPtr;
-    };
+#endif
 
 } // namespace RCF
+
 
 
 #endif // ! INCLUDE_RCF_ASIO_HPP

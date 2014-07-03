@@ -22,6 +22,7 @@
 
 #include <boost/bind.hpp>
 
+#include <RCF/CallbackConnectionService.hpp>
 #include <RCF/Filter.hpp>
 #include <RCF/CurrentSession.hpp>
 #include <RCF/Endpoint.hpp>
@@ -42,11 +43,11 @@
 
 #include <RCF/Version.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 #include <SF/memory.hpp>
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <RCF/BsAutoPtr.hpp>
 #endif
 
@@ -88,10 +89,13 @@ namespace RCF { class FileTransferService {}; }
 
 #if RCF_FEATURE_SERVER==1
 #include <RCF/CallbackConnectionService.hpp>
-#include <RCF/ObjectFactoryService.hpp>
 #include <RCF/PingBackService.hpp>
-#include <RCF/SessionObjectFactoryService.hpp>
 #include <RCF/SessionTimeoutService.hpp>
+#endif
+
+#if RCF_FEATURE_LEGACY==1
+#include <RCF/ObjectFactoryService.hpp>
+#include <RCF/SessionObjectFactoryService.hpp>
 #endif
 
 namespace RCF {
@@ -153,6 +157,19 @@ namespace RCF {
     {
         RCF_DTOR_BEGIN
             stop();
+
+            mThreadPoolPtr.reset();
+
+            while (mServices.size() > 0)
+            {
+                mServices.pop_back();
+            }
+
+            while (mServerTransports.size() > 0)
+            {
+                mServerTransports.pop_back();
+            }
+
         RCF_DTOR_END
     }
 
@@ -715,8 +732,7 @@ namespace RCF {
         {
             if (
                 out.getSerializationProtocol() == Sp_BsBinary 
-                || out.getSerializationProtocol() == Sp_BsText 
-                || out.getSerializationProtocol() == Sp_BsXml)
+                || out.getSerializationProtocol() == Sp_BsText)
             {
                 int runtimeVersion = mRequest.mRuntimeVersion;
                 if (runtimeVersion < 8)
@@ -1101,6 +1117,100 @@ namespace RCF {
         }
     }
 
+#if RCF_FEATURE_SERVER==1
+
+    void RcfSession::processOobMessages()
+    {
+        if (mRequest.mOutOfBandRequest.getLength() > 0)
+        {
+
+            ThreadInfoPtr threadInfoPtr = getTlsThreadInfoPtr();
+            if (threadInfoPtr)
+            {
+                threadInfoPtr->notifyBusy();
+            }
+
+            OobMessagePtr msgPtr = OobMessage::decodeRequestCommon(
+                mRequest.mOutOfBandRequest);
+
+            switch ( msgPtr->getMessageType() )
+            {
+            case Omt_RequestTransportFilters:
+                {
+                    OobRequestTransportFilters & rtfMsg = 
+                        static_cast<OobRequestTransportFilters &>(*msgPtr);
+
+
+#if RCF_FEATURE_SERVER==1
+                    rtfMsg.mResponseError = 
+                        mRcfServer.mFilterServicePtr->RequestTransportFilters(
+                        rtfMsg.mFilterIds);
+#else
+                    Exception e(_RcfError_NotSupportedInThisBuild("Transport filters"));
+                    rtfMsg.mResponseError = e.getErrorId();
+                    rtfMsg.mResponseErrorString = e.getErrorString();
+#endif
+
+                }
+                break;
+
+            case Omt_CreateCallbackConnection:
+                {
+                    OobCreateCallbackConnection & rtfMsg = 
+                        static_cast<OobCreateCallbackConnection &>(*msgPtr);
+
+#if RCF_FEATURE_SERVER==1
+                    mRcfServer.mCallbackConnectionServicePtr->CreateCallbackConnection();
+                    rtfMsg.mResponseError = RcfError_Ok;
+#else
+                    Exception e(_RcfError_NotSupportedInThisBuild("Callback connections"));
+                    rtfMsg.mResponseError = e.getErrorId();
+                    rtfMsg.mResponseErrorString = e.getErrorString();
+#endif
+                }
+                break;
+
+            case Omt_RequestSubscription:
+                {
+                    OobRequestSubscription & rtfMsg = 
+                        static_cast<OobRequestSubscription &>(*msgPtr);
+
+#if RCF_FEATURE_PUBSUB==1
+                    rtfMsg.mResponseError = mRcfServer.mPublishingServicePtr->RequestSubscription(
+                        rtfMsg.mPublisherName, 
+                        rtfMsg.mSubToPubPingIntervalMs, 
+                        rtfMsg.mPubToSubPingIntervalMs);
+#else
+                    Exception e(_RcfError_NotSupportedInThisBuild("Subscriptions"));
+                    rtfMsg.mResponseError = e.getErrorId();
+                    rtfMsg.mResponseErrorString = e.getErrorString();
+#endif
+                }
+                break;
+
+            default:
+
+                RCF_THROW( Exception(_RcfError_Decoding()) );
+            }
+
+            ByteBuffer buffer;
+            msgPtr->encodeResponse(buffer);
+            mRequest.mOutOfBandResponse = buffer;
+        }
+        else
+        {
+            mRequest.mOutOfBandResponse = ByteBuffer();
+        }
+    }
+
+#else
+
+    void RcfSession::processOobMessages()
+    {
+    }
+
+#endif
+
     void RcfSession::invokeServant()
     {
         StubEntryPtr stubEntryPtr = mRequest.locateStubEntryPtr(mRcfServer);
@@ -1125,12 +1235,20 @@ namespace RCF {
 
             if (!mTransportProtocolVerified)
             {
-                if (mRequest.getService() != "I_RequestTransportFilters")
+                bool bypassTransportProtocolCheck = 
+                        (mRequest.getService() == "I_RequestTransportFilters")
+                    ||  mRequest.mFnId == -1;
+
+                bool doTransportProtocolCheck = ! bypassTransportProtocolCheck;
+
+                if (doTransportProtocolCheck)
                 {
                     verifyTransportProtocol(mTransportProtocol);
                     mTransportProtocolVerified = true;
                 }
             }
+
+            processOobMessages();
 
             if (mRequest.getFnId() == -1)
             {
@@ -1142,15 +1260,12 @@ namespace RCF {
             }
             else
             {
-                if (!isInProcess())
-                {
-                    registerForPingBacks();
+                registerForPingBacks();
 
-                    ThreadInfoPtr threadInfoPtr = getTlsThreadInfoPtr();
-                    if (threadInfoPtr)
-                    {
-                        threadInfoPtr->notifyBusy();
-                    }
+                ThreadInfoPtr threadInfoPtr = getTlsThreadInfoPtr();
+                if (threadInfoPtr)
+                {
+                    threadInfoPtr->notifyBusy();
                 }
 
                 stubEntryPtr->getRcfClientPtr()->getServerStub().invoke(
@@ -1300,6 +1415,11 @@ namespace RCF {
     SubscriptionServicePtr RcfServer::getSubscriptionServicePtr()
     {
         return mSubscriptionServicePtr;
+    }
+
+    FilterServicePtr RcfServer::getFilterServicePtr() 
+    {
+        return mFilterServicePtr;
     }
 
     void RcfServer::setThreadPool(ThreadPoolPtr threadPoolPtr)

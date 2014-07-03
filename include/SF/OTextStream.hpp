@@ -29,6 +29,9 @@ namespace SF {
         OTextStream() : OStream()
         {}
 
+        OTextStream(RCF::MemOstream &os) : OStream(os)
+        {}
+
         OTextStream(std::ostream &os) : OStream(os)
         {}
 

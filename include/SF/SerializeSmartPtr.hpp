@@ -74,7 +74,7 @@ namespace SF {
             ContextRead &ctx = ar.getIstream()->getTrackingContext();
 
             void *pv = NULL;
-            if (pt && ctx.getEnabled() && ctx.query( pt, typeid(SmartPtrT), pv ))
+            if (pt && ctx.getEnabled() && ctx.query( (void *) pt, typeid(SmartPtrT), pv ))
             {
                 SmartPtrT *ps_prev = reinterpret_cast< SmartPtrT * >(pv);
                 **ppt = *ps_prev;
@@ -83,7 +83,7 @@ namespace SF {
             {
                 if (ctx.getEnabled())
                 {
-                    ctx.add( pt, typeid(SmartPtrT), *ppt );
+                    ctx.add( (void *) pt, typeid(SmartPtrT), *ppt );
                 }
                 **ppt = SmartPtrT(pt);
             }

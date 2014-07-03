@@ -245,17 +245,25 @@ namespace RCF {
 
         if ( !ok && dwErr == ERROR_IO_PENDING )
         {
+            // Asynchronous accept.
             overlapped.release();
         }
         else if (!ok && dwErr == ERROR_PIPE_CONNECTED)
         {
+            // Synchronous connect.
             AsioErrorCode ec;
             overlapped.complete(ec, 0);
         }
         else
         {
+            // ConnectNamedPipe() may return a synchronous error. In particular we sometimes
+            // get ERROR_NO_DATA ("The pipe is being closed"). So, here we need another 
+            // accept call.
+
             // MSDN says ConectNamedPipe will always return 0, in overlapped mode.
             RCF_ASSERT(!ok);
+
+            mTransport.createSessionState()->beginAccept();
         }
     }
 

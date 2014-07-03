@@ -30,7 +30,9 @@
 
 #include "RCF/ThreadLibrary.hpp"
 
-namespace util {
+namespace RCF {
+
+    class ProfilingData;
 
     class ProfilingResults
     {
@@ -38,6 +40,8 @@ namespace util {
         ProfilingResults()
         {
         }
+
+        ~ProfilingResults();
 
         static ProfilingResults *&getSingletonPtrRef()
         {
@@ -48,6 +52,9 @@ namespace util {
             }
             return pProfilingResults;
         }
+
+        std::vector<ProfilingData *> pTlsData;
+
     public:
         static ProfilingResults &getSingleton()
         {
@@ -102,6 +109,12 @@ namespace util {
     private:
         ProfilingData() : stack_(100), data_(new DataT()) { ProfilingResults::getSingleton().add( data_ );  }
     public:
+        ~ProfilingData()
+        {
+            delete data_;
+            data_ = NULL;
+        }
+
         static ProfilingData &getThreadSpecificInstance()
         {
             static RCF::ThreadSpecificPtr<ProfilingData>::Val profilingData;
@@ -109,6 +122,7 @@ namespace util {
             if (NULL == profilingData.get())
             {
                 profilingData.reset(new ProfilingData());
+                ProfilingResults::getSingleton().pTlsData.push_back(profilingData);
                 profilingData->push("");
             }
             return *profilingData;
@@ -202,6 +216,16 @@ namespace util {
         unsigned int t1Ms;
     };
 
-} // namespace util
+    ProfilingResults::~ProfilingResults()
+    {
+        for (std::size_t i=0; i<pTlsData.size(); ++i)
+        {
+            delete pTlsData[i];
+        }
+        pTlsData.clear();
+    }
+
+
+} // namespace RCF
 
 #endif //! INCLUDE_UTIL_PROFILE_HPP

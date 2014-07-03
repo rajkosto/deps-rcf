@@ -26,6 +26,7 @@
 #include <boost/weak_ptr.hpp>
 
 #include <RCF/Asio.hpp>
+#include <RCF/AsioBuffers.hpp>
 #include <RCF/Enums.hpp>
 #include <RCF/Export.hpp>
 #include <RCF/IpAddress.hpp>
@@ -62,6 +63,8 @@ namespace RCF {
 
         // Needs to call open().
         friend class TcpAsioTransportFactory;
+
+        friend class Win32NamedPipeSessionState;
 
         typedef boost::weak_ptr<I_Session>              SessionWeakPtr;
 

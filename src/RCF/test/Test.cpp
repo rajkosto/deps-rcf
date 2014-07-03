@@ -31,6 +31,8 @@
 // Boost string algo is more portable than stricmp, strcasecmp, etc.
 #include <boost/algorithm/string.hpp>
 
+#include <fstream>
+
 namespace RCF {
 bool compareNoCase(const std::string & s1, const std::string & s2)
 {
@@ -157,7 +159,7 @@ bool TestHierarchy::doesCurrentTestCaseMatch()
 }
 
 
-TestCase::TestCase(const std::string & name) : mName(name), mHasRun(false)
+TestCaseSentry::TestCaseSentry(const std::string & name) : mName(name), mHasRun(false)
 {
     TestHierarchy & th = gTestEnv().mTestHierarchy;
     th.pushTestCase(mName);
@@ -175,7 +177,7 @@ TestCase::TestCase(const std::string & name) : mName(name), mHasRun(false)
 #pragma warning( disable: 4267 ) 
 #endif
 
-TestCase::TestCase(std::size_t n) : mRunnable(false), mHasRun(false)
+TestCaseSentry::TestCaseSentry(std::size_t n) : mRunnable(false), mHasRun(false)
 {
     TestHierarchy & th = gTestEnv().mTestHierarchy;
 
@@ -197,7 +199,7 @@ TestCase::TestCase(std::size_t n) : mRunnable(false), mHasRun(false)
 #pragma warning(pop)
 #endif
 
-TestCase::~TestCase()
+TestCaseSentry::~TestCaseSentry()
 {
     TestHierarchy & th = gTestEnv().mTestHierarchy;
 
@@ -209,12 +211,12 @@ TestCase::~TestCase()
     th.popTestCase();
 }
 
-bool TestCase::shouldRun()
+bool TestCaseSentry::shouldRun()
 {
     return mRunnable && !mHasRun;
 }
 
-void TestCase::setHasRun()
+void TestCaseSentry::setHasRun()
 {
     mHasRun = true;
 }
@@ -355,7 +357,7 @@ std::string getWorkingDir()
 {
     std::vector<char> vec(1024);
     char * szRet = getcwd(&vec[0], static_cast<int>( vec.size() ));
-    RCF_ASSERT(szRet);
+    RCF_UNUSED_VARIABLE(szRet);
     return std::string(&vec[0]);
 }
 

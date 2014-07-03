@@ -109,9 +109,9 @@ namespace RCF {
 
     std::string UdpEndpoint::asString() const
     {
-        std::ostringstream os;
+        MemOstream os;
         os << "UDP endpoint " << mIp.string();
-        return os.str();
+        return os.string();
     }
 
 } // namespace RCF

@@ -54,27 +54,9 @@ namespace RCF {
 
         RCF_VERIFY(
             mInvokeFunctorMap.find(subInterface) != mInvokeFunctorMap.end(),
-            Exception(_RcfError_UnknownInterface(subInterface)))
-            (subInterface)(fnId)(mInvokeFunctorMap.size())(mMergedStubs.size());
+            Exception(_RcfError_UnknownInterface(subInterface)));
 
         mInvokeFunctorMap[subInterface](fnId, session);
-    }
-
-    void ServerBinding::merge(RcfClientPtr rcfClientPtr)
-    {
-        InvokeFunctorMap &invokeFunctorMap =
-            rcfClientPtr->getServerStub().mInvokeFunctorMap;
-
-        std::copy(
-            invokeFunctorMap.begin(),
-            invokeFunctorMap.end(),
-            std::insert_iterator<InvokeFunctorMap>(
-                mInvokeFunctorMap,
-                mInvokeFunctorMap.begin()));
-
-        invokeFunctorMap.clear();
-
-        mMergedStubs.push_back(rcfClientPtr);
     }
 
 } // namespace RCF

@@ -46,355 +46,170 @@
 
 #define RCF_BEGIN_INLINE(InterfaceT, Name) RCF_BEGIN_I0_INLINE(InterfaceT, Name)
 
-#define RCF_BEGIN_I0_INLINE(InterfaceT, Name)                                                           \
-    RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                                                            \
-    RCF_BEGIN_IMPL_INHERITED_0(InterfaceT, Name)                                                        \
+#define RCF_BEGIN_I0_INLINE(InterfaceT, Name)                               \
+    RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                                \
+    RCF_BEGIN_IMPL_INHERITED_0(InterfaceT, Name)                            \
     RCF_BEGIN_IMPL_POSTLUDE(InterfaceT, Name)
 
-#define RCF_BEGIN_I1_INLINE(InterfaceT, Name, InheritT1)                                                \
-    RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                                                            \
-    RCF_BEGIN_IMPL_INHERITED_1(InterfaceT, Name, InheritT1)                                             \
+#define RCF_BEGIN_I1_INLINE(InterfaceT, Name, InheritT1)                    \
+    RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                                \
+    RCF_BEGIN_IMPL_INHERITED_1(InterfaceT, Name, InheritT1)                 \
     RCF_BEGIN_IMPL_POSTLUDE(InterfaceT, Name)
 
-#define RCF_BEGIN_I2_INLINE(InterfaceT, Name, InheritT1, InheritT2)                                     \
-    RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                                                            \
-    RCF_BEGIN_IMPL_INHERITED_2(InterfaceT, Name, InheritT1, InheritT2)                                  \
+#define RCF_BEGIN_I2_INLINE(InterfaceT, Name, InheritT1, InheritT2)         \
+    RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                                \
+    RCF_BEGIN_IMPL_INHERITED_2(InterfaceT, Name, InheritT1, InheritT2)      \
     RCF_BEGIN_IMPL_POSTLUDE(InterfaceT, Name)
 
-#define RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                                                        \
-                                                                                                        \
-    template<typename T>                                                                                \
-    class RcfClient;                                                                                    \
-                                                                                                        \
-    class RCF_EXPORT_INTERFACE InterfaceT                                                               \
-    {                                                                                                   \
-    public:                                                                                             \
-        typedef RcfClient<InterfaceT> RcfClientT;                                                       \
-        static std::string getInterfaceName()                                                           \
-        {                                                                                               \
-            std::string interfaceName(Name);                                                            \
-            if (interfaceName.empty())                                                                  \
-            {                                                                                           \
-                interfaceName = #InterfaceT;                                                            \
-            }                                                                                           \
-            return interfaceName;                                                                       \
-        }                                                                                               \
+#define RCF_BEGIN_IMPL_PRELUDE(InterfaceT, Name)                            \
+                                                                            \
+    template<typename T>                                                    \
+    class RcfClient;                                                        \
+                                                                            \
+    class RCF_EXPORT_INTERFACE InterfaceT                                   \
+    {                                                                       \
+    public:                                                                 \
+        typedef RcfClient<InterfaceT> RcfClientT;                           \
+        static std::string getInterfaceName()                               \
+        {                                                                   \
+            std::string interfaceName(Name);                                \
+            if (interfaceName.empty())                                      \
+            {                                                               \
+                interfaceName = #InterfaceT;                                \
+            }                                                               \
+            return interfaceName;                                           \
+        }                                                                   \
     };
 
-#define RCF_BEGIN_IMPL_INHERITED_0(InterfaceT, Name)                                                    \
-    template<>                                                                                          \
-    class RCF_EXPORT_INTERFACE RcfClient< InterfaceT > :                                                \
-        public virtual ::RCF::I_RcfClient                                                               \
-    {                                                                                                   \
-    private:                                                                                            \
-        template<typename DerefPtrT>                                                                    \
-        void registerInvokeFunctors(::RCF::InvokeFunctorMap &invokeFunctorMap, DerefPtrT derefPtr)      \
-        {                                                                                               \
-            ::RCF::registerInvokeFunctors(*this, invokeFunctorMap, derefPtr);                           \
-        }                                                                                               \
-        void setClientStubPtr(::RCF::ClientStubPtr clientStubPtr)                                       \
-        {                                                                                               \
-            mClientStubPtr = clientStubPtr;                                                             \
+#define RCF_BEGIN_IMPL_INHERITED_0(InterfaceT, Name)                        \
+    template<>                                                              \
+    class RCF_EXPORT_INTERFACE RcfClient< InterfaceT > :                    \
+        public virtual ::RCF::I_RcfClient                                   \
+    {                                                                       \
+    private:                                                                \
+        template<typename DerefPtrT>                                        \
+        void registerInvokeFunctors(                                        \
+            ::RCF::InvokeFunctorMap &invokeFunctorMap,                      \
+            DerefPtrT derefPtr)                                             \
+        {                                                                   \
+            ::RCF::registerInvokeFunctors(                                  \
+                *this,                                                      \
+                invokeFunctorMap,                                           \
+                derefPtr);                                                  \
+        }                                                                   \
+        void setClientStubPtr(::RCF::ClientStubPtr clientStubPtr)           \
+        {                                                                   \
+            I_RcfClient::setClientStubPtr(clientStubPtr);                   \
         }
 
-#define RCF_BEGIN_IMPL_INHERITED_1(InterfaceT, Name, InheritT1)                                         \
-    template<>                                                                                          \
-    class RCF_EXPORT_INTERFACE RcfClient< InterfaceT > :                                                \
-        public virtual ::RCF::I_RcfClient,                                                              \
-        public virtual ::RCF::GetInterface<InheritT1>::type                                             \
-    {                                                                                                   \
-    private:                                                                                            \
-        template<typename DerefPtrT>                                                                    \
-        void registerInvokeFunctors(::RCF::InvokeFunctorMap &invokeFunctorMap, DerefPtrT derefPtr)      \
-        {                                                                                               \
-            ::RCF::registerInvokeFunctors(*this, invokeFunctorMap, derefPtr);                           \
-            ::RCF::StubAccess().registerParentInvokeFunctors(                                           \
-                (InheritT1 *) NULL,                                                                     \
-                *this,                                                                                  \
-                invokeFunctorMap,                                                                       \
-                derefPtr);                                                                              \
-        }                                                                                               \
-        void setClientStubPtr(::RCF::ClientStubPtr clientStubPtr)                                       \
-        {                                                                                               \
-            mClientStubPtr = clientStubPtr;                                                             \
-            ::RCF::StubAccess().setClientStubPtr( (InheritT1*) 0, *this);                               \
-        }
-
-#define RCF_BEGIN_IMPL_INHERITED_2(InterfaceT, Name, InheritT1, InheritT2)                              \
-    template<>                                                                                          \
-    class RcfClient< InterfaceT > :                                                                     \
-        public virtual ::RCF::I_RcfClient,                                                              \
-        public virtual ::RCF::GetInterface<InheritT1>::type,                                            \
-        public virtual ::RCF::GetInterface<InheritT2>::type                                             \
-    {                                                                                                   \
-    private:                                                                                            \
-        template<typename DerefPtrT>                                                                    \
-        void registerInvokeFunctors(::RCF::InvokeFunctorMap &invokeFunctorMap, DerefPtrT derefPtr)      \
-        {                                                                                               \
-            ::RCF::registerInvokeFunctors(*this, invokeFunctorMap, derefPtr);                           \
-                                                                                                        \
-            ::RCF::StubAccess().registerParentInvokeFunctors(                                           \
-                (InheritT1 *) NULL,                                                                     \
-                *this,                                                                                  \
-                invokeFunctorMap,                                                                       \
-                derefPtr);                                                                              \
-                                                                                                        \
-            ::RCF::StubAccess().registerParentInvokeFunctors(                                           \
-                (InheritT2 *) NULL,                                                                     \
-                *this,                                                                                  \
-                invokeFunctorMap,                                                                       \
-                derefPtr);                                                                              \
-        }                                                                                               \
-        void setClientStubPtr(::RCF::ClientStubPtr clientStubPtr)                                       \
-        {                                                                                               \
-            mClientStubPtr = clientStubPtr;                                                             \
-            ::RCF::StubAccess().setClientStubPtr( (InheritT1*) 0, *this);                               \
-            ::RCF::StubAccess().setClientStubPtr( (InheritT2*) 0, *this);                               \
-        }
-
-#define RCF_BEGIN_IMPL_POSTLUDE(InterfaceT, Name)                                                       \
-    public:                                                                                             \
-                                                                                                        \
-        RcfClient()                                                                                     \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);                             \
-        }                                                                                               \
-                                                                                                        \
-        template<typename DerefPtrT>                                                                    \
-        RcfClient(                                                                                      \
-            ::RCF::ServerBindingPtr serverStubPtr,                                                      \
-            DerefPtrT derefPtr,                                                                         \
-            boost::mpl::true_ *)                                                                        \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);\
-            serverStubPtr->registerInvokeFunctors(*this, derefPtr);                                     \
-            mServerStubPtr = serverStubPtr;                                                             \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient(                                                                                      \
-            const ::RCF::Endpoint &endpoint)                                                          \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);                             \
-            const std::string & targetName = mInterfaceName;                                            \
-            ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(mInterfaceName, targetName) );    \
-            clientStubPtr->setEndpoint(endpoint);                                                       \
-            setClientStubPtr(clientStubPtr);                                                            \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient(                                                                                      \
-            const ::RCF::Endpoint & endpoint,                                                         \
-            const std::string & targetName)                                                             \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);                             \
-            ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(mInterfaceName, targetName) );    \
-            clientStubPtr->setEndpoint(endpoint);                                                       \
-            setClientStubPtr(clientStubPtr);                                                            \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient(                                                                                      \
-            ::RCF::ClientTransportAutoPtr clientTransportAutoPtr)                                       \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);\
-            const std::string & targetName = mInterfaceName;                                            \
-            ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(mInterfaceName, targetName) );    \
-            clientStubPtr->setTransport(clientTransportAutoPtr);                                        \
-            setClientStubPtr(clientStubPtr);                                                            \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient(                                                                                      \
-            ::RCF::ClientTransportAutoPtr clientTransportAutoPtr,                                       \
-            const std::string & targetName)                                                             \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);                             \
-            ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(mInterfaceName, targetName) );    \
-            clientStubPtr->setTransport(clientTransportAutoPtr);                                        \
-            setClientStubPtr(clientStubPtr);                                                            \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient(                                                                                      \
-            const ::RCF::ClientStub & clientStub)                                                       \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);                             \
-            const std::string & targetName = mInterfaceName;                                            \
-            ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(clientStub) );                    \
-            clientStubPtr->setInterfaceName(mInterfaceName);                                            \
-            clientStubPtr->setTargetName(targetName);                                                   \
-            clientStubPtr->setTargetToken(::RCF::Token());                                              \
-            setClientStubPtr(clientStubPtr);                                                            \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient(                                                                                      \
-            const ::RCF::ClientStub & clientStub,                                                       \
-            const std::string & targetName)                                                             \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);                             \
-            ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(clientStub) );                    \
-            clientStubPtr->setInterfaceName(mInterfaceName);                                            \
-            clientStubPtr->setTargetName(targetName);                                                   \
-            clientStubPtr->setTargetToken(::RCF::Token());                                              \
-            setClientStubPtr(clientStubPtr);                                                            \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient(                                                                                      \
-            const ::RCF::I_RcfClient & rhs)                                                             \
-        {                                                                                               \
-            mInterfaceName = ::RCF::getInterfaceName( (InterfaceT *) NULL);                             \
-            if (rhs.getClientStubPtr())                                                                 \
-            {                                                                                           \
-                const std::string & targetName = mInterfaceName;                                        \
-                ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(rhs.getClientStub()));        \
-                clientStubPtr->setInterfaceName(mInterfaceName);                                        \
-                clientStubPtr->setTargetName(targetName);                                               \
-                clientStubPtr->setTargetToken(::RCF::Token());                                          \
-                setClientStubPtr(clientStubPtr);                                                        \
-            }                                                                                           \
-        }                                                                                               \
-                                                                                                        \
-        ~RcfClient()                                                                                    \
-        {                                                                                               \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient &operator=(const RcfClient &rhs)                                                      \
-        {                                                                                               \
-            if (&rhs != this)                                                                           \
-            {                                                                                           \
-                if (rhs.mClientStubPtr)                                                                 \
-                {                                                                                       \
-                    const std::string &targetName = mInterfaceName;                                     \
-                    ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(rhs.getClientStub()));    \
-                    clientStubPtr->setInterfaceName(mInterfaceName);                                    \
-                    clientStubPtr->setTargetName(targetName);                                           \
-                    clientStubPtr->setTargetToken(::RCF::Token());                                      \
-                    setClientStubPtr(clientStubPtr);                                                    \
-                }                                                                                       \
-                else                                                                                    \
-                {                                                                                       \
-                    RCF_ASSERT(!rhs.mServerStubPtr);                                                    \
-                    mClientStubPtr = rhs.mClientStubPtr;                                                \
-                }                                                                                       \
-            }                                                                                           \
-            return *this;                                                                               \
-        }                                                                                               \
-                                                                                                        \
-        RcfClient &operator=(const ::RCF::I_RcfClient &rhs)                                             \
-        {                                                                                               \
-            if (rhs.getClientStubPtr())                                                                 \
-            {                                                                                           \
-                const std::string & targetName = mInterfaceName;                                        \
-                ::RCF::ClientStubPtr clientStubPtr( new ::RCF::ClientStub(rhs.getClientStub()));        \
-                clientStubPtr->setInterfaceName(mInterfaceName);                                        \
-                clientStubPtr->setTargetName(targetName);                                               \
-                clientStubPtr->setTargetToken(::RCF::Token());                                          \
-                setClientStubPtr(clientStubPtr);                                                        \
-            }                                                                                           \
-            else                                                                                        \
-            {                                                                                           \
-                RCF_ASSERT(!rhs.getServerStubPtr());                                                    \
-                mClientStubPtr.reset();                                                                 \
-            }                                                                                           \
-            return *this;                                                                               \
-        }                                                                                               \
-                                                                                                        \
-        void swap(RcfClient & rhs)                                                                      \
-        {                                                                                               \
-            ::RCF::ClientStubPtr clientStubPtr = rhs.mClientStubPtr;                                    \
-            ::RCF::ServerBindingPtr serverStubPtr = rhs.mServerStubPtr;                                 \
-                                                                                                        \
-            rhs.mClientStubPtr = mClientStubPtr;                                                        \
-            rhs.mServerStubPtr = mServerStubPtr;                                                        \
-                                                                                                        \
-            mClientStubPtr = clientStubPtr;                                                             \
-            mServerStubPtr = serverStubPtr;                                                             \
-        }                                                                                               \
-                                                                                                        \
-    public:                                                                                             \
-        ::RCF::ClientStub &getClientStub()                                                              \
-        {                                                                                               \
-            return *mClientStubPtr;                                                                     \
-        }                                                                                               \
-                                                                                                        \
-        const ::RCF::ClientStub &getClientStub() const                                                  \
-        {                                                                                               \
-            return *mClientStubPtr;                                                                     \
-        }                                                                                               \
-                                                                                                        \
-        ::RCF::ClientStubPtr getClientStubPtr() const                                                   \
-        {                                                                                               \
-            return mClientStubPtr;                                                                      \
-        }                                                                                               \
-                                                                                                        \
-        ::RCF::ServerBindingPtr getServerStubPtr() const                                                \
-        {                                                                                               \
-            return mServerStubPtr;                                                                      \
-        }                                                                                               \
-                                                                                                        \
-    private:                                                                                            \
-        ::RCF::ServerBinding &getServerStub()                                                           \
-        {                                                                                               \
-            return *mServerStubPtr;                                                                     \
-        }                                                                                               \
-                                                                                                        \
-    public:                                                                                             \
-        template<typename Archive>                                                                      \
-        void serialize(Archive &ar)                                                                     \
-        {                                                                                               \
-            ::RCF::StubAccess().serialize(ar, *this);                                                   \
-        }                                                                                               \
-                                                                                                        \
-        template<typename Archive>                                                                      \
-        void serialize(Archive &ar, const unsigned int)                                                 \
-        {                                                                                               \
-            ::RCF::StubAccess().serialize(ar, *this, 0);                                                \
-        }                                                                                               \
-                                                                                                        \
-    private:                                                                                            \
-                                                                                                        \
-        template<typename N, typename T>                                                                \
-        void invoke(                                                                                    \
-            const N &,                                                                                  \
-            ::RCF::RcfSession &,                                                                        \
-            const T &)                                                                                  \
-        {                                                                                               \
-            ::RCF::Exception e(RCF::_RcfError_FnId(N::value));                                          \
-            RCF_THROW(e);                                                                               \
-        }                                                                                               \
-                                                                                                        \
-        const char * getFunctionName(...)                                                               \
-        {                                                                                               \
-            RCF_ASSERT(0 && "getFunctionName() - invalid function id");                                 \
-            return "";                                                                                  \
-        }                                                                                               \
-                                                                                                        \
-        const char * getArity(...)                                                                      \
-        {                                                                                               \
-            return "";                                                                                  \
-        }                                                                                               \
-                                                                                                        \
-        ::RCF::ClientStubPtr            mClientStubPtr;                                                 \
-        ::RCF::ServerBindingPtr         mServerStubPtr;                                                 \
-                                                                                                        \
-        std::string                     mInterfaceName;                                                 \
-                                                                                                        \
-        typedef ::RCF::Void             V;                                                              \
-        typedef RcfClient< InterfaceT > ThisT;                                                          \
-        typedef ::RCF::Dummy<ThisT>     DummyThisT;                                                     \
-                                                                                                        \
-        friend class ::RCF::StubAccess;                                                                 \
-        friend ::RCF::default_ RCF_make_next_dispatch_id_func(DummyThisT *, ThisT *,...);               \
-    public:                                                                                             \
+#define RCF_BEGIN_IMPL_POSTLUDE(InterfaceT, Name)                           \
+    public:                                                                 \
+                                                                            \
+        RcfClient() :                                                       \
+            I_RcfClient( ::RCF::getInterfaceName( (InterfaceT *) NULL) )    \
+        {                                                                   \
+        }                                                                   \
+                                                                            \
+        template<typename DerefPtrT>                                        \
+        RcfClient(                                                          \
+            ::RCF::ServerBindingPtr         serverStubPtr,                  \
+            DerefPtrT                       derefPtr,                       \
+            boost::mpl::true_ *             ) :                             \
+                I_RcfClient(                                                \
+                    ::RCF::getInterfaceName( (InterfaceT *) NULL),          \
+                    serverStubPtr)                                          \
+        {                                                                   \
+            serverStubPtr->registerInvokeFunctors(*this, derefPtr);         \
+        }                                                                   \
+                                                                            \
+        RcfClient(                                                          \
+            const ::RCF::Endpoint &         endpoint,                       \
+            const std::string &             targetName = "") :              \
+                I_RcfClient(                                                \
+                    ::RCF::getInterfaceName( (InterfaceT *) NULL),          \
+                    endpoint,                                               \
+                    targetName)                                             \
+        {                                                                   \
+        }                                                                   \
+                                                                            \
+        RcfClient(                                                          \
+            ::RCF::ClientTransportAutoPtr   clientTransportAutoPtr,         \
+            const std::string &             targetName = "") :              \
+                I_RcfClient(                                                \
+                    ::RCF::getInterfaceName( (InterfaceT *) NULL),          \
+                    clientTransportAutoPtr,                                 \
+                    targetName)                                             \
+        {                                                                   \
+        }                                                                   \
+                                                                            \
+        RcfClient(                                                          \
+            const ::RCF::ClientStub &       clientStub,                     \
+            const std::string &             targetName = "") :              \
+                I_RcfClient(                                                \
+                    ::RCF::getInterfaceName( (InterfaceT *) NULL),          \
+                    clientStub,                                             \
+                    targetName)                                             \
+        {                                                                   \
+        }                                                                   \
+                                                                            \
+        RcfClient(                                                          \
+            const ::RCF::I_RcfClient &      rhs) :                          \
+                I_RcfClient(                                                \
+                    ::RCF::getInterfaceName( (InterfaceT *) NULL),          \
+                    rhs)                                                    \
+        {                                                                   \
+        }                                                                   \
+                                                                            \
+        ~RcfClient()                                                        \
+        {                                                                   \
+        }                                                                   \
+                                                                            \
+    private:                                                                \
+                                                                            \
+        template<typename N, typename T>                                    \
+        void invoke(                                                        \
+            const N &,                                                      \
+            ::RCF::RcfSession &,                                            \
+            const T &)                                                      \
+        {                                                                   \
+            ::RCF::Exception e(RCF::_RcfError_FnId(N::value));              \
+            RCF_THROW(e);                                                   \
+        }                                                                   \
+                                                                            \
+        const char * getFunctionName(...)                                   \
+        {                                                                   \
+            RCF_ASSERT(0 && "getFunctionName() - invalid function id");     \
+            return "";                                                      \
+        }                                                                   \
+                                                                            \
+        const char * getArity(...)                                          \
+        {                                                                   \
+            return "";                                                      \
+        }                                                                   \
+                                                                            \
+        typedef RcfClient< InterfaceT > ThisT;                              \
+        typedef ::RCF::Dummy<ThisT>     DummyThisT;                         \
+                                                                            \
+        friend class ::RCF::StubAccess;                                     \
+                                                                            \
+        friend ::RCF::default_ RCF_make_next_dispatch_id_func(              \
+            DummyThisT *,                                                   \
+            ThisT *,                                                        \
+            ...);                                                           \
+    public:                                                                 \
         typedef InterfaceT              Interface;
         
 
 
-#define RCF_END_INLINE( InterfaceT )                                                                    \
+#define RCF_END_INLINE( InterfaceT )                                        \
     };
 
-#define RCF_METHOD_PLACEHOLDER()                                                                        \
+#define RCF_METHOD_PLACEHOLDER()                                            \
     RCF_METHOD_PLACEHOLDER_(RCF_MAKE_UNIQUE_ID(PlaceHolder, V0))
 
-#define RCF_METHOD_PLACEHOLDER_(id)                                                                     \
-    public:                                                                                             \
-        RCF_MAKE_NEXT_DISPATCH_ID(id)                                                                   \
+#define RCF_METHOD_PLACEHOLDER_(id)                                         \
+    public:                                                                 \
+        RCF_MAKE_NEXT_DISPATCH_ID(id)                                       \
     private:
 
 
@@ -403,8 +218,6 @@
 
 #define RCF_BEGIN_DECL RCF_BEGIN_INLINE
 #define RCF_BEGIN_I0_DECL RCF_BEGIN_I0_INLINE
-#define RCF_BEGIN_I1_DECL RCF_BEGIN_I1_INLINE
-#define RCF_BEGIN_I2_DECL RCF_BEGIN_I2_INLINE
 #define RCF_END_DECL RCF_END_INLINE
 
 // For definitions only.
@@ -413,12 +226,6 @@
     RCF_BEGIN_DEF_(Interface, Name, RCF_PP_CAT(rcf_interface_id_, Interface, _, __LINE__))
 
 #define RCF_BEGIN_I0_DEF(Interface, Name)                                                               \
-    RCF_BEGIN_DEF_(Interface, Name, RCF_PP_CAT(rcf_interface_id_, Interface, _, __LINE__))
-
-#define RCF_BEGIN_I1_DEF(Interface, Name, InheritT1)                                                    \
-    RCF_BEGIN_DEF_(Interface, Name, RCF_PP_CAT(rcf_interface_id_, Interface, _, __LINE__))
-
-#define RCF_BEGIN_I2_DEF(Interface, Name, InheritT1, InheritT2)                                         \
     RCF_BEGIN_DEF_(Interface, Name, RCF_PP_CAT(rcf_interface_id_, Interface, _, __LINE__))
 
 #define RCF_BEGIN_DEF_(Interface, Name, interfaceId)                                                    \

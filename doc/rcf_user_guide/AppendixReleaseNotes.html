@@ -19,6 +19,12 @@
     Notes</a>
 </h2></div></div></div>
 <div class="toc"><dl>
+<dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_1_100___2014_04_24">RCF
+      2.0.1.100 - 2014-04-24</a></span></dt>
+<dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2685___2013_07_17">RCF
+      2.0.0.2685 - 2013-07-17</a></span></dt>
+<dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2683___2013_06_18">RCF
+      2.0.0.2683 - 2013-06-18</a></span></dt>
 <dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2682___2013_06_01">RCF
       2.0.0.2682 - 2013-06-01</a></span></dt>
 <dt><span class="section"><a href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2679___2013_03_27">RCF
@@ -53,6 +59,132 @@
 </dl></div>
 <div class="section" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
+<a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_1_100___2014_04_24"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_1_100___2014_04_24" title="RCF 2.0.1.100 - 2014-04-24">RCF
+      2.0.1.100 - 2014-04-24</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul type="disc">
+<li>
+            Fix potential busy loop for multithreaded UDP servers.
+          </li>
+<li>
+            Expose <code class="computeroutput"><span class="identifier">RcfServer</span><span class="special">::</span><span class="identifier">getFilterService</span><span class="special">()</span></code>
+            for code using legacy custom filters.
+          </li>
+<li>
+            Fix for <code class="computeroutput"><span class="identifier">RCF_USE_PROTOBUF</span></code>
+            define not working.
+          </li>
+<li>
+            Fix possible handle leak in Windows thread implementation (<code class="computeroutput"><span class="identifier">win_thread</span><span class="special">.</span><span class="identifier">hpp</span></code>).
+          </li>
+<li>
+            Fix for thread joining in Windows thread implementation (<code class="computeroutput"><span class="identifier">win_thread</span><span class="special">::</span><span class="identifier">join</span><span class="special">()</span></code>)
+            - contributed by acDev on support forums.
+          </li>
+<li>
+            Fix bug in shutdown order for <code class="computeroutput"><span class="identifier">RcfServer</span></code>.
+          </li>
+<li>
+            Implement <code class="computeroutput"><span class="identifier">RCF_OPENSSL_STATIC</span></code>
+            define, to allow static linking to OpenSSL.
+          </li>
+<li>
+            Explicitly unload Zlib and OpenSSL DLL's, when deinitializing RCF.
+          </li>
+<li>
+            Implement serialization for various QT classes - see <code class="computeroutput"><span class="identifier">SF</span><span class="special">/</span><span class="identifier">Q</span><span class="special">*.</span><span class="identifier">hpp</span></code>.
+            Contributed by acDev on support forums.
+          </li>
+<li>
+            Fix serialization for <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="keyword">bool</span><span class="special">&gt;</span></code>.
+          </li>
+<li>
+            Implement serialization for <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">bitset</span><span class="special">&lt;&gt;</span></code>.
+          </li>
+<li>
+            Implement <code class="computeroutput"><span class="identifier">SF_SERIALIZE_ENUM_CLASS</span></code>
+            macro, to simplify serialization of C++11 enum classes.
+          </li>
+<li>
+            Fix compiler error when serializing <code class="computeroutput"><span class="identifier">shared_ptr</span><span class="special">&lt;</span><span class="keyword">const</span> <span class="identifier">T</span><span class="special">&gt;</span></code>.
+          </li>
+<li>
+            Publish/subscribe - published messages are now sent asynchronously and
+            concurrently on all subscriber connections.
+          </li>
+<li>
+            Implement <code class="computeroutput"><span class="identifier">Publisher</span><span class="special">::</span><span class="identifier">getSubscriberCount</span><span class="special">()</span></code>,
+            to return number of subscriptions for a publisher.
+          </li>
+<li>
+            Downloads:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.1.100.zip" target="_top">RCF-2.0.1.100.zip</a>
+                </li>
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.1.100.tar.gz" target="_top">RCF-2.0.1.100.tar.gz</a>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2685___2013_07_17"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2685___2013_07_17" title="RCF 2.0.0.2685 - 2013-07-17">RCF
+      2.0.0.2685 - 2013-07-17</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul type="disc">
+<li>
+            More informative error messages upon certificate validation failure,
+            when using OpenSSL.
+          </li>
+<li>
+            Fix for thread local cache leaks reported by <a href="http://vld.codeplex.com/" target="_top">Visual
+            Leak Detector</a>.
+          </li>
+<li>
+            Fix order of destruction issue in <code class="computeroutput"><span class="identifier">RcfServer</span></code>
+            destructor, when using multiple server transports.
+          </li>
+<li>
+            Downloads:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2685.zip" target="_top">RCF-2.0.0.2685.zip</a>
+                </li>
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2685.tar.gz" target="_top">RCF-2.0.0.2685.tar.gz</a>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"><div><div><h3 class="title">
+<a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2683___2013_06_18"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2683___2013_06_18" title="RCF 2.0.0.2683 - 2013-06-18">RCF
+      2.0.0.2683 - 2013-06-18</a>
+</h3></div></div></div>
+<div class="itemizedlist"><ul type="disc">
+<li>
+            Allow compile-time linking to zlib, by defining <code class="computeroutput"><span class="identifier">RCF_ZLIB_STATIC</span></code>
+            in build.
+          </li>
+<li>
+            Downloads:
+            <div class="itemizedlist"><ul type="circle">
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2683.zip" target="_top">RCF-2.0.0.2683.zip</a>
+                </li>
+<li>
+                  <a href="http://www.deltavsoft.com/downloads/RCF-2.0.0.2683.tar.gz" target="_top">RCF-2.0.0.2683.tar.gz</a>
+                </li>
+</ul></div>
+          </li>
+</ul></div>
+</div>
+<div class="section" lang="en">
+<div class="titlepage"><div><div><h3 class="title">
 <a name="rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2682___2013_06_01"></a><a class="link" href="AppendixReleaseNotes.html#rcf_user_guide.AppendixReleaseNotes.rcf_2_0_0_2682___2013_06_01" title="RCF 2.0.0.2682 - 2013-06-01">RCF
       2.0.0.2682 - 2013-06-01</a>
 </h3></div></div></div>
@@ -66,10 +198,6 @@
 <li>
             Accumulate multiple <code class="computeroutput"><span class="identifier">ByteBuffer</span></code>'s
             in SSPI filter, to prevent potential fragmentation of network send operations.
-          </li>
-<li>
-            Allow compile-time linking to zlib, by defining <code class="computeroutput"><span class="identifier">RCF_ZLIB_STATIC</span></code>
-            in build.
           </li>
 <li>
             <code class="computeroutput"><span class="identifier">ThreadPool</span></code> refactored,
@@ -929,7 +1057,7 @@
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2005 - 2012 Delta V Software</div></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2005 - 2013 Delta V Software</div></td>
 </tr></table>
 <hr>
 <div class="spirit-nav">

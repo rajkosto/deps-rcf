@@ -20,11 +20,11 @@
 
 #include <RCF/AmiIoHandler.hpp>
 #include <RCF/AsioHandlerCache.hpp>
+#include <RCF/ClientStub.hpp>
 #include <RCF/ConnectionOrientedClientTransport.hpp>
 #include <RCF/Exception.hpp>
 #include <RCF/InitDeinit.hpp>
 #include <RCF/IpAddress.hpp>
-#include <RCF/ServerInterfaces.hpp>
 #include <RCF/TcpEndpoint.hpp>
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/ThreadPool.hpp>
@@ -194,7 +194,11 @@ namespace RCF {
         const AsioErrorCode & ec, 
         std::size_t bytesTransferred)
     {
+
         RecursiveLock lock(mMutex);
+
+        //mAsioBuffers.mVecPtr->resize(0);
+        //mByteBuffers.resize(0);
 
         if (mIndex == index && mpTransport)
         {
@@ -208,11 +212,14 @@ namespace RCF {
 #ifdef BOOST_WINDOWS
             // Do we need to impersonate?
             boost::scoped_ptr<Win32ThreadImpersonator> impersonator;
-            HANDLE hImpersonationToken = static_cast<ClientStub *>(mpTransport->mpClientStub)
-                ->getWindowsImpersonationToken();
-            if (hImpersonationToken != INVALID_HANDLE_VALUE)
+            if (mpTransport->mpClientStub->isClientStub())
             {
-                impersonator.reset( new Win32ThreadImpersonator(hImpersonationToken) );
+                ClientStub * pStub = static_cast<ClientStub *>(mpTransport->mpClientStub);
+                HANDLE hImpersonationToken = pStub->getWindowsImpersonationToken();
+                if (hImpersonationToken != INVALID_HANDLE_VALUE)
+                {
+                    impersonator.reset( new Win32ThreadImpersonator(hImpersonationToken) );
+                }
             }
 #endif
 
@@ -288,6 +295,9 @@ namespace RCF {
     {
         RecursiveLock lock(mMutex);
 
+        //mAsioBuffers.mVecPtr->resize(0);
+        //mByteBuffers.resize(0);
+
         if (mpTransport && mIndex == index)
         {
             if (!ec)
@@ -297,6 +307,18 @@ namespace RCF {
                 getTlsAmiNotification().run();
             }
         }
+    }
+
+    void OverlappedAmi::ensureLifetime(const ByteBuffer & byteBuffer)
+    {
+        mByteBuffers.resize(0);
+        mByteBuffers.push_back(byteBuffer);
+    }
+
+    void OverlappedAmi::ensureLifetime(const std::vector<ByteBuffer> & byteBuffers)
+    {
+        mByteBuffers.resize(0);
+        mByteBuffers = byteBuffers;
     }
 
     AmiThreadPool::AmiThreadPool() : mThreadPool(1)

@@ -81,14 +81,14 @@ namespace RCF {
             {
                 mOrigWriteBuffers = byteBuffers;
 
-                std::ostringstream os;
+                MemOstream os;
                 os 
                     << "CONNECT " << mServerAddr << ":" << mServerPort << " HTTP/1.1\r\n"
                     << "Host: " << mServerAddr << ":" << mServerPort << "\r\n"
                     << "Proxy-Connection: Keep-Alive\r\n"
                     << "\r\n";
 
-                mHttpConnectRequest = os.str();
+                mHttpConnectRequest = os.string();
 
                 mWritePos = 0;
 
@@ -121,7 +121,7 @@ namespace RCF {
                 std::string http;
                 std::string httpStatus;
                 std::string firstLine = mHttpConnectResponse.substr(0, mHttpConnectResponse.find("\r\n"));
-                std::istringstream is(firstLine);
+                MemIstream is(firstLine.c_str(), firstLine.size());
                 is >> http >> httpStatus;
                 boost::trim_left(httpStatus);
                 if (boost::istarts_with(firstLine, "HTTP/") && boost::istarts_with(httpStatus, "200"))

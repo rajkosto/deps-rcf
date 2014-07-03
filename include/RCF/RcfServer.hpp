@@ -174,10 +174,12 @@ namespace RCF {
                 getSessionObjectFactoryServicePtr();
 
         PublishingServicePtr
-            getPublishingServicePtr();
+                getPublishingServicePtr();
 
         SubscriptionServicePtr
-            getSubscriptionServicePtr();
+                getSubscriptionServicePtr();
+
+        FilterServicePtr getFilterServicePtr();
 
         bool    addServerTransport(
                     ServerTransportPtr serverTransportPtr);
@@ -185,7 +187,8 @@ namespace RCF {
         bool    removeServerTransport(
                     ServerTransportPtr serverTransportPtr);
 
-        ServerTransport & findTransportCompatibleWith(ClientTransport & clienetTransport);
+        ServerTransport & 
+                findTransportCompatibleWith(ClientTransport & clienetTransport);
         
         void    setStartCallback(const StartCallback &startCallback);       
         
@@ -320,106 +323,6 @@ namespace RCF {
             RcfClientPtr rcfClientPtr = createServerStub( 
                 (I1 *) 0, 
                 (ImplementationT *) 0, derefPtr);
-
-            return bindImpl( 
-                name.empty() ? 
-                    I1::getInterfaceName() : 
-                    name , 
-                rcfClientPtr); 
-        }
-
-        template<typename I1, typename I2, typename ImplementationT> 
-        ServerBindingPtr bind(ImplementationT & t, const std::string &name = "")
-        { 
-            boost::shared_ptr< I_Deref<ImplementationT> > derefPtr( 
-                new DerefObj<ImplementationT>(t) ); 
-            
-            RcfClientPtr rcfClientPtr = createServerStub( 
-                (I1 *) 0, 
-                (ImplementationT *) 0, derefPtr);
-
-            { 
-                RcfClientPtr toMergePtr = createServerStub( 
-                    (I2 *) 0, 
-                    (ImplementationT *) 0, 
-                    derefPtr); 
-                
-                rcfClientPtr->getServerStub().merge(toMergePtr); 
-            }
-            return bindImpl( 
-                name.empty() ? 
-                    I1::getInterfaceName() : 
-                    name , 
-                rcfClientPtr); 
-        }
-
-        template<typename I1, typename I2, typename I3, typename ImplementationT> 
-        ServerBindingPtr bind(ImplementationT & t, const std::string &name = "")
-        { 
-            boost::shared_ptr< I_Deref<ImplementationT> > derefPtr( 
-                new DerefObj<ImplementationT>(t) ); 
-            
-            RcfClientPtr rcfClientPtr = createServerStub( (I1 *) 0, (ImplementationT *) 0, derefPtr);
-            { 
-                RcfClientPtr toMergePtr = createServerStub( 
-                    (I2 *) 0, 
-                    (ImplementationT *) 0, 
-                    derefPtr); 
-                
-                rcfClientPtr->getServerStub().merge(toMergePtr); 
-            }
-            { 
-                RcfClientPtr toMergePtr = createServerStub( 
-                    (I3 *) 0, 
-                    (ImplementationT *) 0, 
-                    derefPtr); 
-                
-                rcfClientPtr->getServerStub().merge(toMergePtr); 
-            }
-        
-            return bindImpl( 
-                name.empty() ? 
-                    I1::getInterfaceName() : 
-                    name , 
-                rcfClientPtr); 
-        }
-
-        template<typename I1, typename I2, typename I3, typename I4, typename ImplementationT> 
-        ServerBindingPtr bind(ImplementationT & t, const std::string &name = "")
-        { 
-            boost::shared_ptr< I_Deref<ImplementationT> > derefPtr( 
-                new DerefObj<ImplementationT>(t) ); 
-            
-            RcfClientPtr rcfClientPtr = createServerStub( 
-                (I1 *) 0, 
-                (ImplementationT *) 0, 
-                derefPtr);
-
-            { 
-                RcfClientPtr toMergePtr = createServerStub( 
-                    (I2 *) 0, 
-                    (ImplementationT *) 0, 
-                    derefPtr); 
-                
-                rcfClientPtr->getServerStub().merge(toMergePtr); 
-            }
-
-            { 
-                RcfClientPtr toMergePtr = createServerStub( 
-                    (I3 *) 0, 
-                    (ImplementationT *) 0, derefPtr); 
-                
-                rcfClientPtr->getServerStub().merge(toMergePtr); 
-            }
-
-            { 
-                RcfClientPtr toMergePtr = createServerStub( 
-                    (I4 *) 0, 
-                    (ImplementationT *) 0, 
-                    derefPtr); 
-                
-                rcfClientPtr->getServerStub().merge(toMergePtr); 
-            }
 
             return bindImpl( 
                 name.empty() ? 
@@ -623,6 +526,8 @@ namespace RCF {
         }
 
         void deleteServerObject(const std::string & objectKey);
+
+        StubEntryPtr findStubEntryForToken(const Token & token);
     };
 
 } // namespace RCF

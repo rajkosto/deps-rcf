@@ -19,9 +19,9 @@
 #ifndef INCLUDE_RCF_MULTICASTCLIENTTRANSPORT_HPP
 #define INCLUDE_RCF_MULTICASTCLIENTTRANSPORT_HPP
 
-#include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
@@ -77,14 +77,20 @@ namespace RCF {
         void        dropIdleTransports();
         void        pingAllTransports();
 
+        void        close();
+
+        std::size_t getTransportCount();
+
     private:
 
         void        bringInNewTransports();
 
-        typedef std::list< ClientTransportAutoPtrPtr >     ClientTransportList;
+        typedef std::vector< ClientTransportAutoPtrPtr >     ClientTransportList;
 
         Mutex                                           mClientTransportsMutex;
         ClientTransportList                             mClientTransports;
+
+        Mutex                                           mAddedClientTransportsMutex;
         ClientTransportList                             mAddedClientTransports;
 
         ClientTransportAutoPtr                          mMulticastTemp;

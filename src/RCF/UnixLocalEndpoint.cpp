@@ -55,9 +55,9 @@ namespace RCF {
 
     std::string UnixLocalEndpoint::asString() const
     {
-        std::ostringstream os;
+        MemOstream os;
         os << "Named pipe endpoint \"" << mPipeName << "\"";
-        return os.str();
+        return os.string();
     }
 
 } // namespace RCF

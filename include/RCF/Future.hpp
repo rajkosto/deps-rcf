@@ -259,8 +259,36 @@ namespace RCF {
         const std::string & mMsg;
     };
 
+    // Base class for FutureImpl<>.
+    class RCF_EXPORT FutureImplBase
+    {
+    protected:
+
+        FutureImplBase(
+            ClientStub &clientStub, 
+            const std::string & interfaceName,
+            int fnId,
+            RemoteCallSemantics rcs,
+            const char * szFunc,
+            const char * szArity);
+
+        FutureImplBase(const FutureImplBase& rhs);
+        FutureImplBase &operator=(const FutureImplBase &rhs);
+
+        void call() const;
+        void callSync() const;
+        void callAsync() const;
+
+        ClientStub *            mpClientStub;
+        int                     mFnId;
+        RemoteCallSemantics     mRcs;
+        const char *            mSzFunc;
+        const char *            mSzArity;
+        mutable bool            mOwn;
+    };
+
     template<typename T>
-    class FutureImpl
+    class FutureImpl : public FutureImplBase
     {
     public:
         FutureImpl(
@@ -271,41 +299,21 @@ namespace RCF {
             RemoteCallSemantics rcs,
             const char * szFunc = "",
             const char * szArity = "") :
-                mpT(&t),
-                mpClientStub(&clientStub),
-                mFnId(fnId),
-                mRcs(rcs),
-                mSzFunc(szFunc),
-                mSzArity(szArity),
-                mOwn(true)
+                FutureImplBase(clientStub, interfaceName, fnId, rcs, szFunc, szArity),
+                mpT(&t)
         {
-            // TODO: put this in the initializer list instead?
-            clientStub.init(interfaceName, fnId, rcs);
         }
 
         FutureImpl(const FutureImpl &rhs) :
-            mpT(rhs.mpT),
-            mpClientStub(rhs.mpClientStub),
-            mFnId(rhs.mFnId),
-            mRcs(rhs.mRcs),
-            mSzFunc(rhs.mSzFunc),
-            mSzArity(rhs.mSzArity),
-            mOwn(rhs.mOwn)
+            FutureImplBase(rhs),
+            mpT(rhs.mpT)
         {
-            rhs.mOwn = false;
         }
 
         FutureImpl &operator=(const FutureImpl &rhs)
         {
+            FutureImplBase::operator=(rhs);
             mpT = rhs.mpT;
-            mpClientStub = rhs.mpClientStub;
-            mFnId = rhs.mFnId;
-            mRcs = rhs.mRcs;
-            mSzFunc = rhs.mSzFunc;
-            mSzArity = rhs.mSzArity;
-
-            mOwn = rhs.mOwn;
-            rhs.mOwn = false;
             return *this;
         }
 
@@ -334,7 +342,7 @@ namespace RCF {
         }
 
         // Void or ignored return value, kicks off a sync call.
-        ~FutureImpl()
+        ~FutureImpl() RCF_DTOR_THROWS
         {
             if(mOwn)
             {
@@ -348,122 +356,7 @@ namespace RCF {
         }
 
     private:
-
-        void call() const
-        {
-            if (mpClientStub->getTransport().isInProcess())
-            {
-                mpClientStub->getTransport().doInProcessCall(*mpClientStub);
-                if (mpClientStub->mAsyncCallback)
-                {
-                    mpClientStub->mAsyncCallback = boost::function0<void>();
-                }
-                return;
-            }
-
-#if RCF_FEATURE_FILETRANSFER==1
-
-            // File uploads are done before the call itself.
-            mpClientStub->processUploadStreams();
-
-#endif
-
-            // TODO
-            bool async = mpClientStub->getAsync();
-
-            mpClientStub->setTries(0);
-
-            setCurrentCallDesc(mpClientStub->mCurrentCallDesc, mpClientStub->mRequest, mSzFunc, mSzArity);
-
-            if (async)
-            {
-                callAsync();
-            }
-            else
-            {
-                callSync();
-            }
-        }
-
-        void callSync() const
-        {
-            // ClientStub::onConnectCompleted() uses the contents of mEncodedByteBuffers
-            // to determine what stage the current call is in. So mEncodedByteBuffers
-            // needs to be cleared after a remote call, even if an exception is thrown.
-
-            // Error handling code here will generally also need to be present in 
-            // ClientStub::onError().
-
-            LogEntryExit logEntryExit(*mpClientStub);
-
-            RCF_LOG_3()(mpClientStub)(mpClientStub->mRequest) 
-                << "RcfClient - sending synchronous request.";
-
-            try
-            {
-                mpClientStub->call(mRcs);
-            }
-            catch(const RCF::RemoteException & e)
-            {
-                mpClientStub->mEncodedByteBuffers.resize(0);
-                if (shouldDisconnectOnRemoteError( e.getError() ))
-                {
-                    mpClientStub->disconnect();
-                }
-                throw; 
-            }
-            catch(const RCF::Exception &)
-            {
-                mpClientStub->mEncodedByteBuffers.resize(0);
-                mpClientStub->disconnect();
-                throw;
-            }
-            catch(...)
-            {
-                mpClientStub->mEncodedByteBuffers.resize(0);
-                mpClientStub->disconnect();
-                throw;
-            }
-        }
-
-        void callAsync() const
-        {
-            LogEntryExit logEntryExit(*mpClientStub);
-
-            RCF_LOG_3()(mpClientStub)(mpClientStub->mRequest) 
-                << "RcfClient - sending asynchronous request.";
-
-            std::auto_ptr<RCF::Exception> ape;
-
-            try
-            {
-                mpClientStub->call(mRcs);
-            }
-            catch(const RCF::Exception & e)
-            {
-                ape.reset( e.clone().release() );
-            }
-            catch(...)
-            {
-                ape.reset( new Exception(_RcfError_NonStdException()) );
-            }
-
-            if (ape.get())
-            {
-                mpClientStub->onError(*ape);
-            }
-
-            getTlsAmiNotification().run();
-        }
-
         T *                     mpT;
-        ClientStub *            mpClientStub;
-        int                     mFnId;
-        RemoteCallSemantics     mRcs;
-        const char *            mSzFunc;
-        const char *            mSzArity;
-
-        mutable bool            mOwn;
     };
 
     template<typename T, typename U>
@@ -479,7 +372,7 @@ namespace RCF {
     }
 
     template<typename T>
-    std::ostream & operator<<(std::ostream & os, const FutureImpl<T> & fi)
+    RCF::MemOstream & operator<<(RCF::MemOstream & os, const FutureImpl<T> & fi)
     {
         return os << fi.operator T();
     }

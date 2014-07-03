@@ -70,7 +70,6 @@ namespace RCF {
         I_Service &             mService;
         boost::uint32_t         mIntervalMs;
         Timer                   mLastRunTimer;
-        //AsioDeadlineTimer       mAsioTimer;
         AsioTimerPtr            mAsioTimerPtr;
     };
 

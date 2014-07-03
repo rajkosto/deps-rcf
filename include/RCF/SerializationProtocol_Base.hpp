@@ -19,13 +19,13 @@
 #ifndef INCLUDE_RCF_PROTOCOL_PROTOCOL_HPP
 #define INCLUDE_RCF_PROTOCOL_PROTOCOL_HPP
 
-#include <iosfwd>
-
 #include <boost/function.hpp>
 
 #include <RCF/Config.hpp>
 #include <RCF/Exception.hpp>
 #include <RCF/Tools.hpp>
+
+#include <RCF/MemStream.hpp>
 
 namespace RCF {
 
@@ -73,7 +73,7 @@ namespace RCF {
         {
         public:
             void bind(
-                std::istream &is, 
+                MemIstream & is,
                 std::size_t archiveSize, 
                 int runtimeVersion, 
                 int archiveVersion,
@@ -102,7 +102,7 @@ namespace RCF {
         {
         public:
             void bind(
-                std::ostream &os, 
+                MemOstream & os,
                 int runtimeVersion, 
                 int archiveVersion,
                 SerializationProtocolOut & spOut)
@@ -135,7 +135,7 @@ namespace RCF {
         {
         public:
             void bind(
-                std::istream &is, 
+                MemIstream & is,
                 std::size_t archiveSize, 
                 int runtimeVersion, 
                 int archiveVersion,
@@ -169,7 +169,7 @@ namespace RCF {
         {
         public:
             void bind(
-                std::ostream &os, 
+                RCF::MemOstream &os, 
                 int runtimeVersion, 
                 int archiveVersion,
                 SerializationProtocolOut & spOut)
@@ -205,7 +205,7 @@ namespace RCF {
         {
         public:
             void bind(
-                std::istream &is, 
+                MemIstream & is,
                 std::size_t archiveSize, 
                 int runtimeVersion, 
                 int archiveVersion,
@@ -258,7 +258,7 @@ namespace RCF {
         {
         public:
             void bind(
-                std::ostream &os, 
+                RCF::MemOstream &os, 
                 int runtimeVersion, 
                 int archiveVersion,
                 SerializationProtocolOut & spOut)                           

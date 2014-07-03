@@ -19,41 +19,10 @@
 #ifndef INCLUDE_RCF_TEST_TRANSPORTFACTORIES_HPP
 #define INCLUDE_RCF_TEST_TRANSPORTFACTORIES_HPP
 
-#include <iostream>
-#include <typeinfo>
-#include <utility>
-#include <vector>
-
-#include <sys/stat.h>
-
-#include <boost/config.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/version.hpp>
-
-#include <RCF/ClientStub.hpp>
-#include <RCF/InitDeinit.hpp>
-#include <RCF/ThreadLibrary.hpp>
-
-#include <RCF/TcpAsioServerTransport.hpp>
-#include <RCF/Asio.hpp>
-#include <RCF/Config.hpp>
-
-#ifdef RCF_HAS_LOCAL_SOCKETS
-#include <RCF/UnixLocalClientTransport.hpp>
-#include <RCF/UnixLocalServerTransport.hpp>
-#endif
-
-#if RCF_FEATURE_NAMEDPIPE==1
-#include <RCF/Win32NamedPipeClientTransport.hpp>
-#include <RCF/Win32NamedPipeEndpoint.hpp>
-#include <RCF/Win32NamedPipeServerTransport.hpp>
-#endif
-
-#include <RCF/TcpClientTransport.hpp>
-#include <RCF/UdpClientTransport.hpp>
-#include <RCF/UdpServerTransport.hpp>
-
-#include <RCF/ObjectFactoryService.hpp>
+#include <RCF/RcfClient.hpp>
+#include <RCF/ServerTransport.hpp>
+#include <RCF/ClientTransport.hpp>
+#include <RCF/IpAddress.hpp>
 
 template<typename Interface>
 inline bool tryCreateRemoteObject(
@@ -94,69 +63,23 @@ namespace RCF {
 
     typedef std::vector<TransportFactoryPtr> TransportFactories;
 
-    static TransportFactories &getTransportFactories()
-    {
-        static TransportFactories transportFactories;
-        return transportFactories;
-    }
+    TransportFactories &getTransportFactories();
 
-    static TransportFactories &getIpTransportFactories()
-    {
-        static TransportFactories ipTransportFactories;
-        return ipTransportFactories;
-    }
+    TransportFactories &getIpTransportFactories();
 
     //**************************************************
     // transport factories
-
-    static std::string loopBackV4 = "127.0.0.1";
-    static std::string loopBackV6 = "::1";
 
 #if RCF_FEATURE_NAMEDPIPE==1
 
     class Win32NamedPipeTransportFactory : public I_TransportFactory
     {
     public:
-        TransportPair createTransports()
-        {
-            typedef boost::shared_ptr<Win32NamedPipeServerTransport> Win32NamedPipeServerTransportPtr;
-            Win32NamedPipeServerTransportPtr serverTransportPtr(
-                new Win32NamedPipeServerTransport(RCF_T("")));
-
-            tstring pipeName = serverTransportPtr->getPipeName();
-
-            ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(
-                new ClientTransportAutoPtr(
-                    new Win32NamedPipeClientTransport(pipeName)));
-
-            return std::make_pair(
-                ServerTransportPtr(serverTransportPtr), 
-                clientTransportAutoPtrPtr);
-
-        }
-
-        TransportPair createNonListeningTransports()
-        {
-            return std::make_pair(
-                ServerTransportPtr( new Win32NamedPipeServerTransport( RCF_T("")) ),
-                ClientTransportAutoPtrPtr());
-
-        }
-
-        bool isConnectionOriented()
-        {
-            return true;
-        }
-
-        bool supportsTransportFilters()
-        {
-            return true;
-        }
-
-        std::string desc()
-        {
-            return "Win32NamedPipeTransportFactory";
-        }
+        TransportPair createTransports();
+        TransportPair createNonListeningTransports();
+        bool isConnectionOriented();
+        bool supportsTransportFilters();
+        std::string desc();
     };
 
 #endif
@@ -167,61 +90,19 @@ namespace RCF {
     {
     public:
         
-        TcpAsioTransportFactory(IpAddress::Type type = IpAddress::V4)
-        {
-            switch (type)
-            {
-            case IpAddress::V4: mLoopback = loopBackV4; break;
-            case IpAddress::V6: mLoopback = loopBackV6; break;
-            default: RCF_ASSERT(0);
-            }
-        }
-
-        TransportPair createTransports()
-        {
-            typedef boost::shared_ptr<TcpAsioServerTransport> TcpAsioServerTransportPtr;
-            TcpAsioServerTransportPtr tcpServerTransportPtr(
-                new TcpAsioServerTransport( IpAddress(mLoopback, 0)));
-
-            tcpServerTransportPtr->open();
-            int port = tcpServerTransportPtr->getPort();
-
-            ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(
-                new ClientTransportAutoPtr(
-                    new TcpClientTransport( IpAddress(mLoopback, port))));
-
-            return std::make_pair(
-                ServerTransportPtr(tcpServerTransportPtr), 
-                clientTransportAutoPtrPtr);
-        }
-
-        TransportPair createNonListeningTransports()
-        {
-            return std::make_pair(
-                ServerTransportPtr( new TcpAsioServerTransport( IpAddress(mLoopback, 0)) ),
-                ClientTransportAutoPtrPtr());
-        }
-
-        bool isConnectionOriented()
-        {
-            return true;
-        }
-
-        bool supportsTransportFilters()
-        {
-            return true;
-        }
-
-        std::string desc()
-        {
-            return "TcpAsioTransportFactory (" + mLoopback + ")";
-        }
+        TcpAsioTransportFactory(IpAddress::Type type = IpAddress::V4);
+        TransportPair createTransports();
+        TransportPair createNonListeningTransports();
+        bool isConnectionOriented();
+        bool supportsTransportFilters();
+        std::string desc();
 
     private:
 
         std::string mLoopback;
-
     };
+
+    typedef TcpAsioTransportFactory TcpTransportFactory;
 
 #endif
 
@@ -231,75 +112,20 @@ namespace RCF {
     {
     public:
 
-        UnixLocalTransportFactory() : mIndex(0)
-        {
-        }
+        UnixLocalTransportFactory();
 
     private:
 
-        TransportPair createTransports()
-        {
-            std::string pipeName = generateNewPipeName();
-
-            RCF_LOG_2()(pipeName) << "Creating unix local socket transport pair";
-
-            return std::make_pair(
-                ServerTransportPtr( new UnixLocalServerTransport(pipeName) ),
-                ClientTransportAutoPtrPtr(
-                    new ClientTransportAutoPtr(
-                        new UnixLocalClientTransport(pipeName))));
-        }
-
-        TransportPair createNonListeningTransports()
-        {
-            return std::make_pair(
-                ServerTransportPtr( new UnixLocalServerTransport("") ),
-                ClientTransportAutoPtrPtr());
-        }
-
-        bool isConnectionOriented()
-        {
-            return true;
-        }
-
-        bool supportsTransportFilters()
-        {
-            return true;
-        }
+        TransportPair createTransports();
+        TransportPair createNonListeningTransports();
+        bool isConnectionOriented();
+        bool supportsTransportFilters();
 
     private:
 
-        bool fileExists(const std::string & path)
-        {
-            struct stat stFileInfo = {};
-            int ret = stat(path.c_str(), &stFileInfo);
-            return ret == 0;
-        }
-
-        std::string generateNewPipeName()
-        {
-            std::string tempDir = RCF::getRelativeTestDataPath();
-
-            std::string candidate;
-
-            while (candidate.empty() || fileExists(candidate))
-            {
-                std::ostringstream os;
-                os 
-                    << tempDir 
-                    << "TestPipe_" 
-                    << ++mIndex;
-
-                candidate = os.str();
-            }
-
-            return candidate;
-        }
-
-        std::string desc()
-        {
-            return "UnixLocalTransportFactory";
-        }
+        bool fileExists(const std::string & path);
+        std::string generateNewPipeName();
+        std::string desc();
 
         int mIndex;
 
@@ -313,55 +139,12 @@ namespace RCF {
     {
     public:
 
-        UdpTransportFactory(IpAddress::Type type = IpAddress::V4)
-        {
-            switch (type)
-            {
-            case IpAddress::V4: mLoopback = loopBackV4; break;
-            case IpAddress::V6: mLoopback = loopBackV6; break;
-            default: RCF_ASSERT(0);
-            }
-        }
-
-        TransportPair createTransports()
-        {
-            typedef boost::shared_ptr<UdpServerTransport> UdpServerTransportPtr;
-            UdpServerTransportPtr udpServerTransportPtr(
-                new UdpServerTransport( IpAddress(mLoopback, 0) ));
-
-            udpServerTransportPtr->open();
-            int port = udpServerTransportPtr->getPort();
-
-            ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(
-                new ClientTransportAutoPtr(
-                    new UdpClientTransport( IpAddress(mLoopback, port) )));
-
-            return std::make_pair(
-                ServerTransportPtr(udpServerTransportPtr), 
-                clientTransportAutoPtrPtr);
-        }
-
-        TransportPair createNonListeningTransports()
-        {
-            return std::make_pair(
-                ServerTransportPtr( new UdpServerTransport( IpAddress(mLoopback, 0) ) ),
-                ClientTransportAutoPtrPtr());
-        }
-
-        bool isConnectionOriented()
-        {
-            return false;
-        }
-
-        bool supportsTransportFilters()
-        {
-            return false;
-        }
-
-        std::string desc()
-        {
-            return "UdpTransportFactory (" + mLoopback + ")";
-        }
+        UdpTransportFactory(IpAddress::Type type = IpAddress::V4);
+        TransportPair createTransports();
+        TransportPair createNonListeningTransports();
+        bool isConnectionOriented();
+        bool supportsTransportFilters();
+        std::string desc();
 
     private:
 
@@ -370,74 +153,7 @@ namespace RCF {
 
 #endif
 
-    typedef TcpAsioTransportFactory TcpTransportFactory;
-
-    void initializeTransportFactories()
-    {
-
-#if RCF_FEATURE_IPV6==1
-        const bool compileTimeIpv6 = true;
-        ExceptionPtr ePtr;
-        IpAddress("::1").resolve(ePtr);
-        const bool runTimeIpv6 = (ePtr.get() == NULL);
-#else
-        const bool compileTimeIpv6 = false;
-        const bool runTimeIpv6 = false;
-#endif
-
-#if RCF_FEATURE_NAMEDPIPE==1
-
-        getTransportFactories().push_back(
-            TransportFactoryPtr( new Win32NamedPipeTransportFactory()));
-
-#endif
-
-#if RCF_FEATURE_TCP==1
-
-        getTransportFactories().push_back(
-            TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V4)));
-
-        getIpTransportFactories().push_back(
-            TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V4)));
-
-        if (compileTimeIpv6 && runTimeIpv6)
-        {
-            getTransportFactories().push_back(
-                TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V6)));
-
-            getIpTransportFactories().push_back(
-                TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V6)));
-        }
-
-#endif
-
-#if RCF_FEATURE_LOCALSOCKET==1
-
-        getTransportFactories().push_back(
-            TransportFactoryPtr( new UnixLocalTransportFactory()));
-
-#endif
-
-#if RCF_FEATURE_UDP==1
-
-        getTransportFactories().push_back(
-            TransportFactoryPtr( new UdpTransportFactory(IpAddress::V4)));
-
-        getIpTransportFactories().push_back(
-            TransportFactoryPtr( new UdpTransportFactory(IpAddress::V4)));
-
-        if (compileTimeIpv6 && runTimeIpv6)
-        {
-            getTransportFactories().push_back(
-                TransportFactoryPtr( new UdpTransportFactory(IpAddress::V6)));
-
-            getIpTransportFactories().push_back(
-                TransportFactoryPtr( new UdpTransportFactory(IpAddress::V6)));
-        }
-
-#endif
-
-    }
+    void initializeTransportFactories();
     
 } // namespace RCF
 

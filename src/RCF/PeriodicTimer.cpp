@@ -33,7 +33,7 @@ namespace RCF {
         mTcbPtr( new TimerControlBlock(this) ),
         mService(service),
         mIntervalMs(intervalMs),
-        mAsioTimerPtr( new AsioTimer(getAmiThreadPool().getIoService() ) )
+        mAsioTimerPtr()
     {
     }
 
@@ -48,6 +48,8 @@ namespace RCF {
 
     void PeriodicTimer::start()
     {
+        mAsioTimerPtr.reset( new AsioTimer(getAmiThreadPool().getIoService()) );
+
         {
             Lock lock(mTcbPtr->mMutex);
             mTcbPtr->mpPeriodicTimer = this;
@@ -57,8 +59,12 @@ namespace RCF {
 
     void PeriodicTimer::stop()
     {
-        Lock lock(mTcbPtr->mMutex);
-        mTcbPtr->mpPeriodicTimer = NULL;
+        {
+            Lock lock(mTcbPtr->mMutex);
+            mTcbPtr->mpPeriodicTimer = NULL;
+        }
+
+        mAsioTimerPtr.reset();
     }
 
     void PeriodicTimer::setIntervalMs(boost::uint32_t intervalMs)

@@ -46,7 +46,6 @@ namespace RCF {
         case Tt_UnixNamedPipe           :   return "Unix local socket";
         case Tt_Http                    :   return "HTTP";
         case Tt_Https                   :   return "HTTPS";
-        case Tt_InProcess               :   return "In-process";
         default                         :   RCF_ASSERT(0); return "Unknown";
         }
     }

@@ -19,7 +19,6 @@
 #ifndef INCLUDE_RCF_TOKEN_HPP
 #define INCLUDE_RCF_TOKEN_HPP
 
-#include <iosfwd>
 #include <vector>
 
 #include <boost/noncopyable.hpp>
@@ -37,6 +36,8 @@ namespace SF {
 
 namespace RCF {
 
+    class MemOstream;
+
     class RCF_EXPORT Token
     {
     public:
@@ -47,13 +48,13 @@ namespace RCF {
         friend bool operator==(const Token &lhs, const Token &rhs);
         friend bool operator!=(const Token &lhs, const Token &rhs);
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
         void serialize(SF::Archive &ar);
 
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 
         template<typename Archive> 
         void serialize(Archive &ar, const unsigned int)
@@ -63,7 +64,7 @@ namespace RCF {
 
 #endif
        
-        friend RCF_EXPORT std::ostream &operator<<(std::ostream &os, const Token &token);
+        friend RCF_EXPORT RCF::MemOstream &operator<<(RCF::MemOstream &os, const Token &token);
 
     private:
         int mId;

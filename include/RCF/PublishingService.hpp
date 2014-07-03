@@ -75,8 +75,9 @@ namespace RCF {
         PublisherBase(PublishingService & pubService, const PublisherParms & parms);
         ~PublisherBase();
 
-        std::string getTopicName();
-        void close();
+        std::string     getTopicName();
+        std::size_t     getSubscriberCount();
+        void            close();
 
     protected:
 
@@ -161,6 +162,7 @@ namespace RCF {
         friend class RcfClient<I_RequestSubscription>;
         friend class PublisherBase;
         friend class PublishingServicePb;
+        friend class RcfSession;
 
         boost::int32_t  RequestSubscription(
                             const std::string &subscriptionName);

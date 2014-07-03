@@ -19,7 +19,6 @@
 #ifndef INCLUDE_SF_STREAM_HPP
 #define INCLUDE_SF_STREAM_HPP
 
-#include <iosfwd>
 #include <map>
 #include <string>
 
@@ -31,10 +30,15 @@
 #include <SF/Encoding.hpp>
 #include <SF/I_Stream.hpp>
 
+#include <iosfwd>
+
 namespace RCF {
 
     class SerializationProtocolIn;
     class SerializationProtocolOut;
+
+    class MemIstream;
+    class MemOstream;
 
 }
 namespace SF {
@@ -90,9 +94,9 @@ namespace SF {
         bool getEnabled() const;
 
     private:
-        bool bEnabled_;
-        std::auto_ptr<std::map<UInt32, ObjectId> > nid_id_ptr_;
-        std::auto_ptr<std::map<std::string, std::map< void *, void * > > > type_ptr_obj_ptr_;
+        bool mEnabled;
+        std::auto_ptr<std::map<UInt32, ObjectId> >                          mNidToIdMap;
+        std::auto_ptr<std::map<std::string, std::map< void *, void * > > >  mTypeToObjMap;
     };
 
     class RCF_EXPORT ContextWrite
@@ -106,9 +110,9 @@ namespace SF {
         bool query(const ObjectId &id, UInt32 &nid);
         void clear();
     private:
-        bool bEnabled_;
-        UInt32 currentId_;
-        std::auto_ptr<std::map<ObjectId, UInt32> > id_nid_ptr_;
+        bool                                            mEnabled;
+        UInt32                                          mCurrentId;
+        std::auto_ptr<std::map<ObjectId, UInt32> >      mIdToNidMap;
     };
 
     //**************************************************
@@ -123,7 +127,7 @@ namespace SF {
         Node *getNode();
 
     private:
-        Node *pNode_;
+        Node * mpNode;
     };
 
     //****************************************************
@@ -139,7 +143,13 @@ namespace SF {
         IStream();
 
         IStream(
-            std::istream &  is, 
+            RCF::MemIstream & is,
+            std::size_t     archiveSize = 0, 
+            int             runtimeVersion = 0, 
+            int             archiveVersion = 0);
+
+        IStream(
+            std::istream &  is,
             std::size_t     archiveSize = 0, 
             int             runtimeVersion = 0, 
             int             archiveVersion = 0);
@@ -217,14 +227,19 @@ namespace SF {
         OStream();
 
         OStream(
-            std::ostream &  os, 
-            int             runtimeVersion = 0, 
-            int             archiveVersion = 0);
+            RCF::MemOstream &   os,
+            int                 runtimeVersion = 0, 
+            int                 archiveVersion = 0);
+
+        OStream(
+            std::ostream &      os,
+            int                 runtimeVersion = 0, 
+            int                 archiveVersion = 0);
 
         virtual ~OStream();
 
         void        setOs(
-                        std::ostream &  os, 
+                        std::ostream &  os,
                         int             runtimeVersion = 0, 
                         int             archiveVersion = 0);
 

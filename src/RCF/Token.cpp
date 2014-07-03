@@ -18,11 +18,9 @@
 
 #include <RCF/Token.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 #include <SF/Archive.hpp>
 #endif
-
-#include <iostream>
 
 namespace RCF {
 
@@ -53,7 +51,7 @@ namespace RCF {
         return mId;
     }
    
-    std::ostream &operator<<(std::ostream &os, const Token &token)
+    RCF::MemOstream &operator<<(RCF::MemOstream &os, const Token &token)
     {
         os << "( id = " << token.getId() << " )";
         return os;
@@ -63,7 +61,7 @@ namespace RCF {
         mId(id)
     {}
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
     void Token::serialize(SF::Archive &ar)
     {

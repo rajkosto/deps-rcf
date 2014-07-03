@@ -35,35 +35,6 @@
 
 namespace RCF {
 
-    CertificateImplementationType Certificate::_getType()
-    {
-        return Cit_Unspecified;
-    }
-
-#if RCF_FEATURE_SSPI==1
-    Win32CertificatePtr Certificate::_downcastToWin32Certificate(CertificatePtr certPtr)
-    {
-        return boost::dynamic_pointer_cast<Win32Certificate>(certPtr);
-    }
-#else
-    Win32CertificatePtr Certificate::_downcastToWin32Certificate(CertificatePtr certPtr)
-    {
-        return Win32CertificatePtr();
-    }
-#endif
-
-#if RCF_FEATURE_OPENSSL==1
-    X509CertificatePtr Certificate::_downcastToX509Certificate(CertificatePtr certPtr)
-    {
-        return boost::dynamic_pointer_cast<X509Certificate>(certPtr);
-    }
-#else
-    X509CertificatePtr Certificate::_downcastToX509Certificate(CertificatePtr certPtr)
-    {
-        return X509CertificatePtr();
-    }
-#endif
-
     // Filter
 
     Filter::Filter() :

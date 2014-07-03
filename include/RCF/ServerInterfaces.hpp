@@ -19,6 +19,12 @@
 #ifndef INCLUDE_RCF_SERVERINTERFACES_HPP
 #define INCLUDE_RCF_SERVERINTERFACES_HPP
 
+#include <RCF/Config.hpp>
+
+#if RCF_FEATURE_LEGACY==0
+#error This header is only supported in builds with RCF_FEATURE_LEGACY=1.
+#endif
+
 #include <RCF/ServerInterfaces_NoHeaderGuard.hpp>
 
 #endif // ! INCLUDE_RCF_SERVERINTERFACES_HPP

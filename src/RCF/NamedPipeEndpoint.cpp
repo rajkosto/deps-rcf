@@ -73,9 +73,9 @@ namespace RCF {
 
     std::string NamedPipeEndpoint::asString() const
     {
-        std::ostringstream os;
+        MemOstream os;
         os << "Named pipe endpoint \"" << RCF::toAstring(mPipeName) << "\"";
-        return os.str();
+        return os.string();
     }
 
 } // namespace RCF

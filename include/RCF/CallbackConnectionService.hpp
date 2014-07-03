@@ -48,9 +48,11 @@ namespace RCF {
         void onServiceRemoved(RcfServer & server);
         void onServerStart(RcfServer & server);
 
+    public:
         friend class RcfClient<I_CreateCallbackConnection>;
         void CreateCallbackConnection();
 
+    private:
         RcfServer * mpServer;
         OnCallbackConnectionCreated mOnCallbackConnectionCreated;
     };

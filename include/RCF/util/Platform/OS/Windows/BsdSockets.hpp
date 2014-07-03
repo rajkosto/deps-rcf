@@ -160,9 +160,9 @@ namespace Platform {
                 return ::connect(fd, name, namelen);
             }
 
-            inline int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout)
+            inline int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
             {
-                return ::select(nfds, readfds, writefds, exceptfds, timeout );
+                return ::select(nfds, readfds, writefds, exceptfds, const_cast<struct timeval *>(timeout) );
             }
 
             inline int closesocket(int fd)                                      

@@ -297,7 +297,7 @@ namespace RCF {
         {
             // Launch a temporary thread and run a blocking connect() call.
 
-            mOverlappedPtr->mOpType = OverlappedAmi::Connect;
+            mOverlappedPtr->mOpType = Connect;
 
             RCF::ThreadPtr doConnectThread( new RCF::Thread( boost::bind(
                 &doBlockingConnect,
@@ -310,7 +310,7 @@ namespace RCF {
         {
             // Use Boost.Asio async_connect().
 
-            mOverlappedPtr->mOpType = OverlappedAmi::Connect;
+            mOverlappedPtr->mOpType = Connect;
 
             mTcpSocketPtr->async_connect( 
                 endpoint, 

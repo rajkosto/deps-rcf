@@ -20,6 +20,7 @@
 
 #include <RCF/AmiIoHandler.hpp>
 #include <RCF/AmiThreadPool.hpp>
+#include <RCF/AsioBuffers.hpp>
 #include <RCF/ClientStub.hpp>
 #include <RCF/Exception.hpp>
 #include <RCF/RcfServer.hpp>
@@ -99,6 +100,7 @@ namespace RCF {
 
         int nRet = WSAEventSelect(fd, readEvent, bRead ? FD_READ : FD_WRITE);
         RCF_ASSERT_EQ(nRet , 0);
+        RCF_UNUSED_VARIABLE(nRet);
         HANDLE handles[] = { readEvent };
 
         while (true)
@@ -196,6 +198,8 @@ namespace RCF {
 
         std::size_t bytesToRead = RCF_MIN(bytesRequested, byteBuffer.getLength());
 
+        RCF_ASSERT(!mNoTimeout);
+
         PollingFunctor pollingFunctor(
             mClientProgressPtr,
             ClientProgress::Receive,
@@ -260,7 +264,9 @@ namespace RCF {
 
         RecursiveLock lock(mOverlappedPtr->mMutex);
 
-        mOverlappedPtr->mOpType = OverlappedAmi::Read;
+        mOverlappedPtr->ensureLifetime(byteBuffer);
+
+        mOverlappedPtr->mOpType = Read;
 
         if (mTcpSocketPtr)
         {
@@ -277,11 +283,18 @@ namespace RCF {
                 AmiIoHandler(mOverlappedPtr));
         }
 
-        boost::uint32_t nowMs = getCurrentTimeMs();
-        boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
-        mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
-
-        mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+        if (mNoTimeout)
+        {
+            // Timeouts are being handled at a higher level (MulticastClientTransport).
+            // ...
+        }
+        else
+        {
+            boost::uint32_t nowMs = getCurrentTimeMs();
+            boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
+            mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
+            mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+        }
 
         return 0;
     }
@@ -296,6 +309,8 @@ namespace RCF {
             // Put a breakpoint here to catch write buffer fragmentation.
             mWriteCounter = mWriteCounter;
         }
+
+        RCF_ASSERT(!mNoTimeout);
 
         PollingFunctor pollingFunctor(
             mClientProgressPtr,
@@ -367,30 +382,27 @@ namespace RCF {
             mWriteCounter = mWriteCounter;
         }
 
-        if (!mAsioBuffersPtr)
-        {
-            mAsioBuffersPtr.reset( new AsioBuffers() );
-        }
+        RecursiveLock lock(mOverlappedPtr->mMutex);
 
-        mAsioBuffersPtr->mVecPtr->resize(0);
+        mAsioBuffers.mVecPtr->resize(0);
 
         for (std::size_t i=0; i<byteBuffers.size(); ++i)
         {
             const ByteBuffer & buffer = byteBuffers[i];
-            mAsioBuffersPtr->mVecPtr->push_back( AsioConstBuffer(
+            mAsioBuffers.mVecPtr->push_back( AsioConstBuffer(
                 buffer.getPtr(), 
                 buffer.getLength()));
         }
 
-        RecursiveLock lock(mOverlappedPtr->mMutex);
+        mOverlappedPtr->ensureLifetime(byteBuffers);
 
-        mOverlappedPtr->mOpType = OverlappedAmi::Write;
+        mOverlappedPtr->mOpType = Write;
 
         if (mTcpSocketPtr)
         {
             ASIO_NS::async_write(
                 *mTcpSocketPtr, 
-                *mAsioBuffersPtr, 
+                mAsioBuffers,
                 AmiIoHandler(mOverlappedPtr));
         }
         else
@@ -399,15 +411,22 @@ namespace RCF {
 
             ASIO_NS::async_write(
                 *mLocalSocketPtr, 
-                *mAsioBuffersPtr, 
+                mAsioBuffers, 
                 AmiIoHandler(mOverlappedPtr));
         }
 
-        boost::uint32_t nowMs = getCurrentTimeMs();
-        boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
-        mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
-
-        mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+        if (mNoTimeout)
+        {
+            // Timeouts are being handled at a higher level (MulticastClientTransport).
+            // ...
+        }
+        else
+        {
+            boost::uint32_t nowMs = getCurrentTimeMs();
+            boost::uint32_t timeoutMs = mEndTimeMs - nowMs;
+            mAsioTimerPtr->expires_from_now( boost::posix_time::milliseconds(timeoutMs) );
+            mAsioTimerPtr->async_wait( AmiTimerHandler(mOverlappedPtr) );
+        }
 
         return 0;
     }

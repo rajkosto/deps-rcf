@@ -45,38 +45,6 @@ namespace RCF {
 
     static const int RcfFilter_Xor                          = 101;
 
-    class Certificate;
-    typedef boost::shared_ptr<Certificate> CertificatePtr;
-
-    class Win32Certificate;
-    typedef boost::shared_ptr<Win32Certificate> Win32CertificatePtr;
-
-    class X509Certificate;
-    typedef boost::shared_ptr<X509Certificate> X509CertificatePtr;
-
-    /// Base class of all certificate classes.
-    class RCF_EXPORT Certificate
-    {
-    public:
-
-        // *** SWIG BEGIN ***
-
-        virtual CertificateImplementationType _getType();       
-
-        Win32CertificatePtr _downcastToWin32Certificate(CertificatePtr certPtr);
-        X509CertificatePtr _downcastToX509Certificate(CertificatePtr certPtr);
-
-        // *** SWIG END ***
-
-        virtual ~Certificate()
-        {
-        }
-    };
-
-    
-
-    typedef boost::shared_ptr<Certificate> CertificatePtr;
-
     class Filter;
 
     typedef boost::shared_ptr<Filter> FilterPtr;

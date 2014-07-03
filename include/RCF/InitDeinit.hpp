@@ -28,6 +28,9 @@
 
 namespace RCF {
 
+    // For debug use.
+    RCF_EXPORT std::size_t getInitRefCount();
+
     /// Reference-counted initialization of RCF framework. May be called multiple
     /// times (see deinit()).
     RCF_EXPORT bool init(RcfConfigT * = NULL);

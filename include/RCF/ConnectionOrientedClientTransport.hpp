@@ -22,6 +22,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <RCF/AmiThreadPool.hpp>
+#include <RCF/AsioBuffers.hpp>
 #include <RCF/AsioDeadlineTimer.hpp>
 #include <RCF/Filter.hpp>
 #include <RCF/ByteOrdering.hpp>
@@ -88,6 +89,7 @@ namespace RCF {
         std::size_t                             mBytesRead;
         std::size_t                             mBytesTotal;
         int                                     mError;
+        bool                                    mNoTimeout;
         unsigned int                            mEndTimeMs;
 
         std::vector<FilterPtr>                  mTransportFilters;
@@ -140,7 +142,7 @@ namespace RCF {
         std::size_t                 mReadBufferPos;
         std::size_t                 mWriteBufferPos;
         
-        ClientTransportCallback * mpClientStub;
+        ClientTransportCallback *   mpClientStub;
         
         ByteBuffer *                mpClientStubReadBuffer;
         ByteBuffer                  mReadBuffer;
@@ -149,10 +151,13 @@ namespace RCF {
         ByteBuffer                  mByteBuffer;        
 
     protected:
+        friend class Subscription;
         OverlappedAmiPtr            mOverlappedPtr;
 
         
         MutexPtr                    mSocketOpsMutexPtr;
+
+        AsioBuffers                 mAsioBuffers;
 
     public:
 

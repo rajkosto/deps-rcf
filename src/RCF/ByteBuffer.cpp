@@ -400,7 +400,7 @@ namespace RCF {
 
 } // namespace RCF
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
 #include <RCF/ClientStub.hpp>
 #include <RCF/CurrentSerializationProtocol.hpp>
@@ -475,4 +475,4 @@ namespace SF {
 
 } // namespace SF
 
-#endif // RCF_USE_SF_SERIALIZATION
+#endif // RCF_FEATURE_SF==1

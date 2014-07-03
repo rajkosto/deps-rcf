@@ -67,6 +67,7 @@ namespace RCF  {
         mReadPos = 0;
         mHeaderLen = 0;
         mContentLen = 0;
+        mOrigBytesRequested = 0;
     }
 
     void HttpFrameFilter::read(
@@ -269,7 +270,7 @@ namespace RCF  {
         unsigned int messageLength = static_cast<unsigned int>(
             lengthByteBuffers(byteBuffers));
 
-        std::ostringstream os;
+        MemOstream os;
 
         if (mServerAddr.size() > 0)
         {
@@ -295,7 +296,7 @@ namespace RCF  {
                 "\r\n";
         }
 
-        std::string s = os.str();
+        std::string s = os.string();
         RCF::ByteBuffer httpResponseHeader(s);
         mWriteBuffers.insert(mWriteBuffers.begin(), httpResponseHeader);
         mpPostFilter->write(mWriteBuffers);

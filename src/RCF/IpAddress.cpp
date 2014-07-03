@@ -160,6 +160,8 @@ namespace RCF {
 
     void IpAddress::init(const sockaddr &addr, std::size_t addrLen, Type type)
     {
+        RCF_UNUSED_VARIABLE(addrLen);
+
         mType = type;
         mResolved = true;
         mIp.clear();
@@ -519,9 +521,9 @@ namespace RCF {
 
     std::string IpAddress::string() const
     {
-        std::ostringstream os;
+        MemOstream os;
         os << mIp << ":" << mPort;
-        return os.str();
+        return os.string();
     }
 
     bool IpAddress::empty() const

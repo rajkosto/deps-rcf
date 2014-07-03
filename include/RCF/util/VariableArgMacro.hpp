@@ -31,20 +31,20 @@
 namespace RCF {
 
     // These use sprintf to speed things up.
-    RCF_EXPORT void printToOstream(std::ostream & os, boost::uint16_t n);
-    RCF_EXPORT void printToOstream(std::ostream & os, boost::uint32_t n);
-    RCF_EXPORT void printToOstream(std::ostream & os, boost::uint64_t n);
+    RCF_EXPORT void printToOstream(MemOstream & os, boost::uint16_t n);
+    RCF_EXPORT void printToOstream(MemOstream & os, boost::uint32_t n);
+    RCF_EXPORT void printToOstream(MemOstream & os, boost::uint64_t n);
 
     // Operator<< , simple but slow. Sometimes causes memory allocations.
     template<typename T>
-    void printToOstream(std::ostream & os, const T & t)
+    void printToOstream(MemOstream & os, const T & t)
     {
         os << t;
     }
 
 } // namespace RCF
 
-namespace util {
+namespace RCF {
 
     class RCF_EXPORT VariableArgMacroFunctor : boost::noncopyable
     {
@@ -64,14 +64,14 @@ namespace util {
         void notify(const T &t, const char *name)
         {
             *mArgs << name << "=";
-            RCF::printToOstream(*mArgs, t);
+            printToOstream(*mArgs, t);
             *mArgs << ", ";
         }
 
         void notify(std::size_t t, const char *name)
         {
             *mArgs << name << "=";
-            RCF::printToOstream(*mArgs, t);
+            printToOstream(*mArgs, t);
             *mArgs << ", ";
         }
 
@@ -91,8 +91,8 @@ namespace util {
             return dynamic_cast<T &>(*this);
         }
 
-        RCF::MemOstream * mHeader;
-        RCF::MemOstream * mArgs;
+        MemOstream * mHeader;
+        MemOstream * mArgs;
 
         const char * mFile;
         int mLine;
@@ -110,9 +110,9 @@ namespace util {
     };
 
     #define DUMMY_VARIABLE_ARG_MACRO() \
-        if (false) ::util::DummyVariableArgMacroObject()
+        if (false) ::RCF::DummyVariableArgMacroObject()
 
-} // namespace util
+} // namespace RCF
 
 
 #define DECLARE_VARIABLE_ARG_MACRO(macro_name, functor)                                             \

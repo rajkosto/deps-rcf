@@ -26,16 +26,10 @@
 #include <stdexcept>
 #include <vector>
 
-#ifndef ASSERT
-#include "Assert.hpp"
-#define ASSERT(x) UTIL_ASSERT(x, std::runtime_error("Assertion failure (command line parser)"))
-#define REMEMBER_TO_UNDEFINE_ASSERT
-#endif
-
 //*****************************************
 // Command line parsing utility
 
-namespace util {
+namespace RCF {
 
     class I_CommandLineOption {
     public:
@@ -361,17 +355,12 @@ namespace util {
     }
 
     template<typename T>
-    inline std::ostream &operator<<(std::ostream &os, CommandLineOption<T> &option)
+    inline RCF::MemOstream &operator<<(RCF::MemOstream &os, CommandLineOption<T> &option)
     {
         os << option.get();
         return os;
     }
 
-} // namespace util
-
-#ifdef REMEMBER_TO_UNDEFINE_ASSERT
-#undef REMEMBER_TO_UNDEFINE_ASSERT
-#undef ASSERT
-#endif
+} // namespace RCF
 
 #endif // ! INCLUDE_UTIL_COMMANDLINE_HPP

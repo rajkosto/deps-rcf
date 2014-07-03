@@ -48,13 +48,13 @@
 #define O_BINARY 0
 #endif
 
-#ifndef SOCKET
-#define SOCKET int
-#endif
-
-#ifndef INVALID_SOCKET
-#define INVALID_SOCKET -1
-#endif
+//#ifndef SOCKET
+//#define SOCKET int
+//#endif
+//
+//#ifndef INVALID_SOCKET
+//#define INVALID_SOCKET -1
+//#endif
 
 // Solaris doesn't define INADDR_NONE, for some reason
 #ifndef INADDR_NONE

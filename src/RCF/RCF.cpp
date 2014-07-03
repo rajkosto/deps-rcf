@@ -22,12 +22,12 @@
 #include <RCF/Config.hpp>
 
 // Problems with BSer. Include valarray early so it doesn't get trampled by min/max macro definitions.
-#if defined(_MSC_VER) && _MSC_VER == 1310 && defined(RCF_USE_BOOST_SERIALIZATION)
+#if defined(_MSC_VER) && _MSC_VER == 1310 && RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <valarray>
 #endif
 
 // Problems with BSer. Suppress some static warnings.
-#if defined(_MSC_VER) && defined(RCF_USE_BOOST_SERIALIZATION) && BOOST_VERSION >= 104100
+#if defined(_MSC_VER) && RCF_FEATURE_BOOST_SERIALIZATION==1 && BOOST_VERSION >= 104100
 #pragma warning( push )
 #pragma warning( disable : 4308 )  // warning C4308: negative integral constant converted to unsigned type
 #endif
@@ -38,8 +38,10 @@
 #include "BsdClientTransport.cpp"
 #include "ByteBuffer.cpp"
 #include "ByteOrdering.cpp"
+#include "Certificate.cpp"
 #include "CheckRtti.cpp"
 #include "ClientStub.cpp"
+#include "ClientStubLegacy.cpp"
 #include "ClientTransport.cpp"
 #include "ConnectionOrientedClientTransport.cpp"
 #include "CurrentSerializationProtocol.cpp"
@@ -51,6 +53,7 @@
 #include "Exception.cpp"
 #include "Filter.cpp"
 #include "FilterService.cpp"
+#include "Future.cpp"
 #include "Globals.cpp"
 #include "InitDeinit.cpp"
 #include "IpAddress.cpp"
@@ -101,14 +104,8 @@
 
 #ifdef BOOST_WINDOWS
 #include "Win32Username.cpp"
+#include "Win32Certificate.cpp"
 #endif
-
-
-#if RCF_FEATURE_INPROCESS==1
-#include "InProcessEndpoint.cpp"
-#include "InProcessTransport.cpp"
-#endif
-
 
 #if RCF_FEATURE_TCP==1
 #include "TcpAsioServerTransport.cpp"
@@ -139,7 +136,6 @@
 #if RCF_FEATURE_SERVER==1
 #include "CallbackConnectionService.cpp"
 #include "PingBackService.cpp"
-#include "ServerInterfaces.cpp"
 #include "ServerObjectService.cpp"
 #include "SessionTimeoutService.cpp"
 #endif
@@ -149,6 +145,7 @@
 #include "MulticastClientTransport.cpp"
 #include "PublishingService.cpp"
 #include "SubscriptionService.cpp"
+#include "SubscriptionServiceLegacy.cpp"
 #endif
 
 
@@ -201,7 +198,7 @@ namespace RCF {
 #endif
 
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 #include "../SF/SF.cpp"
 #else
 #include "../SF/Encoding.cpp"
@@ -220,6 +217,6 @@ namespace RCF {
 #endif
 
 // Problems with BSer. Suppress some static warnings.
-#if defined(_MSC_VER) && defined(RCF_USE_BOOST_SERIALIZATION) && BOOST_VERSION >= 104100
+#if defined(_MSC_VER) && RCF_FEATURE_BOOST_SERIALIZATION==1 && BOOST_VERSION >= 104100
 #pragma warning( pop )
 #endif

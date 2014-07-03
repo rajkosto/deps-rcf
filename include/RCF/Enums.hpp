@@ -49,8 +49,6 @@ namespace RCF {
         /// HTTPS/TCP transport
         Tt_Https,
 
-        /// In-process transport
-        Tt_InProcess
     };
 
     /// Describes the transport protocols used by a RCF connection. Transport
@@ -145,6 +143,14 @@ namespace RCF {
         Wp_Https
     };
 
+    enum AsyncOpType
+    {
+        None,
+        Wait,
+        Connect,
+        Write,
+        Read
+    };
 
     RCF_EXPORT std::string getTransportProtocolName(TransportProtocol protocol);
     RCF_EXPORT std::string getTransportTypeName(TransportType protocol);

@@ -26,6 +26,9 @@ namespace SF {
     class INativeBinaryStream : public IStream
     {
     public:
+        INativeBinaryStream(RCF::MemIstream &is) : IStream(is)
+        {}
+
         INativeBinaryStream(std::istream &is) : IStream(is)
         {}
 

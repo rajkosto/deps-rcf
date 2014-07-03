@@ -28,6 +28,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
+#include <RCF/Certificate.hpp>
 #include <RCF/ClientProgress.hpp>
 #include <RCF/Filter.hpp>
 #include <RCF/ClientTransport.hpp>
@@ -36,7 +37,6 @@
 #include <RCF/Export.hpp>
 #include <RCF/GetInterfaceName.hpp>
 #include <RCF/MethodInvocation.hpp>
-#include <RCF/OverlappedAmi.hpp>
 #include <RCF/SerializationProtocol_Base.hpp>
 #include <RCF/RecursionLimiter.hpp>
 #include <RCF/SerializationProtocol.hpp>
@@ -146,8 +146,6 @@ namespace RCF {
     class OverlappedAmi;
     typedef boost::shared_ptr<OverlappedAmi> OverlappedAmiPtr;
 
-    class InProcessTransport;
-
     class RCF_EXPORT CurrentClientStubSentry
     {
     public:
@@ -217,8 +215,11 @@ namespace RCF {
         const std::vector<FilterPtr> &
                     getMessageFilters();
 
+        virtual bool isClientStub() const;
+
 
         // Synchronous transport filter requests.
+        void        requestTransportFilters_Legacy(const std::vector<FilterPtr> &filters);
         void        requestTransportFilters(const std::vector<FilterPtr> &filters);
         void        requestTransportFilters(FilterPtr filterPtr);
         void        requestTransportFilters();
@@ -226,6 +227,10 @@ namespace RCF {
         void        clearTransportFilters();
 
         // Asynchronous transport filter requests.
+        void        requestTransportFiltersAsync_Legacy(
+                        const std::vector<FilterPtr> &filters,
+                        boost::function0<void> onCompletion);
+
         void        requestTransportFiltersAsync(
                         const std::vector<FilterPtr> &filters,
                         boost::function0<void> onCompletion);
@@ -233,6 +238,7 @@ namespace RCF {
         void        requestTransportFiltersAsync(
                         FilterPtr filterPtr,
                         boost::function0<void> onCompletion);
+
 
         void            setRemoteCallTimeoutMs(unsigned int remoteCallTimeoutMs);
         unsigned int    getRemoteCallTimeoutMs() const;
@@ -274,11 +280,15 @@ namespace RCF {
 
         // Synchronous versions.
 
+#if RCF_FEATURE_LEGACY==1
+
         void createRemoteObject(const std::string &objectName = "");
         void deleteRemoteObject();
 
         void createRemoteSessionObject(const std::string &objectName = "");
         void deleteRemoteSessionObject();
+
+#endif
 
 #if RCF_FEATURE_FILETRANSFER==1
         void setFileProgressCallback(FileProgressCb fileProgressCb);
@@ -318,6 +328,16 @@ namespace RCF {
         FutureImpl<Void> ping();
         FutureImpl<Void> ping(const CallOptions & callOptions);
 
+        ByteBuffer      getOutOfBandRequest();
+        void            setOutofBandRequest(ByteBuffer requestBuffer);
+
+        ByteBuffer      getOutOfBandResponse();
+        void            setOutofBandResponse(ByteBuffer responseBuffer);
+
+        FutureImpl<Void> doControlMessage(
+            const CallOptions &     callOptions, 
+            ByteBuffer              controlRequest);
+
         //**********************************************************************
 
         void setPingBackIntervalMs(int pingBackIntervalMs);
@@ -343,8 +363,7 @@ namespace RCF {
 
     private:
 
-        template<typename T>
-        friend class FutureImpl;
+        friend class FutureImplBase;
 
         template<
             typename R, 
@@ -384,8 +403,6 @@ namespace RCF {
             typename A15>
         friend class ClientParameters;
 
-        friend class InProcessTransport;
-
         Token                       mToken;
         RemoteCallSemantics         mDefaultCallingSemantics;
         SerializationProtocol       mProtocol;
@@ -422,7 +439,7 @@ namespace RCF {
         SerializationProtocolOut    mOut;
 
         bool                        mAsync;
-        OverlappedAmi::AsyncOpType  mAsyncOpType;
+        AsyncOpType                 mAsyncOpType;
         boost::function0<void>      mAsyncCallback;
         std::auto_ptr<Exception>    mAsyncException;
         unsigned int                mEndTimeMs;
@@ -692,23 +709,13 @@ namespace RCF {
     {
     public:
 
-        RestoreClientTransportGuard(ClientStub &client, ClientStub &clientTemp) :
-            mClient(client),
-            mClientTemp(clientTemp)
-        {}
-
-        ~RestoreClientTransportGuard()
-        {
-            RCF_DTOR_BEGIN
-            mClient.setTransport(mClientTemp.releaseTransport());
-            RCF_DTOR_END
-        }
+        RestoreClientTransportGuard(ClientStub &client, ClientStub &clientTemp);
+        ~RestoreClientTransportGuard();
 
     private:
         ClientStub &mClient;
         ClientStub &mClientTemp;
     };
-
 
 } // namespace RCF
 

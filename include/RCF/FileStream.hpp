@@ -32,7 +32,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/function.hpp>
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #endif
@@ -75,11 +75,11 @@ namespace RCF {
         std::string                 mRenameFile;
         boost::uint64_t             mLastWriteTime;
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         void serialize(SF::Archive & ar);
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
         template<typename Archive>
         void serialize(Archive & ar, const unsigned int)
         {
@@ -115,11 +115,11 @@ namespace RCF {
 
         boost::uint64_t getTotalByteSize() const;
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         void serialize(SF::Archive & ar);
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
         template<typename Archive>
         void serialize(Archive & ar, const unsigned int)
         {
@@ -151,12 +151,12 @@ namespace RCF {
             bool isWriting,
             boost::function2<void, boost::uint32_t &, Direction &> serializeImpl);
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         void serializeImplSf(SF::Archive & ar, boost::uint32_t & transferId, Direction & dir);
         void serialize(SF::Archive & ar);
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 
         template<typename Archive>
         void serializeImplBser(Archive & ar, boost::uint32_t & transferId, Direction & dir)
@@ -225,11 +225,11 @@ namespace RCF {
 
         FileStreamImplPtr mImplPtr;
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         void serialize(SF::Archive & ar);
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
         template<typename Archive>
         void serialize(Archive & ar, const unsigned int)
         {
@@ -267,11 +267,11 @@ namespace RCF {
         boost::uint64_t mOffset;
         ByteBuffer mData;
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         void serialize(SF::Archive & ar);
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
         template<typename Archive>
         void serialize(Archive & ar, const unsigned int)
         {
@@ -291,11 +291,11 @@ namespace RCF {
         boost::uint64_t mPos;
         boost::uint32_t mChunkSize;
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
         void serialize(SF::Archive & ar);
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
         template<typename Archive>
         void serialize(Archive & ar, const unsigned int)
         {

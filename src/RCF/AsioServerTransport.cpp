@@ -1009,13 +1009,6 @@ namespace RCF {
         mAcceptorPtr.reset();
         mStopFlag = true;
         cancelOutstandingIo();
-        mpIoService->reset();
-        std::size_t items = mpIoService->poll();
-        while (items)
-        {
-            mpIoService->reset();
-            items = mpIoService->poll();
-        }
 
         mpIoService = NULL;
         mpServer = NULL;
@@ -1076,7 +1069,17 @@ namespace RCF {
 #ifdef BOOST_WINDOWS
         OSVERSIONINFO osvi = {0};
         osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // warning C4996: 'GetVersionExA': was declared deprecated
+#endif
+
         GetVersionEx(&osvi);
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
         if (osvi.dwMajorVersion >= 6)
         {

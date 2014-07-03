@@ -25,6 +25,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <RCF/Export.hpp>
+#include <RCF/MemStream.hpp>
 #include <RCF/MinMax.hpp>
 #include <RCF/ReallocBuffer.hpp>
 

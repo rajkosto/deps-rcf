@@ -27,9 +27,10 @@
 #include <pthread.h>
 #endif
 
-// In debug builds, the tick counter rolls over after 15 seconds.
 #ifdef NDEBUG
-static const boost::uint32_t OffsetMs = 15*1000;
+// To test timer roll over, we can set the tick counter to start at a negative value.
+//static const boost::uint32_t OffsetMs = 15*1000;
+static const boost::uint32_t OffsetMs = 0;
 #else
 static const boost::uint32_t OffsetMs = 0;
 #endif

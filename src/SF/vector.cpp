@@ -21,8 +21,10 @@
 #include <boost/cstdint.hpp>
 #include <boost/mpl/assert.hpp>
 
+#include <RCF/Export.hpp>
 #include <SF/Stream.hpp>
 #include <SF/Tools.hpp>
+#include <SF/bitset.hpp>
 
 namespace SF {
 
@@ -144,6 +146,45 @@ namespace SF {
                 }
             }
         }
+    }
+
+
+    class VectorBoolWrapper : public I_BitsetWrapper
+    {
+    public:
+        VectorBoolWrapper(std::vector<bool> & bits) : mBits(bits)
+        {
+        }
+
+        virtual std::size_t size()
+        {
+            return mBits.size();
+        }
+
+        virtual void resize(std::size_t newSize)
+        {
+            mBits.resize(newSize);
+        }
+
+        virtual void setBit(std::size_t idx, bool newValue)
+        {
+            mBits[idx] = newValue;
+        }
+
+        virtual bool getBit(std::size_t idx)
+        {
+            return mBits[idx];
+        }
+
+    private:
+
+        std::vector<bool> & mBits;
+    };
+
+    RCF_EXPORT void serialize(SF::Archive & ar, std::vector<bool> & bits)
+    {
+        VectorBoolWrapper wrapper(bits);
+        serializeBitset(ar, wrapper);
     }
 
 } // namespace SF

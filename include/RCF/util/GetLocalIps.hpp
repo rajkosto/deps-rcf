@@ -26,7 +26,7 @@
 #include <RCF/Exception.hpp>
 #include <RCF/util/Platform/OS/BsdSockets.hpp>
 
-namespace util {
+namespace RCF {
 
     std::pair<std::string, std::vector<std::string> > getLocalIps()
     {
@@ -50,6 +50,6 @@ namespace util {
         return std::make_pair( std::string(&hostname[0]), ips);
     }
 
-}
+} // namespace RCF
 
 #endif

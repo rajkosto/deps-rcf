@@ -42,11 +42,11 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits.hpp>
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 #include <SF/memory.hpp>
 #endif
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 #include <RCF/BsAutoPtr.hpp>
 #include <boost/serialization/binary_object.hpp>
 #endif
@@ -119,7 +119,7 @@ namespace RCF {
         deserializeImpl(in, *pt, 0);                                    \
     }
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 
     RCF_DEFINE_PRIMITIVE_POINTER_SERIALIZATION_T3(std::basic_string)
 
@@ -183,7 +183,7 @@ namespace RCF {
 
 #undef RefCountSmartPtr
 
-#ifdef RCF_USE_BOOST_SERIALIZATION
+#if RCF_FEATURE_BOOST_SERIALIZATION==1
 } // namespace RCF
 
 namespace boost { namespace serialization {
@@ -221,7 +221,7 @@ namespace boost { namespace serialization {
     BOOST_SERIALIZATION_SPLIT_FREE(RCF::ByteBuffer);
 
 namespace RCF {
-#endif // RCF_USE_BOOST_SERIALIZATION
+#endif // RCF_FEATURE_BOOST_SERIALIZATION==1
 
     // serializeOverride() and deserializeOverride() are used to implement
     // a backwards compatibility workaround, for ByteBuffer interoperability 
@@ -1700,6 +1700,10 @@ namespace RCF {
 
 
     RCF_EXPORT void createCallbackConnectionImpl(
+        ClientStub & client, 
+        ServerTransport & callbackServer);
+
+    RCF_EXPORT void createCallbackConnectionImpl_Legacy(
         ClientStub & client, 
         ServerTransport & callbackServer);
 

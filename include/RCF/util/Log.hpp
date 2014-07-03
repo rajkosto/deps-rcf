@@ -19,7 +19,6 @@
 #ifndef INCLUDE_UTIL_LOG_HPP
 #define INCLUDE_UTIL_LOG_HPP
 
-#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
@@ -32,7 +31,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include <RCF/Export.hpp>
+#include <RCF/MemStream.hpp>
 #include <RCF/ThreadLibrary.hpp>
+#include <RCF/Tools.hpp>
 
 #include <RCF/util/Tchar.hpp>
 #include <RCF/util/VariableArgMacro.hpp>
@@ -42,16 +43,50 @@
 #endif
 
 namespace RCF { 
+
+    // Trace std::vector
+    template<typename T>
+    void printToOstream(MemOstream & os, const std::vector<T> &v)
+    {
+        os << "(";
+        for (std::size_t i=0; i<v.size(); ++i)
+        {
+            os << v[i] << ", ";
+        }
+        os << ")";
+    }
+
+    // Trace std::deque
+    template<typename T>
+    void printToOstream(MemOstream & os, const std::deque<T> &d)
+    {
+        os << "(";
+        for (std::size_t i=0; i<d.size(); ++i)
+        {
+            os << d[i] << ", ";
+        }
+        os << ")";
+    }
+
+    class Exception;
+    class RemoteException;
+    class SerializationException;
+
+    RCF_EXPORT void printToOstream(MemOstream & os, const std::type_info & ti);
+    RCF_EXPORT void printToOstream(MemOstream & os, const std::exception & e);
+    RCF_EXPORT void printToOstream(MemOstream & os, const Exception &e);
+    RCF_EXPORT void printToOstream(MemOstream & os, const RemoteException &e);
+    RCF_EXPORT void printToOstream(MemOstream & os, const SerializationException &e);
    
     class ByteBuffer;
 
     class LogBuffers
     {
     public:
-        RCF::MemOstream mTlsUserBuffer;
-        RCF::MemOstream mTlsLoggerBuffer;
-        RCF::MemOstream mTlsVarArgBuffer1;
-        RCF::MemOstream mTlsVarArgBuffer2;
+        MemOstream mTlsUserBuffer;
+        MemOstream mTlsLoggerBuffer;
+        MemOstream mTlsVarArgBuffer1;
+        MemOstream mTlsVarArgBuffer2;
     };
 
     //******************************************************************************
@@ -106,7 +141,7 @@ namespace RCF {
     public:
         virtual ~LogTarget() {}
         virtual LogTarget * clone() const = 0;
-        virtual void write(const RCF::ByteBuffer & output) = 0;
+        virtual void write(const ByteBuffer & output) = 0;
     };
 
     /// Configures log output to be directed to standard output.
@@ -115,12 +150,12 @@ namespace RCF {
     public:
         LogToStdout(bool flushAfterEachWrite = true);
         LogTarget * clone() const;
-        void write(const RCF::ByteBuffer & output);
+        void write(const ByteBuffer & output);
 
-        static RCF::Mutex sIoMutex;
+        static Mutex   sIoMutex;
 
     private:
-        bool mFlush;
+        bool                mFlush;
     };
 
 #ifdef BOOST_WINDOWS
@@ -130,7 +165,7 @@ namespace RCF {
     {
     public:
         LogTarget * clone() const;
-        void write(const RCF::ByteBuffer & output);
+        void write(const ByteBuffer & output);
     };
 
     /// Configures log output to be directed to the Windows event log.
@@ -140,13 +175,13 @@ namespace RCF {
         LogToEventLog(const std::string & appName, int eventLogLevel);
         ~LogToEventLog();
 
-        LogTarget * clone() const;
-        void write(const RCF::ByteBuffer & output);
+        LogTarget *     clone() const;
+        void            write(const ByteBuffer & output);
 
     private:
-        std::string mAppName;
-        int mEventLogLevel;
-        HANDLE mhEventLog;
+        std::string     mAppName;
+        int             mEventLogLevel;
+        HANDLE          mhEventLog;
     };
 
 #endif
@@ -157,30 +192,33 @@ namespace RCF {
     public:
         LogToFile(const std::string & filePath, bool flushAfterEachWrite = false);
         LogToFile(const LogToFile & rhs);
-        LogTarget * clone() const;
-        void write(const RCF::ByteBuffer & output);
+        ~LogToFile();
+
+        LogTarget *     clone() const;
+        void            write(const ByteBuffer & output);
 
     private:
         
-        RCF::Mutex mMutex;
+        Mutex           mMutex;
 
-        std::string mFilePath;
-        bool mOpened;
-        std::ofstream mFout;
-        bool mFlush;
+        std::string     mFilePath;
+        bool            mOpened;
+        FILE *          mFp;
+        bool            mFlush;
     };
 
-    typedef boost::function1<void, const RCF::ByteBuffer &> LogFunctor;
+    typedef boost::function1<void, const ByteBuffer &> LogFunctor;
 
     class RCF_EXPORT LogToFunc : public LogTarget
     {
     public:
         LogToFunc(LogFunctor logFunctor);
-        LogTarget * clone() const;
-        void write(const RCF::ByteBuffer & output);
+
+        LogTarget *     clone() const;
+        void            write(const ByteBuffer & output);
 
     private:
-        LogFunctor mLogFunctor;
+        LogFunctor      mLogFunctor;
     };
 
     //******************************************************************************
@@ -198,27 +236,19 @@ namespace RCF {
         template<typename T>
         const LogEntry& operator<<(const T& t) const
         {
-            const_cast<RCF::MemOstream&>(*mpOstream) << t;
+            const_cast<MemOstream&>(*mpOstream) << t;
             return *this;
         }
 
 #ifndef BOOST_NO_STD_WSTRING
         const LogEntry& operator<<(const std::wstring& t) const
         {
-            const_cast<RCF::MemOstream&>(*mpOstream) << RCF::wstringToString(t);
+            const_cast<MemOstream&>(*mpOstream) << wstringToString(t);
             return *this;
         }
 #endif
 
-        // Special streaming for std::endl etc.
-        typedef std::ostream& (*Pfn)(std::ostream&);
-        const LogEntry& operator<<(Pfn pfn) const
-        {
-            const_cast<RCF::MemOstream&>(*mpOstream) << pfn;
-            return *this;
-        }
-
-        RCF::MemOstream & getOstream()
+        MemOstream & getOstream()
         {
             return *mpOstream;
         }
@@ -234,17 +264,17 @@ namespace RCF {
         int                 mLine;
         const char *        mFunc;
 
-        RCF::ThreadId       mThreadId;
+        ThreadId            mThreadId;
         time_t              mTime;
         boost::uint32_t     mTimeMs;
 
-        RCF::MemOstream *  mpOstream;
+        MemOstream *        mpOstream;
     };
 
     //******************************************************************************
     // Logger
 
-    typedef boost::function2<void, const LogEntry &, RCF::ByteBuffer&> LogFormatFunctor;
+    typedef boost::function2<void, const LogEntry &, ByteBuffer&> LogFormatFunctor;
 
     class RCF_EXPORT Logger : public boost::enable_shared_from_this<Logger>
     {
@@ -295,9 +325,11 @@ namespace RCF {
         const char * mName;
         const T& mValue;
 
-        friend std::ostream& operator<<(std::ostream & os, const LogNameValue& lnv)
+        friend MemOstream& operator<<(MemOstream & os, const LogNameValue& lnv)
         {
-            os << "(" << lnv.mName << " = " << lnv.mValue << ")";
+            os << "(" << lnv.mName << " = ";
+            printToOstream(os, lnv.mValue);
+            os << ")";
             return os;
         }
     };
@@ -310,7 +342,7 @@ namespace RCF {
 
     #define NAMEVALUE(x) RCF::makeNameValue(#x, x)
 
-    class LogVarsFunctor : public util::VariableArgMacroFunctor
+    class LogVarsFunctor : public VariableArgMacroFunctor
     {
     public:
 
@@ -337,13 +369,6 @@ namespace RCF {
         const LogVarsFunctor & operator<<(const T & t) const
         {
             const_cast<LogEntry &>(mLogEntry) << t;
-            return *this;
-        }
-
-        typedef std::ostream& (*Pfn)(std::ostream&);
-        const LogVarsFunctor & operator<<(Pfn pfn) const
-        {
-            const_cast<LogEntry &>(mLogEntry) << pfn;
             return *this;
         }
 

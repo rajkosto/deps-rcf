@@ -26,22 +26,6 @@
 
 namespace RCF {
 
-    typedef AsioSocket                              TcpSocket;
-    typedef boost::shared_ptr<TcpSocket>            TcpSocketPtr;
-
-#ifdef RCF_HAS_LOCAL_SOCKETS
-
-    using ASIO_NS::local::stream_protocol;
-    typedef stream_protocol::socket                 UnixLocalSocket;
-    typedef boost::shared_ptr<UnixLocalSocket>      UnixLocalSocketPtr;
-
-#else
-
-    typedef TcpSocket                               UnixLocalSocket;
-    typedef TcpSocketPtr                            UnixLocalSocketPtr;
-
-#endif
-
     class RCF_EXPORT BsdClientTransport :
         public ConnectionOrientedClientTransport
     {
@@ -86,7 +70,6 @@ namespace RCF {
         TcpSocketPtr            mTcpSocketPtr; 
         UnixLocalSocketPtr      mLocalSocketPtr;
 
-        AsioBuffersPtr          mAsioBuffersPtr;
         AsioIoService *         mpIoService;
 
         int                     mWriteCounter;

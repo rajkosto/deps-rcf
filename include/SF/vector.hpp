@@ -24,6 +24,8 @@
 #include <SF/Serializer.hpp>
 #include <SF/SerializeStl.hpp>
 
+#include <boost/type_traits.hpp>
+
 namespace SF {
 
     // std::vector
@@ -47,16 +49,23 @@ namespace SF {
     }
 
     template<typename T, typename A>
-    inline void serialize_vc6(
+    inline void serialize(
         SF::Archive &           ar,
-        std::vector<T,A> &      vec, 
-        const unsigned int)
+        std::vector<T,A> &      vec)
     {
-        typedef typename RCF::IsFundamental<T>::type type;
+        // We want fast vector serialization for vector<T>, if T is fundamental.
+        // Don't need to cover the case where T is a bool, as vector<bool> has
+        // its own serialize() function (see below).
+
+        const bool IsBool = boost::is_same<T, bool>::value;
+        BOOST_STATIC_ASSERT( !IsBool );
+
+        typedef typename boost::is_fundamental<T>::type type;
         serializeVector(ar, vec, (type *) 0);
     }
 
-
+    // Special case serialization for vector<bool>.
+    RCF_EXPORT void serialize(SF::Archive & ar, std::vector<bool> & bits);
 
     class I_VecWrapper
     {
@@ -118,4 +127,3 @@ namespace SF {
 } // namespace SF
 
 #endif // ! INCLUDE_SF_VECTOR_HPP
- INCLUDE_SF_VECTOR_HPP

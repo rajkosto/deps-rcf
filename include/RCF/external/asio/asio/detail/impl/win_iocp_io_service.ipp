@@ -49,7 +49,7 @@ struct win_iocp_io_service::timer_thread_function
   void operator()()
   {
 	  // JL: Useful when looking at threads in the debugger.
-	  RCF::setWin32ThreadName("RCF Server Asio Timer");
+	  RCF::setWin32ThreadName("RCF Asio Internal Timer");
 
     while (::InterlockedExchangeAdd(&io_service_->shutdown_, 0) == 0)
     {

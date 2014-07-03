@@ -27,7 +27,7 @@
 
 #include <RCF/util/Platform/OS/BsdSockets.hpp> // GetErrorString()
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 #include <SF/Archive.hpp>
 #include <SF/string.hpp>
 #include <SF/vector.hpp>
@@ -64,7 +64,7 @@ namespace RCF {
         return s;
     }
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
     void Error::serialize(SF::Archive & ar)
     {
@@ -73,7 +73,7 @@ namespace RCF {
 
 #endif
 
-    std::string Error::getRawErrorString() const
+    const char * Error::getRawErrorString() const
     {
         int rcfError = mErrorId;
 
@@ -144,7 +144,7 @@ namespace RCF {
         case RcfError_PortInUse                     :   return "Port already in use. Network interface: %1. Port: %2.";
         case RcfError_DynamicObjectNotFound         :   return "Server-side object for given token not found. Token id: %1.";
         case RcfError_VersionMismatch               :   return "Version mismatch.";
-        case RcfError_SslCertVerification           :   return "SSL certificate verification failure.";
+        case RcfError_SslCertVerification           :   return "SSL certificate verification failure. OpenSSL error: %1";
         case RcfError_FiltersLocked                 :   return "Filters locked.";
         case RcfError_Pipe                          :   return "Pipe error.";
         case RcfError_AnySerializerNotFound         :   return "Boost.Any serialization error: serializer not registered for the type \"%1\". Use SF::registerAny() to register a serializer.";
@@ -223,6 +223,11 @@ namespace RCF {
         case RcfError_NotSupportedOnWindows         :   return "%1 is not supported on Windows platforms.";
         case RcfError_NotSupportedInThisBuild       :   return "%1 is not supported in this RCF build.";
         case RcfError_NoLongerSupported             :   return "%1 is no longer supported in this version of RCF.";
+        case RcfError_SslCertVerificationCustom     :   return "SSL certificate verification failure.";
+        case RcfError_ServerCallbacksNotSupported   :   return "The server has not been configured to accept callback connections.";
+        case RcfError_ServerUnsupportedFeature      :   return "The server does not support this feature. Feature: %1.";
+        case RcfError_SyncPublishError              :   return "Synchronous error while sending to subscriber. Error: %1.";
+        case RcfError_DeserializeVectorBool         :   return "Bit count mismatch on deserialization of vector<bool>. Bit count: %1. Buffer size: %2.";
 
         // Errors that are no longer in use.
         case RcfError_StubAssignment                :   return "Incompatible stub assignment.";
@@ -349,7 +354,7 @@ namespace RCF {
     {
         if (mError.getErrorId() >= RcfError_User)
         {
-            std::ostringstream os;
+            MemOstream os;
             os << "Non-RCF error (" << mError.getErrorId() << ")";
             std::string w = getWhat();
             if (!w.empty())
@@ -360,18 +365,18 @@ namespace RCF {
             {
                 os << ".";
             }
-            return os.str();
+            return os.string();
         }
         else if (mSubSystem == RcfSubsystem_Os)
         {
-            std::ostringstream os;
+            MemOstream os;
             os << mError.getErrorString();
 
             if (mSubSystem == RcfSubsystem_Os)
             {
                 os << " OS: " << mSubSystemError << " - " << getOsErrorString(mSubSystemError);
             }
-            return os.str();
+            return os.string();
         }
         else
         {
@@ -429,14 +434,14 @@ namespace RCF {
 
         int errorId = mError.getErrorId();
 
-        std::ostringstream os;
+        MemOstream os;
         os
             << "[" << errorId << ": " << getErrorString() << "]"
             << "[" << mSubSystem << ": " << RCF::getSubSystemName(mSubSystem) << "]"
             << "[" << mSubSystemError << ": " << osErr << "]"
             << "[What: " << mWhat << "]"
             << "[Context: " << mContext << "]";
-        return os.str();
+        return os.string();
     }
 
     void Exception::throwSelf() const
@@ -446,7 +451,7 @@ namespace RCF {
 
         RCF_ASSERT(
             typeid(*this) == typeid(Exception))
-            (typeid(*this));
+            (typeid(*this).name());
 
         throw *this;
     }
@@ -546,7 +551,7 @@ namespace RCF {
         return mArchiveVersion;
     }
 
-#ifdef RCF_USE_SF_SERIALIZATION
+#if RCF_FEATURE_SF==1
 
     void RemoteException::serialize(SF::Archive &ar)
     {

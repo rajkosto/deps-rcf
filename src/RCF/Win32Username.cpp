@@ -182,6 +182,7 @@ namespace RCF {
         DWORD dwSize = sizeof(buffer)/sizeof(buffer[0]);
         BOOL ok = GetComputerName(buffer, &dwSize);
         RCF_ASSERT(ok);
+        RCF_UNUSED_VARIABLE(ok);
         return tstring(&buffer[0]);
     }
 

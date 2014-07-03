@@ -32,7 +32,7 @@ namespace SF {
 
     // ContextRead
 
-    ContextRead::ContextRead() : bEnabled_(true)
+    ContextRead::ContextRead() : mEnabled(true)
     {}
 
     ContextRead::~ContextRead()
@@ -40,40 +40,40 @@ namespace SF {
 
     void ContextRead::setEnabled(bool enabled)
     {
-        bEnabled_ = enabled;
+        mEnabled = enabled;
     }
 
     bool ContextRead::getEnabled() const
     {
-        return bEnabled_;
+        return mEnabled;
     }
 
     void ContextRead::add(UInt32 nid, const ObjectId &id)
     {
-        RCF_ASSERT(bEnabled_);
-        if (nid_id_ptr_.get() == NULL)
+        RCF_ASSERT(mEnabled);
+        if (mNidToIdMap.get() == NULL)
         {
-            nid_id_ptr_.reset( new std::map<UInt32, ObjectId>());
+            mNidToIdMap.reset( new std::map<UInt32, ObjectId>());
         }
-        (*nid_id_ptr_)[nid] = id;
+        (*mNidToIdMap)[nid] = id;
     }
 
     void ContextRead::add(void *ptr, const std::type_info &objType, void *pObj)
     {
-        RCF_ASSERT(bEnabled_);
-        if (type_ptr_obj_ptr_.get() == NULL)
+        RCF_ASSERT(mEnabled);
+        if (mTypeToObjMap.get() == NULL)
         {
-            type_ptr_obj_ptr_.reset( new std::map<std::string, std::map< void *, void * > >() );
+            mTypeToObjMap.reset( new std::map<std::string, std::map< void *, void * > >() );
         }
-        (*type_ptr_obj_ptr_)[ objType.name() ][ ptr ] = pObj;
+        (*mTypeToObjMap)[ objType.name() ][ ptr ] = pObj;
     }
 
     bool ContextRead::query(UInt32 nid, ObjectId &id)
     {
-        RCF_ASSERT(bEnabled_);
-        if (nid_id_ptr_.get() && nid_id_ptr_->find( nid ) != nid_id_ptr_->end())
+        RCF_ASSERT(mEnabled);
+        if (mNidToIdMap.get() && mNidToIdMap->find( nid ) != mNidToIdMap->end())
         {
-            id = (*nid_id_ptr_)[ nid ];
+            id = (*mNidToIdMap)[ nid ];
             return true;
         }
         else
@@ -84,11 +84,11 @@ namespace SF {
 
     bool ContextRead::query(void *ptr, const std::type_info &objType, void *&pObj)
     {
-        RCF_ASSERT(bEnabled_);
-        if (type_ptr_obj_ptr_.get() &&
-            (*type_ptr_obj_ptr_)[ objType.name() ].find(ptr) != (*type_ptr_obj_ptr_)[ objType.name() ].end() )
+        RCF_ASSERT(mEnabled);
+        if (mTypeToObjMap.get() &&
+            (*mTypeToObjMap)[ objType.name() ].find(ptr) != (*mTypeToObjMap)[ objType.name() ].end() )
         {
-            pObj = (*type_ptr_obj_ptr_)[ objType.name() ][ ptr ];
+            pObj = (*mTypeToObjMap)[ objType.name() ][ ptr ];
             return true;
         }
         else
@@ -99,21 +99,21 @@ namespace SF {
 
     void ContextRead::clear()
     {
-        if (nid_id_ptr_.get())
+        if (mNidToIdMap.get())
         {
-            nid_id_ptr_->clear();
+            mNidToIdMap->clear();
         }
-        if (type_ptr_obj_ptr_.get())
+        if (mTypeToObjMap.get())
         {
-            type_ptr_obj_ptr_->clear();
+            mTypeToObjMap->clear();
         }
     }
 
     // ContextWrite
 
     ContextWrite::ContextWrite() :
-        bEnabled_(false),
-        currentId_(1)
+        mEnabled(false),
+        mCurrentId(1)
     {}
 
     ContextWrite::~ContextWrite()
@@ -121,37 +121,37 @@ namespace SF {
 
     void ContextWrite::setEnabled(bool enabled)
     {
-        bEnabled_ = enabled;
-        if (bEnabled_ && id_nid_ptr_.get() == NULL)
+        mEnabled = enabled;
+        if (mEnabled && mIdToNidMap.get() == NULL)
         {
-            id_nid_ptr_.reset( new std::map<ObjectId, UInt32>());
+            mIdToNidMap.reset( new std::map<ObjectId, UInt32>());
         }
     }
 
     bool ContextWrite::getEnabled() const
     {
-        return bEnabled_;
+        return mEnabled;
     }
 
     void ContextWrite::add(const ObjectId &id, UInt32 &nid)
     {
-        if (bEnabled_)
+        if (mEnabled)
         {
-            if (id_nid_ptr_->find( id ) != id_nid_ptr_->end())
+            if (mIdToNidMap->find( id ) != mIdToNidMap->end())
             {
-                nid = (*id_nid_ptr_)[ id ];
+                nid = (*mIdToNidMap)[ id ];
             }
             else
             {
-                nid = (*id_nid_ptr_)[ id ] = currentId_++;
+                nid = (*mIdToNidMap)[ id ] = mCurrentId++;
             }
         }
     }
     bool ContextWrite::query(const ObjectId &id, UInt32 &nid)
     {
-        if ( bEnabled_ && id_nid_ptr_->find( id ) != id_nid_ptr_->end() )
+        if ( mEnabled && mIdToNidMap->find( id ) != mIdToNidMap->end() )
         {
-            nid = (*id_nid_ptr_)[ id ];
+            nid = (*mIdToNidMap)[ id ];
             return true;
         }
         else
@@ -162,17 +162,17 @@ namespace SF {
 
     void ContextWrite::clear()
     {
-        if (id_nid_ptr_.get())
+        if (mIdToNidMap.get())
         {
-            id_nid_ptr_->clear();
+            mIdToNidMap->clear();
         }
-        currentId_ = 1;
+        mCurrentId = 1;
     }
 
     // LocalStorage
 
     LocalStorage::LocalStorage() :
-        pNode_()
+        mpNode()
     {}
 
     LocalStorage::~LocalStorage()
@@ -180,12 +180,12 @@ namespace SF {
 
     void LocalStorage::setNode(Node *pNode)
     {
-        pNode_ = pNode;
+        mpNode = pNode;
     }
 
     Node *LocalStorage::getNode()
     {
-        return pNode_;
+        return mpNode;
     }
 
     enum {
@@ -201,11 +201,28 @@ namespace SF {
 
     IStream::IStream() :
         mpIs(),
+        mArchiveSize(0),
         mRuntimeVersion( RCF::getDefaultRuntimeVersion() ),
         mArchiveVersion( RCF::getDefaultArchiveVersion() ),
         mIgnoreVersionStamp(false),
         mpSerializationProtocolIn(NULL)
     {
+    }
+
+    IStream::IStream(
+        RCF::MemIstream &  is, 
+        std::size_t     archiveSize, 
+        int             runtimeVersion, 
+        int             archiveVersion) :
+
+            mpIs(),
+            mArchiveSize(0),
+            mRuntimeVersion( runtimeVersion ),
+            mArchiveVersion( archiveVersion ),
+            mIgnoreVersionStamp(false),
+            mpSerializationProtocolIn(NULL)
+    {
+        setIs(is, archiveSize, runtimeVersion, archiveVersion);
     }
 
     IStream::IStream(
@@ -223,6 +240,7 @@ namespace SF {
     {
         setIs(is, archiveSize, runtimeVersion, archiveVersion);
     }
+
 
     IStream::~IStream()
     {
@@ -548,6 +566,20 @@ namespace SF {
         mArchiveMetadataWritten(false),
         mpSerializationProtocolOut(NULL)
     {
+    }
+
+    OStream::OStream(
+        RCF::MemOstream &  os, 
+        int             runtimeVersion, 
+        int             archiveVersion) : 
+
+            mpOs(), 
+            mRuntimeVersion(runtimeVersion),
+            mSuppressArchiveMetadata(false),
+            mArchiveMetadataWritten(false),
+            mpSerializationProtocolOut(NULL)
+    {
+        setOs(os, runtimeVersion, archiveVersion);
     }
 
     OStream::OStream(

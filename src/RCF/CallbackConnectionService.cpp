@@ -20,7 +20,10 @@
 
 #include <RCF/Marshal.hpp>
 #include <RCF/RcfServer.hpp>
+
+#if RCF_FEATURE_LEGACY==1
 #include <RCF/ServerInterfaces.hpp>
+#endif
 
 namespace RCF {
 
@@ -30,12 +33,20 @@ namespace RCF {
 
     void CallbackConnectionService::onServiceAdded(RcfServer & server)
     {
+
+#if RCF_FEATURE_LEGACY==1
         server.bind<I_CreateCallbackConnection>(*this);
+#endif
+
     }
 
     void CallbackConnectionService::onServiceRemoved(RcfServer & server)
     {
+
+#if RCF_FEATURE_LEGACY==1
         server.unbind<I_CreateCallbackConnection>();
+#endif
+
     }
 
     void CallbackConnectionService::onServerStart(RcfServer & server)
@@ -45,9 +56,10 @@ namespace RCF {
 
     void CallbackConnectionService::CreateCallbackConnection()
     {
-        // TODO: regular error message.
-        // ...
-        RCF_ASSERT( mOnCallbackConnectionCreated );
+        if ( !mOnCallbackConnectionCreated )
+        {
+            RCF_THROW( Exception(_RcfError_ServerCallbacksNotSupported()) );
+        }
 
         RCF::convertRcfSessionToRcfClient( mOnCallbackConnectionCreated );
     }
