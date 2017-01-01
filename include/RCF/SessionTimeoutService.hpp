@@ -28,9 +28,9 @@
 
 namespace RCF {
 
-    class SessionState;
-    typedef boost::shared_ptr<SessionState> SessionStatePtr;
-    typedef boost::weak_ptr<SessionState> SessionStateWeakPtr;
+    class NetworkSession;
+    typedef boost::shared_ptr<NetworkSession> NetworkSessionPtr;
+    typedef boost::weak_ptr<NetworkSession> NetworkSessionWeakPtr;
 
     class RCF_EXPORT SessionTimeoutService : public I_Service
     {
@@ -46,7 +46,7 @@ namespace RCF {
 
     private:
 
-        std::vector<SessionStateWeakPtr>  mSessionsTemp;
+        std::vector<NetworkSessionWeakPtr>  mSessionsTemp;
 
         boost::uint32_t                 mSessionTimeoutMs;
         boost::uint32_t                 mReapingIntervalMs;

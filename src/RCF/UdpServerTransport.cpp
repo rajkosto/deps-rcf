@@ -127,7 +127,16 @@ namespace RCF {
             
             sockaddr * pServerAddr = NULL;
             Platform::OS::BsdSockets::socklen_t serverAddrSize = 0;
+
+#if defined(__MACH__) && defined(__APPLE__)
+            // On OS X, need to bind to all interfaces, before subscribing to a particular multicast group.
+            std::string strIp = (mIpAddress.getType() == IpAddress::V4) ? "0.0.0.0" : "::0";
+            IpAddress bindToAllInt(strIp, mIpAddress.getPort());
+            bindToAllInt.resolve();
+            bindToAllInt.getSockAddr(pServerAddr, serverAddrSize);
+#else
             mIpAddress.getSockAddr(pServerAddr, serverAddrSize);
+#endif
 
             // bind the socket
             ret = ::bind(mFd, pServerAddr, serverAddrSize);
@@ -145,27 +154,79 @@ namespace RCF {
 
                 mMulticastIpAddress.resolve();
 
-                // TODO: implement for IPv6.
-                RCF_ASSERT(
-                        mIpAddress.getType() == IpAddress::V4 
-                    &&  mMulticastIpAddress.getType() == IpAddress::V4);
-
                 std::string ip = mMulticastIpAddress.getIp();
-            
-                ip_mreq imr;
-                imr.imr_multiaddr.s_addr = inet_addr(ip.c_str());
-                imr.imr_interface.s_addr = INADDR_ANY;
-                int ret = setsockopt(mFd,IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*) &imr, sizeof(imr));
-                int err = Platform::OS::BsdSockets::GetLastError();
 
-                RCF_VERIFY(
-                    ret ==  0,
-                    Exception(
-                        _RcfError_Socket("setsockopt() with IPPROTO_IP/IP_ADD_MEMBERSHIP"),
-                        err,
-                        RcfSubsystem_Os))
-                        (mMulticastIpAddress.string())(mIpAddress.string());
+                sockaddr * pAddr = NULL;
+                Platform::OS::BsdSockets::socklen_t addrSize = 0;
+                mMulticastIpAddress.getSockAddr(pAddr, addrSize);
 
+                if ( mIpAddress.getType() == IpAddress::V4 )
+                {
+                    sockaddr_in * pAddrV4 = (sockaddr_in *)pAddr;
+                    
+                    ip_mreq imr;
+                    memset(&imr, 0, sizeof(imr));
+
+                    memcpy(
+                        &imr.imr_multiaddr,
+                        &pAddrV4->sin_addr,
+                        sizeof(imr.imr_multiaddr));
+
+                     if (mIpAddress.getIp().compare("0.0.0.0") == 0 )
+                     {
+                         imr.imr_interface.s_addr = INADDR_ANY;
+                     }
+                     else
+                     {
+                         imr.imr_interface.s_addr = inet_addr(mIpAddress.getIp().c_str());
+                     }
+
+
+                    ret = setsockopt(mFd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*)&imr, sizeof(imr));
+                    err = Platform::OS::BsdSockets::GetLastError();
+
+                    RCF_VERIFY(
+                        ret == 0,
+                        Exception(
+                            _RcfError_Socket("setsockopt() with IPPROTO_IP/IP_ADD_MEMBERSHIP"),
+                            err,
+                            RcfSubsystem_Os))
+                            (mMulticastIpAddress.string())(mIpAddress.string());
+                }
+#if RCF_FEATURE_IPV6==1
+                else if ( mIpAddress.getType() == IpAddress::V6 )
+                {
+                    SockAddrIn6 * pAddrV6 = (SockAddrIn6 *) pAddr;
+                    
+                    ipv6_mreq imr = { 0 };
+                    memset(&imr, 0, sizeof(imr));
+
+                    memcpy(
+                        &imr.ipv6mr_multiaddr,
+                        &pAddrV6->sin6_addr,
+                        sizeof(imr.ipv6mr_multiaddr));
+
+                     // Specifying source IP address with interface index.
+                     sockaddr * pSockAddrSrc = NULL;
+                     Platform::OS::BsdSockets::socklen_t sockAddrSrcSize = 0;
+                     mIpAddress.getSockAddr(pSockAddrSrc, sockAddrSrcSize);
+                     SockAddrIn6 * pAddrV6Src = (SockAddrIn6 *) pSockAddrSrc;
+                     
+                     imr.ipv6mr_interface = pAddrV6Src->sin6_scope_id;
+
+
+                    ret = setsockopt(mFd, IPPROTO_IPV6, IP_ADD_MEMBERSHIP, (const char*)&imr, sizeof(imr));
+                    err = Platform::OS::BsdSockets::GetLastError();
+
+                    RCF_VERIFY(
+                        ret == 0,
+                        Exception(
+                            _RcfError_Socket("setsockopt() with IPPROTO_IPV6/IP_ADD_MEMBERSHIP"),
+                            err,
+                            RcfSubsystem_Os))
+                            (mMulticastIpAddress.string())(mIpAddress.string());
+                }
+#endif
                 // TODO: enable source-filtered multicast messages
                 //ip_mreq_source imr;
                 //imr.imr_multiaddr.s_addr = inet_addr("232.5.6.7");
@@ -249,16 +310,16 @@ namespace RCF {
         int err = Platform::OS::BsdSockets::GetLastError();
         if (ret == 1)
         {
-            SessionStatePtr sessionStatePtr = getTlsUdpSessionStatePtr();
-            if (sessionStatePtr.get() == NULL)
+            NetworkSessionPtr networkSessionPtr = getTlsUdpNetworkSessionPtr();
+            if (networkSessionPtr.get() == NULL)
             {
-                sessionStatePtr = SessionStatePtr(new SessionState(*this));
-                sessionStatePtr->mSessionPtr = getSessionManager().createSession();
-                sessionStatePtr->mSessionPtr->setSessionState(*sessionStatePtr);
-                setTlsUdpSessionStatePtr(sessionStatePtr);
+                networkSessionPtr = NetworkSessionPtr(new NetworkSession(*this));
+                networkSessionPtr->mRcfSessionPtr = getSessionManager().createSession();
+                networkSessionPtr->mRcfSessionPtr->setNetworkSession(*networkSessionPtr);
+                setTlsUdpNetworkSessionPtr(networkSessionPtr);
             }
 
-            tryReadMessage(sessionStatePtr);
+            tryReadMessage(networkSessionPtr);
         }
         else if (ret == 0)
         {
@@ -276,7 +337,7 @@ namespace RCF {
 
     }
 
-    void UdpSessionState::postWrite(
+    void UdpNetworkSession::postWrite(
         std::vector<ByteBuffer> &byteBuffers)
     {
         // prepend data length and send the data
@@ -318,12 +379,12 @@ namespace RCF {
             RCF_THROW(e)(mTransport.mFd)(len)(writeBuffer.size());
         }
 
-        SessionStatePtr sessionStatePtr = getTlsUdpSessionStatePtr();
+        NetworkSessionPtr networkSessionPtr = getTlsUdpNetworkSessionPtr();
 
-        SessionPtr sessionPtr = sessionStatePtr->mSessionPtr;
+        SessionPtr sessionPtr = networkSessionPtr->mRcfSessionPtr;
     }
 
-    void UdpSessionState::postRead()
+    void UdpNetworkSession::postRead()
     {
     }
 
@@ -351,7 +412,7 @@ namespace RCF {
     void UdpServerTransport::onServiceRemoved(RcfServer &)
     {}
 
-    UdpSessionState::UdpSessionState(UdpServerTransport & transport) :
+    UdpNetworkSession::UdpNetworkSession(UdpServerTransport & transport) :
         mTransport(transport)
     {}
 
@@ -365,14 +426,14 @@ namespace RCF {
         close();
     }
 
-    void UdpServerTransport::tryReadMessage(SessionStatePtr sessionStatePtr)
+    void UdpServerTransport::tryReadMessage(NetworkSessionPtr networkSessionPtr)
     {
         // Try to read a message from the UDP socket.
 
         int err = 0;
 
         ReallocBufferPtr &readVecPtr =
-        sessionStatePtr->mReadVecPtr;
+        networkSessionPtr->mReadVecPtr;
 
         if (readVecPtr.get() == NULL || !readVecPtr.unique())
         {
@@ -401,14 +462,14 @@ namespace RCF {
         }
         if (err != Platform::OS::BsdSockets::ERR_EWOULDBLOCK)
         {
-            sessionStatePtr->mRemoteAddress.init(
+            networkSessionPtr->mRemoteAddress.init(
                 (sockaddr&)from,
                 fromlen,
                 mIpAddress.getType());
 
-            if (!isIpAllowed(sessionStatePtr->mRemoteAddress))
+            if (!isIpAllowed(networkSessionPtr->mRemoteAddress))
             {
-                RCF_LOG_2()(sessionStatePtr->mRemoteAddress.getIp())
+                RCF_LOG_2()(networkSessionPtr->mRemoteAddress.getIp())
                     << "Client IP does not match server's IP access rules. Closing connection.";
 
                 discardPacket(mFd);
@@ -433,16 +494,16 @@ namespace RCF {
 
                     RCF::machineToNetworkOrder(byteBuffer.getPtr(), 4, 1);
 
-                    char *buffer = byteBuffer.getPtr();
+                    char * szBuffer = byteBuffer.getPtr();
                     std::size_t bufferLen = byteBuffer.getLength();
 
                     sockaddr * pRemoteAddr = NULL;
                     Platform::OS::BsdSockets::socklen_t remoteAddrSize = 0;
-                    sessionStatePtr->mRemoteAddress.getSockAddr(pRemoteAddr, remoteAddrSize);
+                    networkSessionPtr->mRemoteAddress.getSockAddr(pRemoteAddr, remoteAddrSize);
 
-                    int len = sendto(
+                    len = sendto(
                         mFd,
-                        buffer,
+                        szBuffer,
                         static_cast<int>(bufferLen),
                         0,
                         pRemoteAddr,
@@ -469,7 +530,7 @@ namespace RCF {
 
                     if (static_cast<unsigned int>(len) == 4 + dataLength)
                     {
-                        getSessionManager().onReadCompleted(sessionStatePtr->mSessionPtr);
+                        getSessionManager().onReadCompleted(networkSessionPtr->mRcfSessionPtr);
                     }
                 }
             }
@@ -480,34 +541,34 @@ namespace RCF {
         }
     }
 
-    const RemoteAddress &UdpSessionState::getRemoteAddress() const
+    const RemoteAddress &UdpNetworkSession::getRemoteAddress() const
     {
         return mRemoteAddress;
     }
 
-    ServerTransport & UdpSessionState::getServerTransport()
+    ServerTransport & UdpNetworkSession::getServerTransport()
     {
         return mTransport;
     }
 
-    const RemoteAddress & UdpSessionState::getRemoteAddress()
+    const RemoteAddress & UdpNetworkSession::getRemoteAddress()
     {
         return mRemoteAddress;
     }
 
-    void UdpSessionState::setTransportFilters(const std::vector<FilterPtr> &filters)
+    void UdpNetworkSession::setTransportFilters(const std::vector<FilterPtr> &filters)
     {
         RCF_UNUSED_VARIABLE(filters);
         RCF_ASSERT(0);
     }
 
-    void UdpSessionState::getTransportFilters(std::vector<FilterPtr> &filters)
+    void UdpNetworkSession::getTransportFilters(std::vector<FilterPtr> &filters)
     {
         RCF_UNUSED_VARIABLE(filters);
         RCF_ASSERT(0);
     }
 
-    ByteBuffer UdpSessionState::getReadByteBuffer()
+    ByteBuffer UdpNetworkSession::getReadByteBuffer()
     {
         return ByteBuffer(
             &(*mReadVecPtr)[0] + 4,
@@ -516,16 +577,16 @@ namespace RCF {
             mReadVecPtr);
     }
 
-    void UdpSessionState::postClose()
+    void UdpNetworkSession::postClose()
     {
     }
 
-    int UdpSessionState::getNativeHandle() const
+    int UdpNetworkSession::getNativeHandle() const
     {
         return mTransport.mFd;
     }
 
-    bool UdpSessionState::isConnected()
+    bool UdpNetworkSession::isConnected()
     {
         return true;
     }

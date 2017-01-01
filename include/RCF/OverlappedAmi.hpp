@@ -49,14 +49,14 @@ namespace RCF {
     class OverlappedAmi;
     typedef boost::shared_ptr<OverlappedAmi> OverlappedAmiPtr;
 
-    class ConnectionOrientedClientTransport;
+    class ConnectedClientTransport;
 
     class OverlappedAmi : 
         public boost::enable_shared_from_this<OverlappedAmi>
     {
     public:
 
-        OverlappedAmi(ConnectionOrientedClientTransport *pTcpClientTransport) : 
+        OverlappedAmi(ConnectedClientTransport *pTcpClientTransport) : 
             mpTransport(pTcpClientTransport),
             mIndex(0),
             mOpType(None)
@@ -82,7 +82,7 @@ namespace RCF {
         // TODO: should make these private.
 
         RecursiveMutex                      mMutex;
-        ConnectionOrientedClientTransport * mpTransport;
+        ConnectedClientTransport * mpTransport;
         std::size_t                         mIndex;
         AsyncOpType                         mOpType;
 

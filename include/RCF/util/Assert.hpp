@@ -31,66 +31,17 @@
 #include <crtdbg.h>
 #endif
 
+#include <RCF/Export.hpp>
+
 namespace RCF {
 
-    class AssertFunctor : public VariableArgMacroFunctor
+    class RCF_EXPORT AssertFunctor : public VariableArgMacroFunctor
     {
     public:
 
-        AssertFunctor() : mExpr(NULL)
-        {
-        }
-
-        AssertFunctor(const char * expr) : mExpr(expr)
-        {
-        }
-
-#if defined(_MSC_VER) && !defined(NDEBUG)
-#pragma warning(push)
-#pragma warning(disable: 4995) // 'sprintf': name was marked as #pragma deprecated
-#pragma warning(disable: 4996) // 'sprintf': This function or variable may be unsafe.
-
-        ~AssertFunctor()
-        {
-            const char * msg = 
-                "%s\n"
-                "Values: %s\n"
-                "Function: %s";
-
-            std::string values(mArgs->str(), static_cast<std::size_t>(mArgs->tellp()));
-
-            char szBuffer[512] = {0};
-            sprintf(szBuffer, "%s(%d): Assert failed. Expression: %s.\n", mFile, mLine, mExpr);
-            OutputDebugStringA(szBuffer);
-            fprintf(stdout, "%s", szBuffer);
-            int ret = _CrtDbgReport(_CRT_ASSERT, mFile, mLine, NULL, msg, mExpr, values.c_str(), mFunc);
-            if (ret == 1)
-            {
-                // __debugbreak() is more likely to give a proper call stack.
-                //DebugBreak();
-                __debugbreak(); 
-            }
-        }
-
-#pragma warning(pop)
-#else
-
-        ~AssertFunctor()
-        {
-            std::string values(mArgs->str(), static_cast<std::size_t>(mArgs->tellp()));
-
-            fprintf(
-                stdout,
-                "%s:%d: Assertion failed. %s . Values: %s\n", 
-                mFile, 
-                mLine, 
-                mExpr, 
-                values.c_str());
-            
-            assert(0 && "See line above for assertion details.");
-        }
-
-#endif
+        AssertFunctor();
+        AssertFunctor(const char * expr);
+        ~AssertFunctor();
 
         const char * mExpr;
     };
@@ -98,10 +49,7 @@ namespace RCF {
     class VarArgAbort
     {
     public:
-        VarArgAbort()
-        {
-            abort();
-        }
+        VarArgAbort();
 
         template<typename T>
         VarArgAbort &operator()(const T &)

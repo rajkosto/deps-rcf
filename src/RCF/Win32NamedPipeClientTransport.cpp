@@ -33,7 +33,7 @@ namespace RCF {
 
     Win32NamedPipeClientTransport::Win32NamedPipeClientTransport(
         const Win32NamedPipeClientTransport & rhs) :
-            ConnectionOrientedClientTransport(rhs),
+            ConnectedClientTransport(rhs),
             mPipeName(rhs.mPipeName),
             mEpPipeName(rhs.mEpPipeName),
             mhPipe(INVALID_HANDLE_VALUE),
@@ -106,7 +106,7 @@ namespace RCF {
 
         mhEvent = hEvent;
 
-        mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+        mAsioTimerPtr.reset( new AsioDeadlineTimer(*mpIoService) );
     }
 
     Win32NamedPipeClientTransport::~Win32NamedPipeClientTransport()
@@ -225,9 +225,9 @@ namespace RCF {
 
             if (hPipe == INVALID_HANDLE_VALUE && dwErr == ERROR_PIPE_BUSY) 
             {
-                DWORD timeoutMs = 100;
-                BOOL ok = WaitNamedPipe(mPipeName.c_str(), timeoutMs);
-                DWORD dwErr = GetLastError();
+                DWORD dwTimeoutMs = 100;
+                BOOL ok = WaitNamedPipe(mPipeName.c_str(), dwTimeoutMs);
+                dwErr = GetLastError();
                 RCF_UNUSED_VARIABLE(ok);
                 RCF_UNUSED_VARIABLE(dwErr);
             }
@@ -257,7 +257,7 @@ namespace RCF {
             if (mpIoService)
             {
                 mSocketPtr.reset( new AsioPipeHandle(*mpIoService, mhPipe) );
-                mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+                mAsioTimerPtr.reset(new AsioDeadlineTimer(*mpIoService));
             }
         }
 
@@ -299,7 +299,7 @@ namespace RCF {
             if (mpIoService)
             {
                 mSocketPtr.reset( new AsioPipeHandle(*mpIoService, mhPipe) );
-                mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+                mAsioTimerPtr.reset( new AsioDeadlineTimer(*mpIoService) );
             }
 
             AsioErrorCode ec;
@@ -367,7 +367,6 @@ namespace RCF {
         {
             RCF_VERIFY( 
                 dwErr == ERROR_IO_PENDING ||
-                dwErr == WSA_IO_PENDING ||
                 dwErr == ERROR_MORE_DATA,
                 Exception(_RcfError_ClientReadFail(), dwErr));
         }
@@ -426,7 +425,7 @@ namespace RCF {
                 mSocketPtr.reset( new AsioPipeHandle(ioService) );
             }
             
-            mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+            mAsioTimerPtr.reset( new AsioDeadlineTimer(ioService) );
             mpIoService = &ioService;
         }
     }
@@ -468,7 +467,6 @@ namespace RCF {
 
         if (!ok &&  (
                 dwErr == ERROR_IO_PENDING 
-            ||  dwErr == WSA_IO_PENDING 
             ||  dwErr == ERROR_MORE_DATA))
         {
             readOk = true;
@@ -583,7 +581,6 @@ namespace RCF {
 
         if (!ok &&  (
                     dwErr == ERROR_IO_PENDING 
-                ||  dwErr == WSA_IO_PENDING 
                 ||  dwErr == ERROR_MORE_DATA))
         {
             writeOk = true;

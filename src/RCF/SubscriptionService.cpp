@@ -83,7 +83,14 @@ namespace RCF {
     bool Subscription::isConnected()
     {
         RecursiveLock lock(mMutex);
-        return mConnectionPtr->getClientStub().isConnected();
+        if ( !mConnectionPtr )
+        {
+            return true;
+        }
+        else
+        {
+            return mConnectionPtr->getClientStub().isConnected();
+        }
     }
 
     unsigned int Subscription::getPingTimestamp()
@@ -120,7 +127,7 @@ namespace RCF {
                 // the object that this subscription refers to. So we need to
                 // make sure there are no calls in progress.
 
-                Lock lock(rcfSessionPtr->mStopCallInProgressMutex);
+                Lock sessionLock(rcfSessionPtr->mStopCallInProgressMutex);
                 rcfSessionPtr->mStopCallInProgress = true;
 
                 // Remove subscription binding.
@@ -134,7 +141,11 @@ namespace RCF {
 
             mRcfSessionWeakPtr.reset();
             
-            mConnectionPtr->getClientStub().disconnect();
+            if ( mConnectionPtr )
+            {
+                mConnectionPtr->getClientStub().disconnect();
+            }
+
             mClosed = true;
         }
 
@@ -228,13 +239,13 @@ namespace RCF {
             publisherUrl = epPtr->asString();
         }
 
-        if (!clientTransportAutoPtr->isAssociatedWithIoService())
-        {
-            AsioServerTransport & asioTransport = dynamic_cast<AsioServerTransport &>(
-                mpServer->getServerTransport());
+        //if (!clientTransportAutoPtr->isAssociatedWithIoService())
+        //{
+        //    AsioServerTransport & asioTransport = dynamic_cast<AsioServerTransport &>(
+        //        mpServer->getServerTransport());
 
-            clientTransportAutoPtr->associateWithIoService(asioTransport.getIoService());
-        }
+        //    clientTransportAutoPtr->associateWithIoService(asioTransport.getIoService());
+        //}
 
         SubscriptionPtr subscriptionPtr( new Subscription(
             *this,
@@ -590,7 +601,7 @@ namespace RCF {
             if (subPtr)
             {
                 Subscription & sub = * subPtr;
-                if (sub.mPingsEnabled && sub.isConnected())
+                if ( sub.mPingsEnabled && sub.mConnectionPtr && sub.isConnected() )
                 {
                     // Lock will be unlocked when the asynchronous send completes.
                     // Using recursive lock here because the ping may result in a 
@@ -643,7 +654,7 @@ namespace RCF {
                 {
                     Subscription & sub = * subPtr;
 
-                    RecursiveLock lock(sub.mMutex);
+                    RecursiveLock subscriptionLock(sub.mMutex);
                     RcfSessionPtr sessionPtr = sub.mRcfSessionWeakPtr.lock();
 
                     if (!sessionPtr)
@@ -686,7 +697,7 @@ namespace RCF {
         OnSubscriptionDisconnect onDisconnect) :
             mSubscriptionService(subscriptionService),
             mRcfSessionWeakPtr(rcfSessionWeakPtr),
-            mConnectionPtr( new I_RcfClient("", clientTransportAutoPtr) ),
+            mConnectionPtr(),
             mPingIntervalMs(incomingPingIntervalMs),
             mPingsEnabled(false),
             mPublisherUrl(publisherUrl),
@@ -694,7 +705,11 @@ namespace RCF {
             mOnDisconnect(onDisconnect),
             mClosed(false)
     {
-        mConnectionPtr->getClientStub().setAutoReconnect(false);
+        if ( clientTransportAutoPtr.get() )
+        {
+            mConnectionPtr.reset(new I_RcfClient("", clientTransportAutoPtr));
+            mConnectionPtr->getClientStub().setAutoReconnect(false);
+        }
     }
    
 } // namespace RCF

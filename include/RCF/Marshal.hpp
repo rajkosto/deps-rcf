@@ -338,6 +338,31 @@ namespace RCF {
         T * mpT;
     };
 
+    // Helper class to ensure delete is called for pointers that we allocate as part of reference marshaling.
+    template<typename T>
+    class Deleter
+    {
+    public:
+        Deleter(T *& pt) : mpt(pt), mDismissed(false)
+        {
+        }
+        ~Deleter()
+        {
+            if ( !mDismissed && mpt )
+            {
+                delete mpt;
+                mpt = NULL;
+            }
+        }
+        void dismiss()
+        {
+            mDismissed = true;
+        }
+    private:
+        T*&     mpt;
+        bool    mDismissed;
+    };
+
 
     // -------------------------------------------------------------------------
     // Server marshaling.
@@ -525,7 +550,9 @@ namespace RCF {
                     // polymorphic serialization happening.
 
                     T *pt = NULL;
+                    Deleter<T> deleter(pt);
                     deserialize(in, pt);
+                    deleter.dismiss();
                     mPs.assign(pt);
                 }
                 else if (ver == 8)
@@ -550,12 +577,14 @@ namespace RCF {
                     else
                     {
                         T *pt = NULL;
+                        Deleter<T> deleter(pt);
                         deserialize(in, pt);
                         if (!pt)
                         {
                             RCF::Exception e(RCF::_RcfError_DeserializationNullPointer());
                             RCF_THROW(e);
                         }
+                        deleter.dismiss();
                         mPs.assign(pt);
                     }
                 }
@@ -618,7 +647,9 @@ namespace RCF {
                     // polymorphic serialization happening.
 
                     T * pt = NULL;
+                    Deleter<T> deleter(pt);
                     deserialize(in, pt);
+                    deleter.dismiss();
                     mPs.assign(pt);
                 }
                 else if (ver == 8)
@@ -644,12 +675,14 @@ namespace RCF {
                     else
                     {
                         T *pt = NULL;
+                        Deleter<T> deleter(pt);
                         deserialize(in, pt);
                         if (!pt)
                         {
                             RCF::Exception e(RCF::_RcfError_DeserializationNullPointer());
                             RCF_THROW(e);
                         }
+                        deleter.dismiss();
                         mPs.assign(pt);
                     }
                 }
@@ -769,7 +802,9 @@ namespace RCF {
             if (in.getRemainingArchiveLength() != 0)
             {
                 T *pt = NULL;
+                Deleter<T> deleter(pt);
                 deserialize(in, pt);
+                deleter.dismiss();
                 mPs.assign(pt);
             }
         }
@@ -1504,6 +1539,12 @@ namespace RCF {
                     a1,a2,a3,a4,a5,a6,a7,a8,
                     a9,a10,a11,a12,a13,a14,a15);
 
+            if (!clientStub.mpParameters)
+            {
+                Exception e(_RcfError_ClientStubParms());
+                RCF_THROW(e);
+            }
+
             return static_cast<ParametersT &>(*clientStub.mpParameters);
         }
     };
@@ -1650,6 +1691,12 @@ namespace RCF {
             session.mpParameters = new 
                 ( &session.mParametersVec[0] ) 
                 ParametersT(session);
+
+            if (!session.mpParameters)
+            {
+                Exception e(_RcfError_ServerStubParms());
+                RCF_THROW(e);
+            }
 
             return static_cast<ParametersT &>(*session.mpParameters);
         }

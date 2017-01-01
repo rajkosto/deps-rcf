@@ -34,7 +34,7 @@ namespace SF {
     inline void serializeVector(
         SF::Archive &           ar,
         std::vector<T,A> &      vec,
-        boost::mpl::false_ *)
+        RCF::FalseType *)
     {
         serializeStlContainer<PushBackSemantics, ReserveSemantics>(ar, vec);
     }
@@ -43,7 +43,7 @@ namespace SF {
     inline void serializeVector(
         SF::Archive &           ar,
         std::vector<T,A> &      vec,
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
         serializeVectorFast(ar, vec);
     }

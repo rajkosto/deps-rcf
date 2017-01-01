@@ -20,6 +20,7 @@
 
 #include <RCF/ByteOrdering.hpp>
 #include <RCF/Exception.hpp>
+#include <RCF/Tools.hpp>
 
 #include <sstream>
 
@@ -296,6 +297,11 @@ namespace RCF {
 
     void IpAddress::resolve(RCF::ExceptionPtr & e) const
     {
+        if ( mResolved )
+        {
+            return;
+        }
+
         addrinfo hints = {0};
 
         hints.ai_family = AF_UNSPEC;
@@ -344,6 +350,10 @@ namespace RCF {
             return;
         }
 
+
+        using namespace boost::multi_index::detail;
+        scope_guard freeAddrInfoGuard = make_guard(&freeaddrinfo, pAddrInfoRet);
+        RCF_UNUSED_VARIABLE(freeAddrInfoGuard);
 
         // Find first V4 and first V6 address that getaddrinfo() returned. 
         addrinfo * addrinfoVec[2] = {0};
@@ -411,8 +421,6 @@ namespace RCF {
             memcpy(&mAddrV6, sockaddr_ipv6, sizeof(mAddrV6));
             mResolved = true;
         }
-
-        freeaddrinfo(pAddrInfoRet);
     }
 
     void IpAddress::extractIpAndPort()
@@ -455,6 +463,11 @@ namespace RCF {
 
     void IpAddress::resolve(ExceptionPtr & e) const
     {
+        if ( mResolved )
+        {
+            return;
+        }
+
         // Try resolution of numeric addresses first.
         unsigned long test = inet_addr(mIp.c_str());
         if (test != INADDR_NONE)

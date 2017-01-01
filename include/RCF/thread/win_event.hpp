@@ -86,14 +86,14 @@ public:
     lock.unlock();
 
     {
-        mutex::scoped_lock lock(mWaitCountMutex);
+        mutex::scoped_lock waitLock(mWaitCountMutex);
         ++mWaitCount;
     }
 
     ::WaitForSingleObject(event_, INFINITE);
 
     {
-        mutex::scoped_lock lock(mWaitCountMutex);
+        mutex::scoped_lock waitLock(mWaitCountMutex);
         --mWaitCount;
         if (mWaitCount == 0)
         {
@@ -115,7 +115,7 @@ public:
       lock.unlock();
 
       {
-          mutex::scoped_lock lock(mWaitCountMutex);
+          mutex::scoped_lock waitLock(mWaitCountMutex);
           ++mWaitCount;
       }
 
@@ -123,7 +123,7 @@ public:
       assert(ret != WAIT_ABANDONED && ret != WAIT_FAILED);
 
       {
-          mutex::scoped_lock lock(mWaitCountMutex);
+          mutex::scoped_lock waitLock(mWaitCountMutex);
           --mWaitCount;
           if (ret != WAIT_TIMEOUT && mWaitCount == 0)
           {

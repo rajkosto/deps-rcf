@@ -44,7 +44,18 @@ namespace detail {
 
 posix_event::posix_event()
 {
+#ifdef RCF_USE_CLOCK_MONOTONIC
+
+  ::pthread_condattr_init(&condattr_);
+  ::pthread_condattr_setclock(&condattr_, CLOCK_MONOTONIC);
+  int error = ::pthread_cond_init(&cond_, &condattr_);
+  
+#else
+
   int error = ::pthread_cond_init(&cond_, 0);
+  
+#endif
+
   RCF_VERIFY(error == 0, Exception(_RcfError_ThreadingError("pthread_cond_init()"), error));
 }
 

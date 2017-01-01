@@ -132,10 +132,9 @@ namespace RCF {
 
         template<typename T>
         boost::shared_ptr<T> queryServerObject(
-            const std::string & objectKey, 
-            boost::uint32_t timeoutMs)
+            const std::string & objectKey)
         {
-            return getServerObjectImpl<T>(objectKey, timeoutMs, false);
+            return getServerObjectImpl<T>(objectKey, 0, false);
         }
 
         template<typename T>

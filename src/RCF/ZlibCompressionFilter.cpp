@@ -535,8 +535,6 @@ namespace RCF {
                     "deflate() failed"))
                 (mZerr)(inBuffer.getLength())(outBuffer.getLength());
 
-            RCF_ASSERT_GTEQ(mCstream.avail_out , 0);
-
             std::size_t bytesIn = inBuffer.getLength() - mCstream.avail_in;
             std::size_t bytesOut = outRemaining - mCstream.avail_out;
             mTotalBytesIn += bytesIn;

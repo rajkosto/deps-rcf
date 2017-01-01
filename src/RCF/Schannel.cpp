@@ -331,6 +331,7 @@ namespace RCF {
         else
         {
             // Authorization failed. Do nothing here, the connection will automatically close.
+            RCF_LOG_2() << "Schannel SSL handshake failed. Error: " + RCF::getOsErrorString(status);
         }
 
         return true;

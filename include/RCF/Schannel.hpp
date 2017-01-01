@@ -75,7 +75,7 @@ namespace RCF {
     public:
         SchannelClientFilter(
             ClientStub * pClientStub,
-            DWORD enabledProtocols = SP_PROT_NONE,
+            DWORD enabledProtocols = SP_PROT_TLS1_CLIENT,
             ULONG contextRequirements = DefaultSchannelContextRequirements);
 
         int getFilterId() const;

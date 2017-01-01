@@ -26,12 +26,12 @@
 
 namespace RCF {
 
-    // Win32NamedPipeSessionState
+    // Win32NamedPipeNetworkSession
 
-    Win32NamedPipeSessionState::Win32NamedPipeSessionState(
+    Win32NamedPipeNetworkSession::Win32NamedPipeNetworkSession(
         Win32NamedPipeServerTransport & transport,
         AsioIoService & ioService) :
-            AsioSessionState(transport, ioService)
+            AsioNetworkSession(transport, ioService)
     {
         const std::size_t       MaxPipeInstances    = PIPE_UNLIMITED_INSTANCES;
         const DWORD             OutBufferSize       = 4096;
@@ -55,19 +55,25 @@ namespace RCF {
         mSocketPtr.reset( new AsioPipeHandle(ioService, hPipe) );
     }
 
-    Win32NamedPipeSessionState::~Win32NamedPipeSessionState()
+    Win32NamedPipeNetworkSession::~Win32NamedPipeNetworkSession()
     {
     }
 
-    const RemoteAddress & Win32NamedPipeSessionState::implGetRemoteAddress()
+    const RemoteAddress & Win32NamedPipeNetworkSession::implGetRemoteAddress()
     {
         return mRemoteAddress;
     }
 
-    void Win32NamedPipeSessionState::implRead(char * buffer, std::size_t bufferLen)
+    void Win32NamedPipeNetworkSession::implRead(char * buffer, std::size_t bufferLen)
     {
+        if ( !mSocketPtr )
+        {
+            RCF_LOG_4() << "Win32NamedPipeNetworkSession - connection has been closed.";
+            return;
+        }
+
         RCF_LOG_4()(bufferLen) 
-            << "Win32NamedPipeSessionState - calling ReadFile().";
+            << "Win32NamedPipeNetworkSession - calling ReadFile().";
 
         ASIO_NS::windows::overlapped_ptr overlapped(
             mSocketPtr->get_io_service(), 
@@ -94,7 +100,6 @@ namespace RCF {
             dwErr = GetLastError();
 
             if (    dwErr != ERROR_IO_PENDING 
-                &&  dwErr != WSA_IO_PENDING 
                 &&  dwErr != ERROR_MORE_DATA)
             {
                 realError = dwErr;
@@ -122,10 +127,17 @@ namespace RCF {
         }
     }
 
-    void Win32NamedPipeSessionState::implWrite(const std::vector<ByteBuffer> & buffers)
+    void Win32NamedPipeNetworkSession::implWrite(const std::vector<ByteBuffer> & buffers)
     {
+        if ( !mSocketPtr )
+        {
+            RCF_LOG_4() << "Win32NamedPipeNetworkSession - connection has been closed.";
+            return;
+        }
+
         RCF_LOG_4()(RCF::lengthByteBuffers(buffers))
-            << "Win32NamedPipeSessionState - calling WriteFile().";
+            << "Win32NamedPipeNetworkSession - calling WriteFile().";
+
 
         ASIO_NS::windows::overlapped_ptr overlapped(
             mSocketPtr->get_io_service(), 
@@ -150,7 +162,6 @@ namespace RCF {
 
         if (!ok &&  (
             dwErr == ERROR_IO_PENDING 
-            ||  dwErr == WSA_IO_PENDING 
             ||  dwErr == ERROR_MORE_DATA))
         {
             writeOk = true;
@@ -174,12 +185,12 @@ namespace RCF {
         }
     }
 
-    void Win32NamedPipeSessionState::implWrite(AsioSessionState &toBeNotified, const char * buffer, std::size_t bufferLen)
+    void Win32NamedPipeNetworkSession::implWrite(AsioNetworkSession &toBeNotified, const char * buffer, std::size_t bufferLen)
     {
         ASIO_NS::windows::overlapped_ptr overlapped(
             mSocketPtr->get_io_service(), 
             boost::bind(
-                &AsioSessionState::onNetworkWriteCompleted,
+                &AsioNetworkSession::onNetworkWriteCompleted,
                 toBeNotified.sharedFromThis(),
                 ASIO_NS::placeholders::error,
                 ASIO_NS::placeholders::bytes_transferred));
@@ -201,7 +212,6 @@ namespace RCF {
 
         if (!ok &&  (
             dwErr == ERROR_IO_PENDING 
-            ||  dwErr == WSA_IO_PENDING 
             ||  dwErr == ERROR_MORE_DATA))
         {
             writeOk = true;
@@ -225,14 +235,14 @@ namespace RCF {
         }
     }
 
-    void Win32NamedPipeSessionState::implAccept()
+    void Win32NamedPipeNetworkSession::implAccept()
     {
-        RCF_LOG_4()<< "Win32NamedPipeSessionState - calling ConnectNamedPipe().";
+        RCF_LOG_4()<< "Win32NamedPipeNetworkSession - calling ConnectNamedPipe().";
 
         ASIO_NS::windows::overlapped_ptr overlapped(
             mSocketPtr->get_io_service(), 
             boost::bind(
-                &AsioSessionState::onAcceptCompleted,
+                &AsioNetworkSession::onAcceptCompleted,
                 sharedFromThis(),
                 ASIO_NS::placeholders::error));
 
@@ -263,27 +273,27 @@ namespace RCF {
             // MSDN says ConectNamedPipe will always return 0, in overlapped mode.
             RCF_ASSERT(!ok);
 
-            mTransport.createSessionState()->beginAccept();
+            mTransport.createNetworkSession()->beginAccept();
         }
     }
 
-    bool Win32NamedPipeSessionState::implOnAccept()
+    bool Win32NamedPipeNetworkSession::implOnAccept()
     {       
         return true;
     }
 
-    bool Win32NamedPipeSessionState::implIsConnected()
+    bool Win32NamedPipeNetworkSession::implIsConnected()
     {
         //RCF_ASSERT(0 && "not implemented yet");
         return true;
     }
 
-    void Win32NamedPipeSessionState::implClose()
+    void Win32NamedPipeNetworkSession::implClose()
     {
         mSocketPtr.reset();
     }
 
-    ClientTransportAutoPtr Win32NamedPipeSessionState::implCreateClientTransport()
+    ClientTransportAutoPtr Win32NamedPipeNetworkSession::implCreateClientTransport()
     {
         std::auto_ptr<Win32NamedPipeClientTransport> pipeClientTransportPtr(
             new Win32NamedPipeClientTransport(mSocketPtr, mRemotePipeName));
@@ -291,7 +301,7 @@ namespace RCF {
         return ClientTransportAutoPtr(pipeClientTransportPtr.release());
     }
 
-    void Win32NamedPipeSessionState::implTransferNativeFrom(ClientTransport & clientTransport)
+    void Win32NamedPipeNetworkSession::implTransferNativeFrom(ClientTransport & clientTransport)
     {
         
         Win32NamedPipeClientTransport * pPipeClientTransport =
@@ -310,12 +320,12 @@ namespace RCF {
         mRemotePipeName = pipeClientTransport.getPipeName();
     }
 
-    void Win32NamedPipeSessionState::closeSocket(AsioPipeHandlePtr socketPtr)
+    void Win32NamedPipeNetworkSession::closeSocket(AsioPipeHandlePtr socketPtr)
     {
         socketPtr->close();
     }
 
-    HANDLE Win32NamedPipeSessionState::getNativeHandle()
+    HANDLE Win32NamedPipeNetworkSession::getNativeHandle()
     {
         return mSocketPtr->native();
     }
@@ -373,9 +383,9 @@ namespace RCF {
         return ServerTransportPtr(new Win32NamedPipeServerTransport(mPipeName));
     }
 
-    AsioSessionStatePtr Win32NamedPipeServerTransport::implCreateSessionState()
+    AsioNetworkSessionPtr Win32NamedPipeServerTransport::implCreateNetworkSession()
     {
-        return AsioSessionStatePtr( new Win32NamedPipeSessionState(*this, *mpIoService) );
+        return AsioNetworkSessionPtr( new Win32NamedPipeNetworkSession(*this, *mpIoService) );
     }
 
     void Win32NamedPipeServerTransport::implOpen()
@@ -418,13 +428,13 @@ namespace RCF {
     }
 
     Win32NamedPipeImpersonator::Win32NamedPipeImpersonator() :
-        mPipeSession( dynamic_cast<Win32NamedPipeSessionState &>(
-            RCF::getTlsRcfSessionPtr()->getSessionState()))
+        mPipeSession( dynamic_cast<Win32NamedPipeNetworkSession &>(
+            RCF::getTlsRcfSessionPtr()->getNetworkSession()))
     {
         impersonate();
     }
 
-    Win32NamedPipeImpersonator::Win32NamedPipeImpersonator(Win32NamedPipeSessionState & session) :
+    Win32NamedPipeImpersonator::Win32NamedPipeImpersonator(Win32NamedPipeNetworkSession & session) :
         mPipeSession(session)
     {
         impersonate();
@@ -462,11 +472,16 @@ namespace RCF {
         DWORD dwErr = GetLastError();
         RCF_VERIFY(ok, Exception(_RcfError_Win32ApiError("InitializeSecurityDescriptor()"), dwErr));
 
+#pragma warning(push)
+#pragma warning(disable: 6248) // C6248:  Setting a SECURITY_DESCRIPTOR's DACL to NULL will result in an unprotected object.
+
         ok = SetSecurityDescriptorDacl( 
             &mSd,
             TRUE,
             (PACL) NULL,
             FALSE);
+
+#pragma warning(pop)
 
         dwErr = GetLastError();
         RCF_VERIFY(ok, Exception(_RcfError_Win32ApiError("SetSecurityDescriptorDacl()"), dwErr));

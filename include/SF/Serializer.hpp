@@ -226,8 +226,19 @@ namespace SF {
         typedef typename GetIndirection<U>::Level Level;
         const int levelOfIndirection = Level::value;
         RCF_ASSERT( levelOfIndirection == 1 || levelOfIndirection == 2);
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 6326) // warning C6326: Potential comparison of a constant with another constant.
+#endif
+
         ar.setFlag( SF::Archive::POINTER, levelOfIndirection == 2 );
-        invokeSerializer(u,ar);
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+        invokeSerializer(u, ar);
     }
 
     // Forward declaration.
@@ -287,7 +298,7 @@ namespace SF {
     inline void serializeFundamentalOrNot(
         Archive &                           archive, 
         T &                                 t, 
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
         serializeFundamental(archive, t);
     }
@@ -296,7 +307,7 @@ namespace SF {
     inline void serializeFundamentalOrNot(
         Archive &                           archive, 
         T &                                 t, 
-        boost::mpl::false_ *)
+        RCF::FalseType *)
     {
         serializeInternal(archive, t);
     }
@@ -305,7 +316,7 @@ namespace SF {
     inline void serializeEnumOrNot(
         Archive &                           archive, 
         T &                                 t, 
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
         serializeEnum(archive, t);
     }
@@ -314,7 +325,7 @@ namespace SF {
     inline void serializeEnumOrNot(
         Archive &                           archive, 
         T &                                 t, 
-        boost::mpl::false_ *)
+        RCF::FalseType *)
     {
         typedef typename RCF::IsFundamental<T>::type type;
         serializeFundamentalOrNot(archive, t, (type *) NULL);

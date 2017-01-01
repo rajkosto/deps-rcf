@@ -269,7 +269,7 @@ namespace RCF {
     void serializeProtobufOrNot(
         SerializationProtocolOut &out,
         const T &t,
-        boost::mpl::false_ *)
+        RCF::FalseType *)
     {
         serializeImpl(out, t, 0);
     }
@@ -278,7 +278,7 @@ namespace RCF {
     void deserializeProtobufOrNot(
         SerializationProtocolIn &in,
         T &t,
-        boost::mpl::false_ *)
+        RCF::FalseType *)
     {
         deserializeImpl(in, t, 0);
     }
@@ -287,7 +287,7 @@ namespace RCF {
     void serializeProtobufOrNot(
         SerializationProtocolOut &out,
         const T & t,
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
         MemOstream & os = out.getMemOstream();
         os.write("XXXX", 4);
@@ -328,25 +328,25 @@ namespace RCF {
     void serializeProtobufOrNot(
         SerializationProtocolOut &out,
         const T * pt,
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
-        serializeProtobufOrNot(out, *pt, (boost::mpl::true_ *) NULL);
+        serializeProtobufOrNot(out, *pt, (RCF::TrueType *) NULL);
     }
 
     template<typename T>
     void serializeProtobufOrNot(
         SerializationProtocolOut &out,
         T * pt,
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
-        serializeProtobufOrNot(out, *pt, (boost::mpl::true_ *) NULL);
+        serializeProtobufOrNot(out, *pt, (RCF::TrueType *) NULL);
     }
 
     template<typename T>
     void deserializeProtobufOrNot(
         SerializationProtocolIn &in,
         T &t,
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
         MemIstream & is = in.getIstream();
 
@@ -358,7 +358,7 @@ namespace RCF {
 
         ByteBuffer byteBuffer;
         in.extractSlice(byteBuffer, len);
-        bool ok = t.ParseFromArray(byteBuffer.getPtr(), byteBuffer.getLength());
+        bool ok = t.ParseFromArray(byteBuffer.getPtr(), static_cast<int>(byteBuffer.getLength()));
         RCF_VERIFY(ok, Exception(_RcfError_ProtobufRead(typeid(t).name())))(typeid(t));
     }
 
@@ -366,14 +366,14 @@ namespace RCF {
     void deserializeProtobufOrNot(
         SerializationProtocolIn &in,
         T * & pt,
-        boost::mpl::true_ *)
+        RCF::TrueType *)
     {
         if (pt == NULL)
         {
             pt = new T();
         }
 
-        deserializeProtobufOrNot(in, *pt, (boost::mpl::true_ *) NULL);
+        deserializeProtobufOrNot(in, *pt, (RCF::TrueType *) NULL);
     }
 
     template<typename T>

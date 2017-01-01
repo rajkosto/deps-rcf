@@ -187,7 +187,7 @@ namespace RCF {
 
 
             {
-                ReadLock lock(mObjPoolMutex);
+                ReadLock poolLock(mObjPoolMutex);
 
                 if (mObjPool.empty())
                 {
@@ -218,7 +218,7 @@ namespace RCF {
                     else
                     {
                         ObjList & objList = *(iter->second);
-                        Lock lock(objList.mMutex);
+                        Lock listLock(objList.mMutex);
                         if (objList.mMaxSize == 0)
                         {
                             if (alwaysCreate)

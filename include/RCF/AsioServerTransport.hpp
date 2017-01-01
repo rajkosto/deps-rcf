@@ -39,11 +39,11 @@ namespace RCF {
 
     class RcfServer;
     class TcpClientTransport;
-    class AsioSessionState;
+    class AsioNetworkSession;
     class AsioServerTransport;
 
-    typedef boost::shared_ptr<AsioSessionState>         AsioSessionStatePtr;
-    typedef boost::weak_ptr<AsioSessionState>           AsioSessionStateWeakPtr;
+    typedef boost::shared_ptr<AsioNetworkSession>         AsioNetworkSessionPtr;
+    typedef boost::weak_ptr<AsioNetworkSession>           AsioNetworkSessionWeakPtr;
 
     class AsioAcceptor
     {
@@ -62,15 +62,17 @@ namespace RCF {
     private:
 
         // Needs to call open().
-        friend class TcpAsioTransportFactory;
+        friend class TcpTransportFactory;
+        friend class HttpTransportFactory;
+        friend class HttpsTransportFactory;
 
-        friend class Win32NamedPipeSessionState;
+        friend class Win32NamedPipeNetworkSession;
 
         typedef boost::weak_ptr<I_Session>              SessionWeakPtr;
 
-        AsioSessionStatePtr createSessionState();
+        AsioNetworkSessionPtr createNetworkSession();
 
-        
+    protected:
 
         // I_ServerTransportEx implementation
         ClientTransportAutoPtr  
@@ -86,9 +88,7 @@ namespace RCF {
                             createClientTransport(
                                 SessionPtr sessionPtr);
 
-        bool                reflect(
-                                const SessionPtr &sessionPtr1, 
-                                const SessionPtr &sessionPtr2);
+    private:
 
         // I_Service implementation
         void                open();
@@ -110,16 +110,18 @@ namespace RCF {
 
         void                startAcceptingThread(Exception & eRet);
 
+    public:
+
         RcfServer &         getServer();
         RcfServer &         getSessionManager();
 
     private:
 
-        void                registerSession(AsioSessionStateWeakPtr session);
-        void                unregisterSession(AsioSessionStateWeakPtr session);
+        void                registerSession(AsioNetworkSessionWeakPtr session);
+        void                unregisterSession(AsioNetworkSessionWeakPtr session);
         void                cancelOutstandingIo();
 
-        friend class AsioSessionState;
+        friend class AsioNetworkSession;
         friend class FilterAdapter;
         friend class ServerTcpFrame;
         friend class ServerHttpFrame;
@@ -141,7 +143,7 @@ namespace RCF {
 
     private:
 
-        virtual AsioSessionStatePtr     implCreateSessionState() = 0;
+        virtual AsioNetworkSessionPtr     implCreateNetworkSession() = 0;
         virtual void                    implOpen() = 0;
 
         virtual ClientTransportAutoPtr  implCreateClientTransport(
@@ -157,19 +159,19 @@ namespace RCF {
     class ReadHandler
     {
     public:
-        ReadHandler(AsioSessionStatePtr sessionStatePtr);
+        ReadHandler(AsioNetworkSessionPtr networkSessionPtr);
         void operator()(AsioErrorCode err, std::size_t bytes);
         void * allocate(std::size_t size);
-        AsioSessionStatePtr mSessionStatePtr;
+        AsioNetworkSessionPtr mNetworkSessionPtr;
     };
 
     class WriteHandler
     {
     public:
-        WriteHandler(AsioSessionStatePtr sessionStatePtr);
+        WriteHandler(AsioNetworkSessionPtr networkSessionPtr);
         void operator()(AsioErrorCode err, std::size_t bytes);
         void * allocate(std::size_t size);
-        AsioSessionStatePtr mSessionStatePtr;
+        AsioNetworkSessionPtr mNetworkSessionPtr;
     };
 
     void *  asio_handler_allocate(std::size_t size, ReadHandler * pHandler);
@@ -177,8 +179,8 @@ namespace RCF {
     void *  asio_handler_allocate(std::size_t size, WriteHandler * pHandler);
     void    asio_handler_deallocate(void * pointer, std::size_t size, WriteHandler * pHandler);
 
-    class RCF_EXPORT AsioSessionState :
-        public SessionState,
+    class RCF_EXPORT AsioNetworkSession :
+        public NetworkSession,
         boost::noncopyable
     {
     public:
@@ -189,20 +191,22 @@ namespace RCF {
         friend class ServerHttpFrame;
 
 
-        typedef boost::weak_ptr<AsioSessionState>       AsioSessionStateWeakPtr;
-        typedef boost::shared_ptr<AsioSessionState>     AsioSessionStatePtr;
+        typedef boost::weak_ptr<AsioNetworkSession>       AsioNetworkSessionWeakPtr;
+        typedef boost::shared_ptr<AsioNetworkSession>     AsioNetworkSessionPtr;
 
-        AsioSessionState(
+        AsioNetworkSession(
             AsioServerTransport &transport,
             AsioIoService & ioService);
 
-        virtual ~AsioSessionState();
+        virtual ~AsioNetworkSession();
 
-        AsioSessionStatePtr sharedFromThis();
+        AsioNetworkSessionPtr sharedFromThis();
 
         void            close();
 
         AsioErrorCode   getLastError();
+
+        void            setCloseAfterWrite();
 
     protected:
         AsioIoService &         mIoService;
@@ -222,12 +226,24 @@ namespace RCF {
         void            write(
                             const std::vector<ByteBuffer> &byteBuffers);
 
+    public:
+
         void            setTransportFilters(
                             const std::vector<FilterPtr> &filters);
 
         void            getTransportFilters(
                             std::vector<FilterPtr> &filters);
 
+        void            setWireFilters(
+                            const std::vector<FilterPtr> &filters);
+
+        void            getWireFilters(
+                            std::vector<FilterPtr> &filters);
+
+        AsioServerTransport &   getAsioServerTransport();
+
+    private:
+    
         void            beginAccept();
         void            beginRead();
         void            beginWrite();
@@ -242,11 +258,8 @@ namespace RCF {
                             AsioErrorCode error, 
                             size_t bytesTransferred);
 
+        friend class HttpSessionFilter;
         void            onAppReadWriteCompleted(
-                            size_t bytesTransferred);
-
-        void            onReflectedReadWriteCompleted(
-                            const AsioErrorCode & error, 
                             size_t bytesTransferred);
 
         void            sendServerError(int error);
@@ -256,9 +269,9 @@ namespace RCF {
 
         // TODO: too many friends
         friend class    AsioServerTransport;
-        friend class    TcpAsioSessionState;
-        friend class    UnixLocalSessionState;
-        friend class    Win32NamedPipeSessionState;
+        friend class    TcpNetworkSession;
+        friend class    UnixLocalNetworkSession;
+        friend class    Win32NamedPipeNetworkSession;
         friend class    FilterAdapter;
 
         enum State
@@ -276,6 +289,9 @@ namespace RCF {
         std::size_t                 mWriteBufferRemaining;
 
         std::vector<FilterPtr>      mTransportFilters;
+
+        friend class HttpServerTransport;
+        friend class PublishingService;
         std::vector<FilterPtr>      mWireFilters;        
 
         AsioServerTransport &       mTransport;
@@ -293,17 +309,14 @@ namespace RCF {
         FilterPtr                   mFilterAdapterPtr;
 
         bool                        mCloseAfterWrite;
-        AsioSessionStateWeakPtr     mReflecteeWeakPtr;
-        AsioSessionStatePtr         mReflecteePtr;
-        bool                        mReflecting;
 
-        AsioSessionStateWeakPtr     mWeakThisPtr;
+        AsioNetworkSessionWeakPtr   mWeakThisPtr;
 
         AsioBuffers                 mBufs;
 
         boost::shared_ptr<Mutex>    mSocketOpsMutexPtr;
 
-        // I_SessionState
+        // I_NetworkSession
 
     private:
         
@@ -311,8 +324,8 @@ namespace RCF {
         ByteBuffer              getReadByteBuffer();
         void                    postWrite(std::vector<ByteBuffer> &byteBuffers);
         void                    postClose();
-        ServerTransport &     getServerTransport();
-        const RemoteAddress & getRemoteAddress();
+        ServerTransport &       getServerTransport();
+        const RemoteAddress &   getRemoteAddress();
         bool                    isConnected();
 
     private:
@@ -320,7 +333,6 @@ namespace RCF {
         virtual const RemoteAddress & implGetRemoteAddress() = 0;
         virtual void implRead(char * buffer, std::size_t bufferLen) = 0;
         virtual void implWrite(const std::vector<ByteBuffer> & buffers) = 0;
-        virtual void implWrite(AsioSessionState &toBeNotified, const char * buffer, std::size_t bufferLen) = 0;
         virtual void implAccept() = 0;
         virtual bool implOnAccept() = 0;
         virtual bool implIsConnected() = 0;

@@ -185,6 +185,18 @@ namespace RCF {
             RCF_LOG_2()(this)(endpoint)(mConnectTimeoutMs) 
                 << "RcfClient - connect to server.";
 
+            if ( getTransportType() == Tt_Http || getTransportType() == Tt_Https )
+            {
+                if ( getHttpProxy().size() > 0 )
+                {
+                    RCF_LOG_2()(this) << "RcfClient - HTTP proxy: " << getHttpProxy() << ":" << getHttpProxyPort();
+                }
+                else
+                {
+                    RCF_LOG_2()(this) << "RcfClient - HTTP proxy: <None configured>";
+                }
+            }
+
             unsigned int connectTimeoutMs = mConnectTimeoutMs;
             if (connectTimeoutMs == 0)
             {
@@ -393,18 +405,18 @@ namespace RCF {
             {
                 // Custom filter sequence. Setup transport filters again for a 
                 // new connection.
-                std::vector<FilterPtr> filters;
-                mTransport->getTransportFilters(filters);
+                std::vector<FilterPtr> filterVec;
+                mTransport->getTransportFilters(filterVec);
 
-                for (std::size_t i=0; i<filters.size(); ++i)
+                for ( std::size_t i = 0; i<filterVec.size(); ++i )
                 {
-                    filters[i]->resetState();
+                    filterVec[i]->resetState();
                 }
 
                 mTransport->setTransportFilters(std::vector<FilterPtr>());
-                if (!filters.empty())
+                if ( !filterVec.empty() )
                 {
-                    requestTransportFilters(filters);
+                    requestTransportFilters(filterVec);
                 }
                 onRequestTransportFiltersCompleted();
             }
@@ -423,18 +435,18 @@ namespace RCF {
                     }
                     else
                     {
-                        std::vector<FilterPtr> filters;
-                        createFilterSequence(filters);
+                        std::vector<FilterPtr> filterVec;
+                        createFilterSequence(filterVec);
 
                         if (mAsync)
                         {
                             requestTransportFiltersAsync(
-                                filters, 
+                                filterVec, 
                                 boost::bind(&ClientStub::onRequestTransportFiltersCompleted, this));
                         }
                         else
                         {
-                            requestTransportFilters(filters);
+                            requestTransportFilters(filterVec);
                             onRequestTransportFiltersCompleted();
                         }
                     }
@@ -613,28 +625,20 @@ namespace RCF {
                 int clientRuntimeVersion = getRuntimeVersion();
                 int clientArchiveVersion = getArchiveVersion();
 
-                // We should only get this error response, if server runtime or
-                // archive version is older.
-
-                RCF_VERIFY(
-                        serverRuntimeVersion < clientRuntimeVersion 
-                    ||  serverArchiveVersion < clientArchiveVersion,
-                    Exception(_RcfError_Encoding()));
-
-                RCF_VERIFY(
-                    serverRuntimeVersion <= clientRuntimeVersion, 
-                    Exception(_RcfError_Encoding()));
-
-                RCF_VERIFY(
-                    serverArchiveVersion <= clientArchiveVersion, 
-                    Exception(_RcfError_Encoding()));
+                // We get this response from the server, if either the
+                // client runtime version or client archive version, is
+                // greater than what the server supports.
 
                 if (getAutoVersioning() && getTries() == 0)
                 {
-                    setRuntimeVersion(serverRuntimeVersion);
+                    int adjustedRuntimeVersion = RCF_MIN(serverRuntimeVersion, clientRuntimeVersion);
+                    setRuntimeVersion(adjustedRuntimeVersion);
+
+                    
                     if (serverArchiveVersion)
                     {
-                        setArchiveVersion(serverArchiveVersion);
+                        int adjustedArchiveVersion = RCF_MIN(serverArchiveVersion, clientArchiveVersion);
+                        setArchiveVersion(adjustedArchiveVersion);
                     }
                     setTries(1);
 
@@ -779,6 +783,14 @@ namespace RCF {
     void ClientStub::call( 
         RCF::RemoteCallSemantics rcs)
     {
+
+        if (    rcs == RCF::Oneway 
+            &&  (getTransportType() == RCF::Tt_Http || getTransportType() == RCF::Tt_Https) )
+        {
+            // Oneway is not possible over HTTP/HTTPS.
+            throw RCF::Exception(_RcfError_OnewayHttp());
+        }
+
         mRetry = false;
         mRcs = rcs;
         mPingBackTimeStamp = 0;
@@ -867,7 +879,7 @@ namespace RCF {
 
         ServerTransportEx & serverTransport =
             dynamic_cast<ServerTransportEx &>(
-                rcfSession.getSessionState().getServerTransport());
+                rcfSession.getNetworkSession().getServerTransport());
 
         ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(
             new ClientTransportAutoPtr(

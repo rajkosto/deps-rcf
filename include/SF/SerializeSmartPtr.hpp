@@ -66,30 +66,36 @@ namespace SF {
     {
         if (ar.isRead())
         {
-            if (ar.isFlagSet(Archive::POINTER)) *ppt = new SmartPtrT;
+            if (ar.isFlagSet(Archive::POINTER))
+            {
+                *ppt = new SmartPtrT;
+            }
             T *pt = NULL;
             ar & pt;
-            typedef ObjectId IdT;
 
             ContextRead &ctx = ar.getIstream()->getTrackingContext();
-
-            void *pv = NULL;
-            if (pt && ctx.getEnabled() && ctx.query( (void *) pt, typeid(SmartPtrT), pv ))
+            if (!ctx.getEnabled())
             {
-                SmartPtrT *ps_prev = reinterpret_cast< SmartPtrT * >(pv);
-                **ppt = *ps_prev;
-            }
-            else if (pt)
-            {
-                if (ctx.getEnabled())
-                {
-                    ctx.add( (void *) pt, typeid(SmartPtrT), *ppt );
-                }
+                // No pointer tracking.
                 **ppt = SmartPtrT(pt);
             }
             else
             {
-                **ppt = SmartPtrT(pt);
+                // Pointer tracking enabled, so some extra gymnastics involved.
+                void *pv = NULL;
+                if (pt && ctx.getEnabled() && ctx.query((void *)pt, typeid(SmartPtrT), pv))
+                {
+                    SmartPtrT *ps_prev = reinterpret_cast<SmartPtrT *>(pv);
+                    **ppt = *ps_prev;
+                }
+                else if (pt)
+                {
+                    if (ctx.getEnabled())
+                    {
+                        ctx.add((void *)pt, typeid(SmartPtrT), *ppt);
+                    }
+                    **ppt = SmartPtrT(pt);
+                }
             }
         }
         else /*if (ar.isWrite())*/

@@ -65,7 +65,7 @@
 #include <boost/filesystem/../../libs/filesystem/v3/src/utf8_codecvt_facet.cpp>
 #include <boost/filesystem/../../libs/filesystem/v3/src/windows_file_codecvt.cpp>
 
-#else // 1.50.0+
+#elif BOOST_VERSION <= 105900
 
 #include <boost/filesystem/../../libs/filesystem/src/codecvt_error_category.cpp>
 
@@ -83,6 +83,26 @@
 #define dot_path dot_path_2
 #define dot_dot_path dot_dot_path_2
 
+#include <boost/filesystem/../../libs/filesystem/src/path.cpp>
+
+#define default_codecvt_buf_size default_codecvt_buf_size_2
+
+#include <boost/filesystem/../../libs/filesystem/src/path_traits.cpp>
+
+#include <boost/filesystem/../../libs/filesystem/src/portability.cpp>
+#include <boost/filesystem/../../libs/filesystem/src/unique_path.cpp>
+#include <boost/filesystem/../../libs/filesystem/src/utf8_codecvt_facet.cpp>
+#include <boost/filesystem/../../libs/filesystem/src/windows_file_codecvt.cpp>
+
+#else // 1.60.0+
+
+#include <boost/filesystem/../../libs/filesystem/src/codecvt_error_category.cpp>
+
+#define dot dot_1
+#include <boost/filesystem/../../libs/filesystem/src/operations.cpp>
+
+#undef dot
+#define dot dot_2
 #include <boost/filesystem/../../libs/filesystem/src/path.cpp>
 
 #define default_codecvt_buf_size default_codecvt_buf_size_2

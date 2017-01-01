@@ -19,12 +19,16 @@
 #ifndef INCLUDE_RCF_HTTPCONNECTFILTER_HPP
 #define INCLUDE_RCF_HTTPCONNECTFILTER_HPP
 
+#include <memory>
 #include <boost/shared_ptr.hpp>
 
 #include <RCF/Filter.hpp>
 #include <RCF/ByteBuffer.hpp>
+#include <RCF/HttpFrameFilter.hpp>
 
 namespace RCF {
+
+    class NtlmWrapper;
 
     class HttpConnectFilter : public Filter
     {
@@ -47,22 +51,47 @@ namespace RCF {
 
         int getFilterId() const;
 
+        enum AuthType
+        {
+            AuthType_None,
+            AuthType_Basic,
+            AuthType_Digest,
+            AuthType_Ntlm,
+            AuthType_Negotiate
+        };
+
     private:
 
-        std::string mServerAddr;
-        int mServerPort;
+        void                        sendProxyRequest();
+        void                        tryNextAuthType();
 
-        bool mPassThrough;
+        void                        doNtlmHandshake();
+        void                        doProxyAuthRetry();
 
-        std::vector<ByteBuffer> mOrigWriteBuffers;
+        std::string                 mServerAddr;
+        int                         mServerPort;
 
-        std::string mHttpConnectRequest;
-        std::string mHttpConnectResponse;
+        bool                        mPassThrough;
 
-        std::size_t mWritePos;
-        std::size_t mReadPos;
+        std::vector<ByteBuffer>     mOrigWriteBuffers;
 
-        std::vector<char> mReadVector;
+        std::string                 mHttpProxyRequest;
+        std::string                 mHttpProxyResponse;
+
+        HttpMessage                 mHttpMessage;
+
+        std::size_t                 mWritePos;
+        std::size_t                 mReadPos;
+
+        std::vector<char>           mReadVector;
+
+        // List of (Auth type, realm) returned by the proxy.
+        std::vector< std::pair<AuthType, std::string> >       
+                                    mProxyAuthTypes;
+
+        std::size_t                 mCurrentAuthType;
+
+        std::auto_ptr<NtlmWrapper>    mNtlmWrapper;
     };
 
 } // namespace RCF

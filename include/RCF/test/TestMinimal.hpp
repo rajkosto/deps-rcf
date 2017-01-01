@@ -70,6 +70,9 @@ int gProcessReturnValue = 0;
 
 int vldLeakReporter(int reportType, wchar_t * message, int * returnValue)
 {
+    RCF_UNUSED_VARIABLE(reportType);
+    RCF_UNUSED_VARIABLE(message);
+
     // We allow one leak (for the root mutex).
     int leakCount = VLDGetLeaksCount();
     if (leakCount > 1)
@@ -112,7 +115,13 @@ int main(int argc, char **argv)
     }
     std::cout << std::endl;
 
-    bool shoudNotCatch = false;
+    bool shouldNotCatch = false;
+
+#ifndef NDEBUG
+    unsigned int defaultTimeLimit = 0;
+#else
+    unsigned int defaultTimeLimit = 5 * 60;
+#endif
 
     {
         RCF::CommandLineOption<std::string>    clTestCase( "testcase",     "",     "Run a specific test case.");
@@ -120,8 +129,9 @@ int main(int argc, char **argv)
         RCF::CommandLineOption<bool>           clAssert(   "assert",       false,  "Enable assert popups, and assert on test failures.");
         RCF::CommandLineOption<int>            clLogLevel( "loglevel",     1,      "Set RCF log level.");
         RCF::CommandLineOption<std::string>    clLogFormat("logformat",    "",     "Set RCF log format.");
+        RCF::CommandLineOption<std::string>    clLogFile("logfile",        "", "Set RCF log file.");
         RCF::CommandLineOption<bool>           clNoCatch(  "nocatch",      false,  "Don't catch exceptions at top level.");
-        RCF::CommandLineOption<unsigned int>   clTimeLimit("timelimit",    5*60,   "Set program time limit in seconds. 0 to disable.");
+        RCF::CommandLineOption<unsigned int>   clTimeLimit("timelimit",     defaultTimeLimit, "Set program time limit in seconds. 0 to disable.");
 
 #ifdef _MSC_VER
         RCF::CommandLineOption<bool>           clMinidump("minidump",      true,   "Enable minidump creation.");
@@ -186,6 +196,13 @@ int main(int argc, char **argv)
         loggerPtr->activate();
 #endif
 
+        std::string logFile = clLogFile.get();
+        if ( logFile.size() > 0 )
+        {
+            RCF::LoggerPtr loggerPtr(new RCF::Logger(logName, logLevel, RCF::LogToFile(logFile, true), logFormat));
+            loggerPtr->activate();
+        }
+
         // -minidump
 #if defined(_MSC_VER)
         bool enableMinidumps = clMinidump.get();
@@ -199,12 +216,12 @@ int main(int argc, char **argv)
         unsigned int timeLimitS = clTimeLimit.get();
         gpProgramTimeLimit = new ProgramTimeLimit(timeLimitS);
 
-        shoudNotCatch = clNoCatch.get();
+        shouldNotCatch = clNoCatch.get();
     }
 
     int ret = 0;
     
-    bool shouldCatch = !shoudNotCatch;
+    bool shouldCatch = !shouldNotCatch;
     if (shouldCatch)
     {
         try

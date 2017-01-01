@@ -19,7 +19,7 @@
 #ifndef INCLUDE_RCF_WIN32NAMEDPIPECLIENTTRANSPORT_HPP
 #define INCLUDE_RCF_WIN32NAMEDPIPECLIENTTRANSPORT_HPP
 
-#include <RCF/ConnectionOrientedClientTransport.hpp>
+#include <RCF/ConnectedClientTransport.hpp>
 
 #include <RCF/util/Tchar.hpp>
 
@@ -28,7 +28,7 @@
 namespace RCF {
 
     class RCF_EXPORT Win32NamedPipeClientTransport :
-        public ConnectionOrientedClientTransport
+        public ConnectedClientTransport
     {
     public:
 

@@ -98,7 +98,7 @@ namespace RCF {
     std::string Win32NamedPipeEndpoint::asString() const
     {
         MemOstream os;
-        os << "Named pipe endpoint \"" << RCF::toAstring(mPipeName) << "\"";
+        os << "pipe://" << RCF::toAstring(mPipeName);
         return os.string();
     }
 

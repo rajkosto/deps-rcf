@@ -111,17 +111,17 @@ namespace SF {
             ar & count;
             if (count)
             {
-                boost::uint32_t bytesToWrite = count * vec.sizeofElement();
+                boost::uint32_t totalBytesToWrite = count * vec.sizeofElement();
 
                 if (RCF::machineOrderEqualsNetworkOrder())
                 {
                     // Don't need reordering, so write everything in one go.
-                    ar.getOstream()->writeRaw( vec.addressOfElement(0), bytesToWrite);
+                    ar.getOstream()->writeRaw(vec.addressOfElement(0), totalBytesToWrite);
                 }
                 else if (ar.getRuntimeVersion() < 8)
                 {
                     // Don't need reordering, so write everything in one go.
-                    ar.getOstream()->writeRaw( vec.addressOfElement(0), bytesToWrite);
+                    ar.getOstream()->writeRaw(vec.addressOfElement(0), totalBytesToWrite);
                 }
                 else
                 {

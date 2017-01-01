@@ -27,16 +27,16 @@ namespace RCF {
 
     class Win32NamedPipeServerTransport;
 
-    // Win32NamedPipeSessionState
+    // Win32NamedPipeNetworkSession
 
-    class Win32NamedPipeSessionState : public AsioSessionState
+    class Win32NamedPipeNetworkSession : public AsioNetworkSession
     {
     public:
-        Win32NamedPipeSessionState(
+        Win32NamedPipeNetworkSession(
             Win32NamedPipeServerTransport & transport,
             AsioIoService & ioService);
 
-        ~Win32NamedPipeSessionState();
+        ~Win32NamedPipeNetworkSession();
 
         const RemoteAddress & implGetRemoteAddress();
 
@@ -44,7 +44,7 @@ namespace RCF {
 
         void implWrite(const std::vector<ByteBuffer> & buffers);
 
-        void implWrite(AsioSessionState &toBeNotified, const char * buffer, std::size_t bufferLen);
+        void implWrite(AsioNetworkSession &toBeNotified, const char * buffer, std::size_t bufferLen);
 
         void implAccept();
 
@@ -83,7 +83,7 @@ namespace RCF {
 
         ServerTransportPtr clone();
 
-        AsioSessionStatePtr implCreateSessionState();
+        AsioNetworkSessionPtr implCreateNetworkSession();
         void implOpen();
         ClientTransportAutoPtr implCreateClientTransport(
             const Endpoint &endpoint);
@@ -97,7 +97,7 @@ namespace RCF {
 
     private:
 
-        friend class Win32NamedPipeSessionState;
+        friend class Win32NamedPipeNetworkSession;
 
         tstring                         mPipeName;
         HANDLE                          mPipeNameLock;
@@ -109,14 +109,14 @@ namespace RCF {
     {
     public:
         Win32NamedPipeImpersonator();
-        Win32NamedPipeImpersonator(Win32NamedPipeSessionState & pipeSession);
+        Win32NamedPipeImpersonator(Win32NamedPipeNetworkSession & pipeSession);
         ~Win32NamedPipeImpersonator();
         void impersonate();
         void revertToSelf() const;
 
     private:
 
-        Win32NamedPipeSessionState & mPipeSession;
+        Win32NamedPipeNetworkSession & mPipeSession;
     };
 
     class RCF_EXPORT NullDacl

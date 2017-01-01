@@ -104,7 +104,7 @@ namespace RCF {
         std::vector<ClientStub *>       mCurrentClientStubs;
         RcfSession *                    mpCurrentRcfSession;
         ThreadInfoPtr                   mThreadInfoPtr;
-        UdpSessionStatePtr              mUdpSessionStatePtr;
+        UdpNetworkSessionPtr              mUdpNetworkSessionPtr;
         RecursionState<int, int>        mRcfSessionRecursionState;
         AmiNotification                 mAmiNotification;
         OverlappedAmiPtr                mOverlappedPtr;
@@ -118,6 +118,8 @@ namespace RCF {
         std::vector< std::vector<FilterPtr> * >             mFilterVecPtr;
         std::vector< std::vector<RcfSessionCallback> * >    mRcfSessionCbVecCache;
         std::vector< std::vector<FileUpload> * >            mFileUploadVecCache;
+
+        std::vector<RcfSession *>                           mRcfSessionSentryStack;
     };
 
 
@@ -224,6 +226,12 @@ namespace RCF {
         tld.mpCurrentRcfSession = pRcfSessionPtr;
     }
 
+    std::vector<RcfSession*>& getRcfSessionSentryStack()
+    {
+        ThreadLocalData & tld = getThreadLocalData();
+        return tld.mRcfSessionSentryStack;
+    }
+
     ThreadInfoPtr getTlsThreadInfoPtr()
     {
         ThreadLocalData & tld = getThreadLocalData();
@@ -236,16 +244,16 @@ namespace RCF {
         tld.mThreadInfoPtr = threadInfoPtr;
     }
 
-    UdpSessionStatePtr getTlsUdpSessionStatePtr()
+    UdpNetworkSessionPtr getTlsUdpNetworkSessionPtr()
     {
         ThreadLocalData & tld = getThreadLocalData();
-        return tld.mUdpSessionStatePtr;
+        return tld.mUdpNetworkSessionPtr;
     }
 
-    void setTlsUdpSessionStatePtr(UdpSessionStatePtr udpSessionStatePtr)
+    void setTlsUdpNetworkSessionPtr(UdpNetworkSessionPtr udpNetworkSessionPtr)
     {
         ThreadLocalData & tld = getThreadLocalData();
-        tld.mUdpSessionStatePtr = udpSessionStatePtr;
+        tld.mUdpNetworkSessionPtr = udpNetworkSessionPtr;
     }
 
     RcfSession & getCurrentRcfSession()

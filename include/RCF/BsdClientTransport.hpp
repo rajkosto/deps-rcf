@@ -20,14 +20,14 @@
 #define INCLUDE_RCF_BSDCLIENTTRANSPORT_HPP
 
 #include <RCF/Export.hpp>
-#include <RCF/ConnectionOrientedClientTransport.hpp>
+#include <RCF/ConnectedClientTransport.hpp>
 
 #include <boost/scoped_ptr.hpp>
 
 namespace RCF {
 
     class RCF_EXPORT BsdClientTransport :
-        public ConnectionOrientedClientTransport
+        public ConnectedClientTransport
     {
     public:
 

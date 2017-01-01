@@ -150,7 +150,11 @@ namespace RCF {
     {
     public:
         CurrentClientStubSentry(ClientStub & clientStub);
+        CurrentClientStubSentry(ClientStub * pClientStub);
         ~CurrentClientStubSentry();
+
+    private:
+        bool mEnabled;
     };
 
     class RCF_EXPORT ClientStub : 
@@ -158,28 +162,34 @@ namespace RCF {
         public boost::enable_shared_from_this<ClientStub>
     {
     public:
-        ClientStub(const std::string &interfaceName);
-        ClientStub(const std::string &interfaceName, const std::string &objectName);
-        ClientStub(const ClientStub &rhs);
+        ClientStub(const std::string & interfaceName);
+        ClientStub(const std::string & interfaceName, const std::string &objectName);
+        ClientStub(const ClientStub & rhs);
         ~ClientStub();
 
-        ClientStub &operator=(const ClientStub &rhs);
+        ClientStub &operator=(const ClientStub & rhs);
 
-        void                setEndpoint(const Endpoint &endpoint);
-        void                setEndpoint(EndpointPtr endpointPtr);
-        EndpointPtr         getEndpoint() const;
-        Token               getTargetToken() const;
-        void                setTargetToken(Token token);
-        const std::string & getTargetName() const;
-        void                setTargetName(const std::string &targetName);
-        void                setInterfaceName(const std::string & interfaceName);
-        const std::string & getInterfaceName();
-        RemoteCallSemantics getRemoteCallSemantics() const;
-        void                setRemoteCallSemantics(RemoteCallSemantics defaultCallingSemantics);
+    private:
+        void                    init(const std::string & interfaceName, const std::string & objectName);
+        void                    assign(const ClientStub & rhs);
+
+    public:
+
+        void                    setEndpoint(const Endpoint &endpoint);
+        void                    setEndpoint(EndpointPtr endpointPtr);
+        EndpointPtr             getEndpoint() const;
+        Token                   getTargetToken() const;
+        void                    setTargetToken(Token token);
+        const std::string &     getTargetName() const;
+        void                    setTargetName(const std::string &targetName);
+        void                    setInterfaceName(const std::string & interfaceName);
+        const std::string &     getInterfaceName();
+        RemoteCallSemantics     getRemoteCallSemantics() const;
+        void                    setRemoteCallSemantics(RemoteCallSemantics defaultCallingSemantics);
 
         // Deprecated - use getRemoteCallSemantics()/setRemoteCallSemantics instead.
-        RemoteCallSemantics getDefaultCallingSemantics() const;
-        void                setDefaultCallingSemantics(RemoteCallSemantics defaultCallingSemantics);
+        RemoteCallSemantics     getDefaultCallingSemantics() const;
+        void                    setDefaultCallingSemantics(RemoteCallSemantics defaultCallingSemantics);
 
         void                    setSerializationProtocol(SerializationProtocol protocol);
         SerializationProtocol   getSerializationProtocol() const;
@@ -195,85 +205,84 @@ namespace RCF {
 
         void                    setTransport(ClientTransportAutoPtr transport);
 
-        ClientTransport&      getTransport();
-        IpClientTransport &   getIpTransport();
+        ClientTransport&        getTransport();
+        IpClientTransport &     getIpTransport();
 
         ClientTransportAutoPtr  releaseTransport();
 
-        void        instantiateTransport();
-        void        connect();
-        void        connectAsync(boost::function0<void> onCompletion);
-        void        wait(boost::function0<void> onCompletion, boost::uint32_t timeoutMs);
-        void        disconnect();
-        bool        isConnected();
-        void        setConnected(bool connected);
+        void                    instantiateTransport();
+        void                    connect();
+        void                    connectAsync(boost::function0<void> onCompletion);
+        void                    wait(boost::function0<void> onCompletion, boost::uint32_t timeoutMs);
+        void                    disconnect();
+        bool                    isConnected();
+        void                    setConnected(bool connected);
 
-        void        setMessageFilters(const std::vector<FilterPtr> &filters);
-        void        setMessageFilters();
-        void        setMessageFilters(FilterPtr filterPtr);
+        void                    setMessageFilters(const std::vector<FilterPtr> &filters);
+        void                    setMessageFilters();
+        void                    setMessageFilters(FilterPtr filterPtr);
 
         const std::vector<FilterPtr> &
-                    getMessageFilters();
+                                getMessageFilters();
 
-        virtual bool isClientStub() const;
+        virtual bool            isClientStub() const;
 
 
         // Synchronous transport filter requests.
-        void        requestTransportFilters_Legacy(const std::vector<FilterPtr> &filters);
-        void        requestTransportFilters(const std::vector<FilterPtr> &filters);
-        void        requestTransportFilters(FilterPtr filterPtr);
-        void        requestTransportFilters();
+        void                    requestTransportFilters_Legacy(const std::vector<FilterPtr> &filters);
+        void                    requestTransportFilters(const std::vector<FilterPtr> &filters);
+        void                    requestTransportFilters(FilterPtr filterPtr);
+        void                    requestTransportFilters();
 
-        void        clearTransportFilters();
+        void                    clearTransportFilters();
 
         // Asynchronous transport filter requests.
-        void        requestTransportFiltersAsync_Legacy(
-                        const std::vector<FilterPtr> &filters,
-                        boost::function0<void> onCompletion);
+        void                    requestTransportFiltersAsync_Legacy(
+                                    const std::vector<FilterPtr> &filters,
+                                    boost::function0<void> onCompletion);
 
-        void        requestTransportFiltersAsync(
-                        const std::vector<FilterPtr> &filters,
-                        boost::function0<void> onCompletion);
+        void                    requestTransportFiltersAsync(
+                                    const std::vector<FilterPtr> &filters,
+                                    boost::function0<void> onCompletion);
 
-        void        requestTransportFiltersAsync(
-                        FilterPtr filterPtr,
-                        boost::function0<void> onCompletion);
+        void                    requestTransportFiltersAsync(
+                                    FilterPtr filterPtr,
+                                    boost::function0<void> onCompletion);
 
 
-        void            setRemoteCallTimeoutMs(unsigned int remoteCallTimeoutMs);
-        unsigned int    getRemoteCallTimeoutMs() const;
+        void                    setRemoteCallTimeoutMs(unsigned int remoteCallTimeoutMs);
+        unsigned int            getRemoteCallTimeoutMs() const;
 
-        void            setConnectTimeoutMs(unsigned int connectTimeoutMs);
-        unsigned int    getConnectTimeoutMs() const;
+        void                    setConnectTimeoutMs(unsigned int connectTimeoutMs);
+        unsigned int            getConnectTimeoutMs() const;
 
-        void        setAutoReconnect(bool autoReconnect);
-        bool        getAutoReconnect() const;
+        void                    setAutoReconnect(bool autoReconnect);
+        bool                    getAutoReconnect() const;
 
-        void        setAutoVersioning(bool autoVersioning);
-        bool        getAutoVersioning() const;
+        void                    setAutoVersioning(bool autoVersioning);
+        bool                    getAutoVersioning() const;
 
-        void            setRuntimeVersion(boost::uint32_t version);
-        boost::uint32_t getRuntimeVersion() const;
+        void                    setRuntimeVersion(boost::uint32_t version);
+        boost::uint32_t         getRuntimeVersion() const;
 
-        void            setArchiveVersion(boost::uint32_t version);
-        boost::uint32_t getArchiveVersion() const;
+        void                    setArchiveVersion(boost::uint32_t version);
+        boost::uint32_t         getArchiveVersion() const;
 
-        void        setClientProgressPtr(ClientProgressPtr clientProgressPtr);
+        void                    setClientProgressPtr(ClientProgressPtr clientProgressPtr);
 
-        ClientProgressPtr 
-                    getClientProgressPtr() const;
+        ClientProgressPtr       getClientProgressPtr() const;
 
         typedef     ClientProgress::ProgressCallback RemoteCallProgressCallback;
 
-        void        setRemoteCallProgressCallback(
-                        RemoteCallProgressCallback cb, 
-                        boost::uint32_t callbackIntervalMs);
+        void                    setRemoteCallProgressCallback(
+                                    RemoteCallProgressCallback cb, 
+                                    boost::uint32_t callbackIntervalMs);
 
-        void        setTries(std::size_t tries);
-        std::size_t getTries() const;
+        void                    setTries(std::size_t tries);
+        std::size_t             getTries() const;
 
-        void        setUserData(boost::any userData);
-        boost::any  getUserData();
+        void                    setUserData(boost::any userData);
+        boost::any              getUserData();
 
         //**********************************************************************
         // These functions involve network calls.
@@ -282,71 +291,71 @@ namespace RCF {
 
 #if RCF_FEATURE_LEGACY==1
 
-        void createRemoteObject(const std::string &objectName = "");
-        void deleteRemoteObject();
+        void                    createRemoteObject(const std::string &objectName = "");
+        void                    deleteRemoteObject();
 
-        void createRemoteSessionObject(const std::string &objectName = "");
-        void deleteRemoteSessionObject();
+        void                    createRemoteSessionObject(const std::string &objectName = "");
+        void                    deleteRemoteSessionObject();
 
 #endif
 
 #if RCF_FEATURE_FILETRANSFER==1
-        void setFileProgressCallback(FileProgressCb fileProgressCb);
-        void setFileProgressCallback() { setFileProgressCallback( FileProgressCb() ); }
+        void                    setFileProgressCallback(FileProgressCb fileProgressCb);
+        void                    setFileProgressCallback() { setFileProgressCallback( FileProgressCb() ); }
 
-        void uploadFiles(
-            const std::string & whichFile, 
-            std::string & uploadId,
-            boost::uint32_t chunkSize,
-            boost::uint32_t transferRateBps,
-            boost::uint32_t sessionLocalId);
+        void                    uploadFiles(
+                                    const std::string & whichFile, 
+                                    std::string & uploadId,
+                                    boost::uint32_t chunkSize,
+                                    boost::uint32_t transferRateBps,
+                                    boost::uint32_t sessionLocalId);
 
-        void uploadFiles(
-            const FileManifest & whichFile, 
-            std::string & uploadId,
-            boost::uint32_t chunkSize,
-            boost::uint32_t transferRateBps,
-            boost::uint32_t sessionLocalId);
+        void                    uploadFiles(
+                                    const FileManifest & whichFile, 
+                                    std::string & uploadId,
+                                    boost::uint32_t chunkSize,
+                                    boost::uint32_t transferRateBps,
+                                    boost::uint32_t sessionLocalId);
 
-        void downloadFiles(
-            const std::string & downloadLocation, 
-            FileManifest & manifest,
-            boost::uint32_t chunkSize, 
-            boost::uint32_t transferRateBps,
-            boost::uint32_t sessionLocalId);
+        void                    downloadFiles(
+                                    const std::string & downloadLocation, 
+                                    FileManifest & manifest,
+                                    boost::uint32_t chunkSize, 
+                                    boost::uint32_t transferRateBps,
+                                    boost::uint32_t sessionLocalId);
 
-        boost::uint32_t addUploadStream(FileUpload fileStream);
-        void processUploadStreams();
+        boost::uint32_t         addUploadStream(FileUpload fileStream);
+        void                    processUploadStreams();
 
-        boost::uint32_t addDownloadStream(FileDownload fileStream);
+        boost::uint32_t         addDownloadStream(FileDownload fileStream);
 
         // For testing.
-        void                setTransferWindowS(boost::uint32_t transferWindowS);
-        boost::uint32_t     getTransferWindowS();
+        void                    setTransferWindowS(boost::uint32_t transferWindowS);
+        boost::uint32_t         getTransferWindowS();
 #endif
 
-        FutureImpl<Void> ping();
-        FutureImpl<Void> ping(const CallOptions & callOptions);
+        FutureImpl<Void>        ping();
+        FutureImpl<Void>        ping(const CallOptions & callOptions);
 
-        ByteBuffer      getOutOfBandRequest();
-        void            setOutofBandRequest(ByteBuffer requestBuffer);
+        ByteBuffer              getOutOfBandRequest();
+        void                    setOutofBandRequest(ByteBuffer requestBuffer);
 
-        ByteBuffer      getOutOfBandResponse();
-        void            setOutofBandResponse(ByteBuffer responseBuffer);
+        ByteBuffer              getOutOfBandResponse();
+        void                    setOutofBandResponse(ByteBuffer responseBuffer);
 
-        FutureImpl<Void> doControlMessage(
-            const CallOptions &     callOptions, 
-            ByteBuffer              controlRequest);
+        FutureImpl<Void>        doControlMessage(
+                                    const CallOptions &     callOptions, 
+                                    ByteBuffer              controlRequest);
 
         //**********************************************************************
 
-        void setPingBackIntervalMs(int pingBackIntervalMs);
-        int getPingBackIntervalMs();
+        void                    setPingBackIntervalMs(int pingBackIntervalMs);
+        int                     getPingBackIntervalMs();
 
-        std::size_t     getPingBackCount();
-        boost::uint32_t getPingBackTimeStamp();
+        std::size_t             getPingBackCount();
+        boost::uint32_t         getPingBackTimeStamp();
         
-        void clearParameters();
+        void                    clearParameters();
 
         SerializationProtocolIn &   getSpIn();
         SerializationProtocolOut &  getSpOut();
@@ -355,9 +364,9 @@ namespace RCF {
         void                        setAsyncException(std::auto_ptr<Exception>);
         bool                        hasAsyncException();
 
-        boost::uint32_t     generatePollingTimeout(boost::uint32_t timeoutMs);
-        void                onPollingTimeout();
-        void                onUiMessage();
+        boost::uint32_t         generatePollingTimeout(boost::uint32_t timeoutMs);
+        void                    onPollingTimeout();
+        void                    onUiMessage();
 
         friend class CallOptions;
 
@@ -576,51 +585,61 @@ namespace RCF {
 
     public:
 
-        void setHttpProxy(const std::string & httpProxy);
-        std::string getHttpProxy();
+        void                setHttpProxy(const std::string & httpProxy);
+        std::string         getHttpProxy() const;
 
-        void setHttpProxyPort(int httpProxyPort);
-        int getHttpProxyPort();
+        void                setHttpProxyPort(int httpProxyPort);
+        int                 getHttpProxyPort() const;
         
-        void setTransportProtocol(TransportProtocol protocol);
-        TransportProtocol getTransportProtocol();
+        void                setTransportProtocol(TransportProtocol protocol);
+        TransportProtocol   getTransportProtocol() const;
 
-        TransportType getTransportType();
+        TransportType       getTransportType();
 
-        void setUsername(const tstring & username);
-        tstring getUsername();
+        void                setUsername(const tstring & username);
+        tstring             getUsername() const;
 
-        void setPassword(const tstring & password);
-        tstring getPassword();
+        void                setPassword(const tstring & password);
+        tstring             getPassword() const;
 
-        void setKerberosSpn(const tstring & kerberosSpn);
-        tstring getKerberosSpn();
+        void                setHttpProxyUsername(const tstring & proxyUsername);
+        tstring             getHttpProxyUsername() const;
 
-        void setEnableCompression(bool enableCompression);
-        bool getEnableCompression();
+        void                setHttpProxyPassword(const tstring & proxyPassword);
+        tstring             getHttpProxyPassword() const;
 
-        void setCertificate(CertificatePtr certificatePtr);
-        CertificatePtr getCertificate();
+        void                setHttpProxyRealm(const tstring & proxyRealm);
+        tstring             getHttpProxyRealm() const;
 
-        void setCaCertificate(CertificatePtr certificatePtr);
-        CertificatePtr getCaCertificate();
+        void                setKerberosSpn(const tstring & kerberosSpn);
+        tstring             getKerberosSpn() const;
 
-        void setOpenSslCipherSuite(const std::string & cipherSuite);
-        std::string getOpenSslCipherSuite() const;
+        void                setEnableCompression(bool enableCompression);
+        bool                getEnableCompression() const;
 
-        void setEnableSchannelCertificateValidation(const tstring & peerName);
-        tstring getEnableSchannelCertificateValidation() const;
+        void                setCertificate(CertificatePtr certificatePtr);
+        CertificatePtr      getCertificate() const;
+
+        void                setCaCertificate(CertificatePtr certificatePtr);
+        CertificatePtr      getCaCertificate() const;
+
+        void                setOpenSslCipherSuite(const std::string & cipherSuite);
+        std::string         getOpenSslCipherSuite() const;
+
+        void                setEnableSchannelCertificateValidation(const tstring & peerName);
+        tstring             getEnableSchannelCertificateValidation() const;
 
         typedef boost::function<bool(Certificate *)> CertificateValidationCb;
-        void setCertificateValidationCallback(CertificateValidationCb certificateValidationCb);
-        const CertificateValidationCb & getCertificateValidationCallback() const;
+        void                                setCertificateValidationCallback(CertificateValidationCb certificateValidationCb);
+        const CertificateValidationCb &     getCertificateValidationCallback() const;
 
-        void setSslImplementation(SslImplementation sslImplementation);
-        SslImplementation getSslImplementation() const;
+        void                setSslImplementation(SslImplementation sslImplementation);
+        SslImplementation   getSslImplementation() const;
 
 #ifdef BOOST_WINDOWS
-        void setWindowsImpersonationToken(HANDLE hToken);
-        HANDLE getWindowsImpersonationToken() const;
+        void                setWindowsImpersonationToken(HANDLE hToken);
+        HANDLE              getWindowsImpersonationToken() const;
+
     private:
         std::auto_ptr<HANDLE>                   mWindowsImpersonationToken;
 #endif
@@ -628,9 +647,12 @@ namespace RCF {
     private:
         std::string                             mHttpProxy;
         int                                     mHttpProxyPort;
+        tstring                                 mHttpProxyRealm;
         TransportProtocol                       mTransportProtocol;
         tstring                                 mUsername;
         tstring                                 mPassword;
+        tstring                                 mHttpProxyUsername;
+        tstring                                 mHttpProxyPassword;
         tstring                                 mKerberosSpn;
         bool                                    mEnableCompression;
 

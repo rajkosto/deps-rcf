@@ -82,8 +82,19 @@ namespace RCF {
             mPvlen(sprb->size()),
             mLeftMargin(),
             mReadOnly(readOnly)
-            
     {}
+
+    ByteBuffer::ByteBuffer(
+        MemOstreamPtr spos,
+        bool readOnly) :
+            mSpos(spos),
+            mSprb(),
+            mPv( spos->str() ),
+            mPvlen( spos->length() ),
+            mLeftMargin(),
+            mReadOnly(readOnly)
+    {}
+
 
     ByteBuffer::ByteBuffer(
         char *pv,

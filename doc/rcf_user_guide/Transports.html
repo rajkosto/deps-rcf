@@ -443,13 +443,13 @@
 </p>
 <pre class="programlisting"><span class="comment">// Server-side.
 </span>
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">SessionState</span> <span class="special">&amp;</span> <span class="identifier">sessionState</span> <span class="special">=</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">getCurrentRcfSession</span><span class="special">().</span><span class="identifier">getSessionState</span><span class="special">();</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">NetworkSession</span> <span class="special">&amp;</span> <span class="identifier">networkSession</span> <span class="special">=</span> <span class="identifier">RCF</span><span class="special">::</span><span class="identifier">getCurrentRcfSession</span><span class="special">().</span><span class="identifier">getNetworkSession</span><span class="special">();</span>
 
-<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpAsioSessionState</span> <span class="special">&amp;</span> <span class="identifier">tcpSessionState</span> <span class="special">=</span> 
-    <span class="keyword">dynamic_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpAsioSessionState</span> <span class="special">&amp;&gt;(</span><span class="identifier">sessionState</span><span class="special">);</span>
+<span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpNetworkSession</span> <span class="special">&amp;</span> <span class="identifier">tcpNetworkSession</span> <span class="special">=</span> 
+    <span class="keyword">dynamic_cast</span><span class="special">&lt;</span><span class="identifier">RCF</span><span class="special">::</span><span class="identifier">TcpNetworkSession</span> <span class="special">&amp;&gt;(</span><span class="identifier">networkSession</span><span class="special">);</span>
 
 <span class="comment">// Obtain server socket handle.
-</span><span class="keyword">int</span> <span class="identifier">sock</span> <span class="special">=</span> <span class="identifier">tcpSessionState</span><span class="special">.</span><span class="identifier">getNativeHandle</span><span class="special">();</span>
+</span><span class="keyword">int</span> <span class="identifier">sock</span> <span class="special">=</span> <span class="identifier">tcpNetworkSession</span><span class="special">.</span><span class="identifier">getNativeHandle</span><span class="special">();</span>
 
 </pre>
 <p>
@@ -810,7 +810,7 @@
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2005 - 2013 Delta V Software</div></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2005 - 2016 Delta V Software</div></td>
 </tr></table>
 <hr>
 <div class="spirit-nav">

@@ -210,7 +210,7 @@ namespace RCF {
 
         if (mpIoService)
         {
-            mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+            mAsioTimerPtr.reset( new AsioDeadlineTimer(*mpIoService) );
             RCF_LOG_1()(mLocalSocketPtr.get()) << "Clearing mLocalSocketPtr";
             mLocalSocketPtr.reset( new UnixLocalSocket(*mpIoService) );
             mLocalSocketPtr->assign(ASIO_NS::local::stream_protocol(), mFd);
@@ -233,7 +233,7 @@ namespace RCF {
             {
                 mLocalSocketPtr->assign(ASIO_NS::local::stream_protocol(), mFd);
             }
-            mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+            mAsioTimerPtr.reset(new AsioDeadlineTimer(*mpIoService));
             mFd = -1;
         }
     }

@@ -427,7 +427,7 @@ namespace RCF {
 
         if (mpIoService)
         {
-            mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+            mAsioTimerPtr.reset( new AsioDeadlineTimer(*mpIoService) );
             mTcpSocketPtr.reset( new AsioSocket(*mpIoService) );
             if (mConnectionAddr.getType() == IpAddress::V4)
             {
@@ -472,7 +472,7 @@ namespace RCF {
                     RCF_ASSERT(0);
                 }
             }
-            mAsioTimerPtr.reset( new AsioDeadlineTimer(getAmiThreadPool().getIoService()) );
+            mAsioTimerPtr.reset( new AsioDeadlineTimer(*mpIoService) );
             mFd = -1;
         }
     }

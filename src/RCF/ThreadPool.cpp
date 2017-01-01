@@ -45,6 +45,12 @@ namespace RCF {
         DWORD dwFlags; // reserved for future use, must be zero
     } THREADNAME_INFO;
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 6312) // warning C6312: Possible infinite loop:  use of the constant EXCEPTION_CONTINUE_EXECUTION in the exception-filter expression of a try-except.  Execution restarts in the protected block.
+#pragma warning(disable: 6322) // warning C6322: Empty _except block.
+#endif
+
     // 32 character limit on szThreadName apparently, or it gets truncated.
     void setWin32ThreadName(const std::string & threadName)
     {
@@ -62,6 +68,11 @@ namespace RCF {
         {
         }
     }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
 } // namespace RCF
 
 #elif defined(__MACH__) && defined(__APPLE__)
@@ -390,7 +401,7 @@ namespace RCF {
 
     void ThreadPool::setThreadMinCount(std::size_t threadMinCount)
     {
-        RCF_ASSERT( 0 <= threadMinCount && threadMinCount <= mThreadMaxCount );
+        RCF_ASSERT( threadMinCount <= mThreadMaxCount );
         mThreadMinCount = threadMinCount;
     }
 
@@ -486,7 +497,6 @@ namespace RCF {
             {
                 Lock lock(mThreadsMutex);
                 ++mBusyCount;
-                RCF_ASSERT_LTEQ(0 , mBusyCount);
                 RCF_ASSERT_LTEQ(mBusyCount , mThreads.size());
                 if (mBusyCount == mThreads.size())
                 {

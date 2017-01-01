@@ -23,6 +23,7 @@
 #include <RCF/ThreadLibrary.hpp>
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/Tools.hpp>
+#include <RCF/util/Assert.hpp>
 
 #include <stdlib.h>
 #include <time.h>
@@ -590,7 +591,7 @@ namespace RCF {
 
     // A: Log name
     // B: Log level
-    // C: date time
+    // C: time
     // D: thread id
     // E: __FILE__
     // F: __LINE__
@@ -647,10 +648,7 @@ namespace RCF {
 
                         sprintf(
                             timeBuffer, 
-                            "%d%02d%02d %02d:%02d:%02d:%03u", 
-                            1900+ts->tm_year, 
-                            1+ts->tm_mon, 
-                            ts->tm_mday, 
+                            "%02d:%02d:%02d:%03u", 
                             ts->tm_hour, 
                             ts->tm_min, 
                             ts->tm_sec,
@@ -802,6 +800,76 @@ namespace RCF {
     void printToOstream(RCF::MemOstream & os, const std::type_info &ti)
     {
         os << ti.name();
+    }
+
+    AssertFunctor::AssertFunctor() : mExpr(NULL)
+    {
+    }
+
+    AssertFunctor::AssertFunctor(const char * expr) : mExpr(expr)
+    {
+    }
+
+#if defined(_MSC_VER) && !defined(NDEBUG)
+#pragma warning(push)
+#pragma warning(disable: 4995) // 'sprintf': name was marked as #pragma deprecated
+#pragma warning(disable: 4996) // 'sprintf': This function or variable may be unsafe.
+
+    AssertFunctor::~AssertFunctor()
+    {
+        const char * msg =
+            "%s\n"
+            "Values: %s\n"
+            "Function: %s";
+
+        std::string values(mArgs->str(), static_cast<std::size_t>(mArgs->tellp()));
+
+        char szBuffer[512] = { 0 };
+        sprintf(szBuffer, "%s(%d): Assert failed. Expression: %s.\n", mFile, mLine, mExpr);
+        OutputDebugStringA(szBuffer);
+        fprintf(stdout, "%s", szBuffer);
+
+        std::string assertMsg(szBuffer);
+        RCF_LOG_1()(assertMsg) << "Failed assertion!";
+
+        int ret = _CrtDbgReport(_CRT_ASSERT, mFile, mLine, NULL, msg, mExpr, values.c_str(), mFunc);
+        if ( ret == 1 )
+        {
+            // __debugbreak() is more likely to give a proper call stack.
+            //DebugBreak();
+            __debugbreak();
+        }
+    }
+
+#pragma warning(pop)
+#else
+
+    AssertFunctor::~AssertFunctor()
+    {
+        std::string values(mArgs->str(), static_cast<std::size_t>(mArgs->tellp()));
+
+        char szBuffer[512] = { 0 };
+        sprintf(
+            szBuffer,
+            "%s:%d: Assertion failed. %s . Values: %s\n",
+            mFile,
+            mLine,
+            mExpr,
+            values.c_str());
+
+        fprintf(stdout, "%s", szBuffer);
+
+        std::string assertMsg(szBuffer);
+        RCF_LOG_1()(assertMsg) << "Failed assertion!";
+
+        assert(0 && "See line above for assertion details.");
+    }
+
+#endif
+
+    VarArgAbort::VarArgAbort()
+    {
+        abort();
     }
 
 } // namespace RCF

@@ -32,6 +32,12 @@
 #pragma warning( disable : 4308 )  // warning C4308: negative integral constant converted to unsigned type
 #endif
 
+// VS 2013 Update 3 - a number of WinSock functions have been deprecated.
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // error C4996: 'WSAAddressToStringA': Use WSAAddressToStringW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+#endif
+
 #include "AmiThreadPool.cpp"
 #include "AsioHandlerCache.cpp"
 #include "AsioServerTransport.cpp"
@@ -43,7 +49,7 @@
 #include "ClientStub.cpp"
 #include "ClientStubLegacy.cpp"
 #include "ClientTransport.cpp"
-#include "ConnectionOrientedClientTransport.cpp"
+#include "ConnectedClientTransport.cpp"
 #include "CurrentSerializationProtocol.cpp"
 #include "CurrentSession.cpp"
 #include "CustomAllocator.cpp"
@@ -68,6 +74,7 @@
 #include "RcfClient.cpp"
 #include "RcfServer.cpp"
 #include "RcfSession.cpp"
+#include "RemoteCallContext.cpp"
 #include "ReallocBuffer.cpp"
 #include "SerializationProtocol.cpp"
 #include "ServerStub.cpp"
@@ -108,7 +115,7 @@
 #endif
 
 #if RCF_FEATURE_TCP==1
-#include "TcpAsioServerTransport.cpp"
+#include "TcpServerTransport.cpp"
 #include "TcpClientTransport.cpp"
 #include "TcpEndpoint.cpp"
 #endif
@@ -130,6 +137,8 @@
 #include "HttpsServerTransport.cpp"
 #include "HttpFrameFilter.cpp"
 #include "HttpConnectFilter.cpp"
+#include "HttpSessionFilter.cpp"
+#include "Base64.cpp"
 #endif
 
 
@@ -214,6 +223,14 @@ namespace RCF {
 
 #if RCF_FEATURE_JSON==1
 #include "JsonRpc.cpp"
+#endif
+
+#if RCF_FEATURE_LOCALSOCKET==1 || RCF_FEATURE_NAMEDPIPE==1
+#include "NamedPipeEndpoint.cpp"
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif
 
 // Problems with BSer. Suppress some static warnings.

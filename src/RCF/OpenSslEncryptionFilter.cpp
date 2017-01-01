@@ -56,9 +56,9 @@ namespace RCF {
         typedef void            (*Pfn_SSL_set_verify)(SSL *s, int mode, int (*callback)(int ok,X509_STORE_CTX *ctx));
         typedef SSL *           (*Pfn_SSL_new)(SSL_CTX *ctx);
         typedef void            (*Pfn_SSL_free)(SSL *ssl);
-        typedef SSL_CTX *       (*Pfn_SSL_CTX_new)(SSL_METHOD *meth);
+        typedef SSL_CTX *       (*Pfn_SSL_CTX_new)(const SSL_METHOD *meth);
         typedef void            (*Pfn_SSL_CTX_free)(SSL_CTX *);
-        typedef SSL_METHOD *    (*Pfn_SSLv23_method)(void);
+        typedef const SSL_METHOD *    (*Pfn_SSLv23_method)(void);
         typedef BIO_METHOD *    (*Pfn_BIO_f_ssl)(void);
         typedef int             (*Pfn_SSL_CTX_use_PrivateKey)(SSL_CTX *ctx, EVP_PKEY *pkey);
         typedef int             (*Pfn_SSL_CTX_use_certificate_chain_file)(SSL_CTX *ctx, const char *file); /* PEM type */

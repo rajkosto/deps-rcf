@@ -56,12 +56,12 @@ namespace RCF {
         
     ServerTransportAutoPtr NamedPipeEndpoint::createServerTransport() const
     {
-        return ServerTransportAutoPtr(new UnixLocalServerTransport(mPipeName));
+        return ServerTransportAutoPtr(new UnixLocalServerTransport(toAstring(mPipeName)));
     }
 
     ClientTransportAutoPtr NamedPipeEndpoint::createClientTransport() const
     {
-        return ClientTransportAutoPtr(new UnixLocalClientTransport(mPipeName));
+        return ClientTransportAutoPtr(new UnixLocalClientTransport(toAstring(mPipeName)));
     }
 
 #endif
@@ -74,7 +74,7 @@ namespace RCF {
     std::string NamedPipeEndpoint::asString() const
     {
         MemOstream os;
-        os << "Named pipe endpoint \"" << RCF::toAstring(mPipeName) << "\"";
+        os << "pipe://" << RCF::toAstring(mPipeName);
         return os.string();
     }
 

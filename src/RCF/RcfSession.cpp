@@ -61,8 +61,7 @@ namespace RCF {
         mpParameters(),
         mParmsVec(1+15), // return value + max 15 arguments
         mAutoSend(true),
-        mpSessionState(NULL),
-        mDisableIo(false),
+        mpNetworkSession(NULL),
         mTransportProtocol(Tp_Clear),
         mEnableCompression(false),
         mTransportProtocolVerified(false),
@@ -70,6 +69,12 @@ namespace RCF {
         mConnectedAtTime(0),
         mRemoteCallCount(0)
     {
+
+        time_t now = 0;
+        now = time(NULL);
+        setConnectedAtTime(now);
+        touch();
+
         Lock lock(getPerformanceData().mMutex);
         ++getPerformanceData().mRcfSessions;
     }
@@ -92,14 +97,14 @@ namespace RCF {
         RCF_DTOR_END
     }
 
-    SessionState & RcfSession::getSessionState() const
+    NetworkSession & RcfSession::getNetworkSession() const
     {
-        return *mpSessionState;
+        return *mpNetworkSession;
     }
 
-    void RcfSession::setSessionState(SessionState & sessionState)
+    void RcfSession::setNetworkSession(NetworkSession & networkSession)
     {
-        mpSessionState = &sessionState;
+        mpNetworkSession = &networkSession;
     }
 
     void RcfSession::clearParameters()
@@ -145,14 +150,14 @@ namespace RCF {
 
     const RCF::RemoteAddress &RcfSession::getClientAddress()
     {
-        return getSessionState().getRemoteAddress();
+        return getNetworkSession().getRemoteAddress();
     }
 
     void RcfSession::disconnect()
     {
-        SessionStatePtr sessionStatePtr = getSessionState().shared_from_this();
-        sessionStatePtr->setEnableReconnect(false);
-        sessionStatePtr->postClose();
+        NetworkSessionPtr networkSessionPtr = getNetworkSession().shared_from_this();
+        networkSessionPtr->setEnableReconnect(false);
+        networkSessionPtr->postClose();
     }
 
     bool RcfSession::hasDefaultServerStub()
@@ -185,7 +190,7 @@ namespace RCF {
 
     void RcfSession::getTransportFilters(std::vector<FilterPtr> &filters)
     {
-        getSessionState().getTransportFilters(filters);
+        getNetworkSession().getTransportFilters(filters);
     }
 
     boost::uint32_t RcfSession::getRuntimeVersion()
@@ -335,7 +340,7 @@ namespace RCF {
                 // notification, and if it happened to be an error (unlikely 
                 // but possible), we definitely would not want a reconnect, as 
                 // the session would still in use.
-                getSessionState().setEnableReconnect(false);
+                getNetworkSession().setEnableReconnect(false);
 
                 PingBackTimerEntry pingBackTimerEntry = 
                     pbsPtr->registerSession(shared_from_this());
@@ -399,7 +404,7 @@ namespace RCF {
             pingBackIntervalMs,
             0);
 
-        getSessionState().postWrite(byteBuffers);
+        getNetworkSession().postWrite(byteBuffers);
     }
 
     bool RcfSession::getAutoSend()
@@ -479,12 +484,6 @@ namespace RCF {
 
 #endif
 
-    void RcfSession::disableIo()
-    {
-        Lock lock(mDisableIoMutex);
-        mDisableIo = true;
-    }
-
     tstring RcfSession::getClientUsername()
     {
         return mClientUsername;
@@ -535,7 +534,7 @@ namespace RCF {
 
     TransportType RcfSession::getTransportType()
     {
-        return getSessionState().getServerTransport().getTransportType();
+        return getNetworkSession().getServerTransport().getTransportType();
     }
 
     bool RcfSession::getIsCallbackSession() const
@@ -581,17 +580,17 @@ namespace RCF {
 
     boost::uint64_t RcfSession::getTotalBytesReceived() const
     {
-        return mpSessionState->getTotalBytesReceived();
+        return mpNetworkSession->getTotalBytesReceived();
     }
 
     boost::uint64_t RcfSession::getTotalBytesSent() const
     {
-        return mpSessionState->getTotalBytesSent();
+        return mpNetworkSession->getTotalBytesSent();
     }
 
     bool RcfSession::isConnected() const
     {
-        return getSessionState().isConnected();
+        return getNetworkSession().isConnected();
     }
 
 } // namespace RCF

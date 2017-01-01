@@ -206,7 +206,7 @@ namespace RCF {
         RcfSession &session,
         boost::shared_ptr<std::vector<FilterPtr> > filters)
     {
-        session.getSessionState().setTransportFilters(*filters);
+        session.getNetworkSession().setTransportFilters(*filters);
     }
 
 } // namespace RCF

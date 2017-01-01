@@ -24,6 +24,7 @@
 
 #include <RCF/ByteBuffer.hpp>
 #include <RCF/Tools.hpp>
+#include <RCF/TypeTraits.hpp>
 
 namespace RCF {
 
@@ -68,13 +69,13 @@ namespace RCF {
         T2      mT2;
 
     private:
-        void clearArg_(const ByteBuffer &byteBuffer, boost::mpl::true_*)
+        void clearArg_(const ByteBuffer &byteBuffer, TrueType *)
         {
             const_cast<ByteBuffer &>(byteBuffer).clear();
         }
 
         template<typename T>
-        void clearArg_(const T &, boost::mpl::false_*)
+        void clearArg_(const T &, FalseType *)
         {}
 
         template<typename T>

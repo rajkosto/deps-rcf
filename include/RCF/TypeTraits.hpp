@@ -20,8 +20,29 @@
 #define INCLUDE_RCF_TYPETRAITS_HPP
 
 #include <boost/type_traits.hpp>
+#include <boost/version.hpp>
+
+#if BOOST_VERSION < 106000
+
+#include <boost/mpl/bool_fwd.hpp>
+namespace RCF {
+    typedef boost::mpl::true_ TrueType;
+    typedef boost::mpl::false_ FalseType;
+}
+
+#else
+
+namespace RCF{
+    typedef boost::true_type TrueType;
+    typedef boost::false_type FalseType;
+}
+
+#endif
+
 
 namespace RCF {
+
+
 
     template<typename T>
     struct IsFundamental : public boost::is_fundamental<T>
@@ -63,7 +84,7 @@ namespace RCF {
     };
 
     template<typename T>
-    struct IsOut : public boost::mpl::false_
+    struct IsOut : public RCF::FalseType
     {
     };
 

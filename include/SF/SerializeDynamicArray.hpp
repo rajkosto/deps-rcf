@@ -45,7 +45,7 @@ namespace SF {
     // If T is fundamental.
     template<typename T, typename N>
     inline void serializeDynamicArray(
-        boost::mpl::true_ *,
+        RCF::TrueType *,
         Archive &ar,
         DynamicArray<T,N> &da)
     {
@@ -77,7 +77,7 @@ namespace SF {
     // If T is non-fundamental.
     template<typename T, typename N>
     inline void serializeDynamicArray(
-        boost::mpl::false_ *,
+        RCF::FalseType *,
         Archive &ar,
         DynamicArray<T,N> &da)
     {

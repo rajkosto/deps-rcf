@@ -262,6 +262,8 @@ namespace RCF {
         std::vector<RCF::ByteBuffer>            mMergeBufferList;
         std::vector<char>                       mMergeBuffer;
 
+        bool                                    mProtocolChecked;
+
     private:
         bool                                    mLimitRecursion;
         RecursionState<ByteBuffer, int>         mRecursionStateRead;

@@ -371,9 +371,14 @@ namespace RCF {
         return & mpBuf->mWriteBuffer[0];
     }
 
+    std::size_t MemOstream::length()
+    {
+        return static_cast<std::size_t>(tellp());
+    }
+
     std::string MemOstream::string()
     {
-        return std::string(str(), static_cast<std::size_t>(tellp()));
+        return std::string(str(), length());
     }
 
     std::size_t MemOstream::capacity()

@@ -30,8 +30,7 @@ namespace RCF {
 
     TransportType MulticastClientTransport::getTransportType()
     {
-        RCF_ASSERT(0);
-        return TransportType();
+        return Tt_Unknown;
     }
 
     ClientTransportAutoPtr MulticastClientTransport::clone() const
@@ -378,8 +377,12 @@ namespace RCF {
         for (iter = mClientTransports.begin(); iter != mClientTransports.end(); ++iter)
         {
             RCF::ClientTransport & transport = ***iter;
-
             RcfSessionWeakPtr rcfSessionWeakPtr = transport.getRcfSession();
+            if ( rcfSessionWeakPtr == RcfSessionWeakPtr() )
+            {
+                // HTTP/HTTPS connections do not hold on to the RcfSession and can't receive pings.
+                continue;
+            }
             RcfSessionPtr rcfSessionPtr = rcfSessionWeakPtr.lock();
             if (!rcfSessionPtr)
             {

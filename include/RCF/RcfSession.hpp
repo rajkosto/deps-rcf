@@ -56,7 +56,7 @@ namespace RCF {
     class I_Parameters;
 
     class UdpServerTransport;
-    class UdpSessionState;
+    class UdpNetworkSession;
 
     class FileTransferService;
     class FileUploadInfo;
@@ -72,7 +72,7 @@ namespace RCF {
     class Certificate;
     typedef boost::shared_ptr<Certificate> CertificatePtr;
 
-    class AsioSessionState;
+    class AsioNetworkSession;
 
     template<
         typename R, 
@@ -195,6 +195,10 @@ namespace RCF {
             deleteSessionObject<T>();
             T * pt = getSessionObjectImpl<T>(true);
             RCF_ASSERT(pt);
+            if ( !pt )
+            {
+                RCF_THROW(Exception(_RcfError_SessionObjectNotCreated(typeid(T).name())));
+            }
             return *pt; 
         }
 
@@ -439,7 +443,7 @@ namespace RCF {
         // UdpServerTransport needs to explicitly set mIoState to Reading,
         // since it doesn't use async I/O with callbacks to RcfServer.
         friend class UdpServerTransport;
-        friend class UdpSessionState;
+        friend class UdpNetworkSession;
         friend class FileStreamImpl;
 
 #if RCF_FEATURE_FILETRANSFER==1
@@ -466,23 +470,15 @@ namespace RCF {
         StubEntryPtr                            mCachedStubEntryPtr;
 
     public:
-        SessionState & getSessionState() const;
-        void setSessionState(SessionState & sessionState);
+        NetworkSession & getNetworkSession() const;
+        void setNetworkSession(NetworkSession & networkSession);
 
     private:
-        SessionState * mpSessionState;
+        friend class HttpSessionFilter;
+        NetworkSession * mpNetworkSession;
 
     public:
         std::string mCurrentCallDesc;
-
-    private:
-        Mutex   mDisableIoMutex;
-        bool    mDisableIo;
-
-        friend class AsioSessionState;
-
-    public:
-        void disableIo();
 
     public:
 
@@ -514,7 +510,7 @@ namespace RCF {
         void setConnectedAtTime(time_t connectedAtTime);
 
         friend class SspiServerFilter;
-        friend class Win32NamedPipeSessionState;
+        friend class Win32NamedPipeNetworkSession;
 
         tstring mClientUsername;
         TransportProtocol mTransportProtocol;

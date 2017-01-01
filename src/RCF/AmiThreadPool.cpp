@@ -21,7 +21,7 @@
 #include <RCF/AmiIoHandler.hpp>
 #include <RCF/AsioHandlerCache.hpp>
 #include <RCF/ClientStub.hpp>
-#include <RCF/ConnectionOrientedClientTransport.hpp>
+#include <RCF/ConnectedClientTransport.hpp>
 #include <RCF/Exception.hpp>
 #include <RCF/InitDeinit.hpp>
 #include <RCF/IpAddress.hpp>
@@ -169,7 +169,7 @@ namespace RCF {
     class Win32ThreadImpersonator
     {
     public:
-        Win32ThreadImpersonator(HANDLE hToken)
+        Win32ThreadImpersonator(HANDLE hToken) : mClosed(false)
         {
             BOOL ok = SetThreadToken(NULL, hToken);
             if (!ok)
@@ -181,10 +181,32 @@ namespace RCF {
             }
         }
 
+        void close()
+        {
+            if ( !mClosed )
+            {
+                mClosed = true;
+                BOOL ok = SetThreadToken(NULL, NULL);
+                if ( !ok )
+                {
+                    DWORD dwErr = GetLastError();
+                    RCF_THROW(Exception(
+                        _RcfError_Win32ApiError("SetThreadToken()"),
+                        dwErr));
+                }
+            }
+        }
+
         ~Win32ThreadImpersonator()
         {
-            SetThreadToken(NULL, NULL);
+            RCF_DTOR_BEGIN
+                close();
+            RCF_DTOR_END
         }
+
+    private:
+
+        bool mClosed;
     };
 
 #endif

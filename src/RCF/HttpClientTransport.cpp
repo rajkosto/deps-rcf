@@ -25,13 +25,25 @@
 
 namespace RCF {
 
+    HttpClientTransport::HttpClientTransport(const HttpClientTransport & rhs) :
+        TcpClientTransport(rhs)
+    {
+        std::vector<FilterPtr> wireFilters;
+
+        wireFilters.push_back(FilterPtr(new HttpFrameFilter(
+            getRemoteAddr().getIp(),
+            getRemoteAddr().getPort())));
+
+        setWireFilters(wireFilters);
+    }
+
     HttpClientTransport::HttpClientTransport(const HttpEndpoint & httpEndpoint) : 
         TcpClientTransport(httpEndpoint.getIp(), httpEndpoint.getPort())
     {
         std::vector<FilterPtr> wireFilters;
 
-        wireFilters.push_back( FilterPtr( new HttpFrameFilter(
-            getRemoteAddr().getIp(), 
+        wireFilters.push_back(FilterPtr(new HttpFrameFilter(
+            getRemoteAddr().getIp(),
             getRemoteAddr().getPort())));
 
         setWireFilters(wireFilters);
@@ -40,6 +52,18 @@ namespace RCF {
     TransportType HttpClientTransport::getTransportType()
     {
         return Tt_Http;
+    }
+
+    EndpointPtr HttpClientTransport::getEndpointPtr() const
+    {
+        EndpointPtr epPtr = TcpClientTransport::getEndpointPtr();
+        TcpEndpoint& tcpEndpoint = static_cast<TcpEndpoint&>(*epPtr);
+        return EndpointPtr(new HttpEndpoint(tcpEndpoint.getIp(), tcpEndpoint.getPort()));
+    }
+
+    ClientTransportAutoPtr HttpClientTransport::clone() const
+    {
+        return ClientTransportAutoPtr(new HttpClientTransport(*this));
     }
 
 } // namespace RCF

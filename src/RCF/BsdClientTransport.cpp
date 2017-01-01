@@ -44,7 +44,7 @@ namespace RCF {
         mWriteCounter(0)
     {
         mClosed = false;
-        mAsioTimerPtr.reset( new AsioDeadlineTimer( getAmiThreadPool().getIoService() ));
+        mAsioTimerPtr.reset( new AsioDeadlineTimer( *mpIoService ));
     }
 
 #ifdef RCF_HAS_LOCAL_SOCKETS
@@ -56,13 +56,13 @@ namespace RCF {
         mWriteCounter(0)
     {
         mClosed = false;
-        mAsioTimerPtr.reset( new AsioDeadlineTimer( getAmiThreadPool().getIoService() ));
+        mAsioTimerPtr.reset( new AsioDeadlineTimer( *mpIoService ));
     }
 
 #endif
 
     BsdClientTransport::BsdClientTransport(const BsdClientTransport & rhs) :
-        ConnectionOrientedClientTransport(rhs),
+        ConnectedClientTransport(rhs),
         mFd(-1),
         mpIoService(NULL),
         mWriteCounter(0)
@@ -309,8 +309,6 @@ namespace RCF {
             // Put a breakpoint here to catch write buffer fragmentation.
             mWriteCounter = mWriteCounter;
         }
-
-        RCF_ASSERT(!mNoTimeout);
 
         PollingFunctor pollingFunctor(
             mClientProgressPtr,

@@ -19,11 +19,14 @@
 #include <RCF/HttpServerTransport.hpp>
 
 #include <RCF/HttpEndpoint.hpp>
+#include <RCF/HttpFrameFilter.hpp>
+#include <RCF/RcfSession.hpp>
+#include <RCF/TcpClientTransport.hpp>
 
 namespace RCF {
 
     HttpServerTransport::HttpServerTransport(const HttpEndpoint & httpEndpoint) : 
-        TcpAsioServerTransport(httpEndpoint.getIp(), httpEndpoint.getPort())
+        TcpServerTransport(httpEndpoint.getIp(), httpEndpoint.getPort())
     {
         mWireProtocol = Wp_Http;
     }

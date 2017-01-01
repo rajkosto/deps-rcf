@@ -18,6 +18,8 @@
 
 #include <RCF/PublishingService.hpp>
 
+#include <RCF/AsioServerTransport.hpp>
+#include <RCF/ConnectedClientTransport.hpp>
 #include <RCF/CurrentSession.hpp>
 #include <RCF/MulticastClientTransport.hpp>
 #include <RCF/RcfServer.hpp>
@@ -119,37 +121,35 @@ namespace RCF {
                 {
                     return RcfError_AccessDenied;
                 }
-            }            
+            }
 
-            ServerTransportEx &serverTransport =
-                dynamic_cast<ServerTransportEx &>(
-                    rcfSession.getSessionState().getServerTransport());
+            rcfSession.setPingIntervalMs(subToPubPingIntervalMs);
 
-            ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(
-                new ClientTransportAutoPtr(
-                    serverTransport.createClientTransport(
-                        rcfSession.shared_from_this())));
+            ServerTransportEx &serverTransport = dynamic_cast<ServerTransportEx &>(
+                rcfSession.getNetworkSession().getServerTransport());
+
+            ClientTransportAutoPtrPtr clientTransportAutoPtrPtr( new ClientTransportAutoPtr(
+                serverTransport.createClientTransport( rcfSession.shared_from_this() )));
 
             (*clientTransportAutoPtrPtr)->setRcfSession(
                 rcfSession.shared_from_this());
 
-            rcfSession.setPingIntervalMs(subToPubPingIntervalMs);
-
-            rcfSession.addOnWriteCompletedCallback(
-                boost::bind(
-                    &PublishingService::addSubscriberTransport,
-                    this,
-                    _1,
-                    publisherName,
-                    clientTransportAutoPtrPtr) );
-
-            if (publisherPtr->mParms.mOnSubscriberDisconnect)
+            if ( publisherPtr->mParms.mOnSubscriberDisconnect )
             {
                 rcfSession.setOnDestroyCallback( boost::bind(
-                    publisherPtr->mParms.mOnSubscriberDisconnect, 
-                    _1, 
-                    subscriptionName));
-            }            
+                    publisherPtr->mParms.mOnSubscriberDisconnect,
+                    _1,
+                    publisherName));
+            }
+
+            rcfSession.setPingTimestamp();
+
+            rcfSession.addOnWriteCompletedCallback( boost::bind(
+                &PublishingService::addSubscriberTransport,
+                this,
+                _1,
+                publisherName,
+                clientTransportAutoPtrPtr) );
         }  
         pubToSubPingIntervalMs = mPingIntervalMs;
         return publisherPtr ? RcfError_Ok : RcfError_UnknownPublisher;
@@ -209,31 +209,46 @@ namespace RCF {
     }
 
     void PublishingService::addSubscriberTransport(
-        RcfSession &session,
+        RcfSession &rcfSession,
         const std::string &publisherName,
         ClientTransportAutoPtrPtr clientTransportAutoPtrPtr)
     {
-        session.setPingTimestamp();
-
         PublisherPtr publisherPtr;
 
         {
             Lock lock(mPublishersMutex);
-            if (mPublishers.find(publisherName) != mPublishers.end())
+            if ( mPublishers.find(publisherName) != mPublishers.end() )
             {
-                publisherPtr = mPublishers[ publisherName ].lock();
+                publisherPtr = mPublishers[publisherName].lock();
             }
         }
 
-        if (publisherPtr)
-        {
-            ClientTransport &clientTransport =
-                publisherPtr->mRcfClientPtr->getClientStub().getTransport();
+        if ( publisherPtr )
+        {        
+            AsioNetworkSession& networkSession = static_cast<AsioNetworkSession&>(rcfSession.getNetworkSession());
 
-            MulticastClientTransport &multiCastClientTransport =
-                dynamic_cast<MulticastClientTransport &>(clientTransport);
+            // For now we assume the presence of wire filters indicates a HTTP/HTTPS connection.
+            if ( networkSession.mWireFilters.size() > 0 )
+            {
+                // This doesn't actually close anything, it just takes the session out of the server IO loop.
+                rcfSession.setCloseSessionAfterWrite(true);
+                (*clientTransportAutoPtrPtr)->setRcfSession(RcfSessionWeakPtr());
 
-            multiCastClientTransport.addTransport(*clientTransportAutoPtrPtr);
+                std::size_t wireFilterCount = networkSession.mWireFilters.size();
+                RCF_ASSERT(wireFilterCount == 1 || wireFilterCount == 2);
+                RCF_UNUSED_VARIABLE(wireFilterCount);
+
+                ConnectedClientTransport& connClientTransport = static_cast<ConnectedClientTransport&>(**clientTransportAutoPtrPtr);
+                connClientTransport.setWireFilters(networkSession.mWireFilters);
+                networkSession.mWireFilters.clear();
+                networkSession.setTransportFilters(std::vector<FilterPtr>());
+            }
+
+            MulticastClientTransport &multicastClientTransport = 
+                static_cast<MulticastClientTransport &>(
+                    publisherPtr->mRcfClientPtr->getClientStub().getTransport());
+
+            multicastClientTransport.addTransport(*clientTransportAutoPtrPtr);
         }
     }
 

@@ -28,50 +28,130 @@
 
 namespace RCF {
 
+    class Exception;
+
+    void splitString(
+        const std::string & stringToSplit,
+        const char * splitAt,
+        std::vector<std::string> & lines);
+
+
+    class HttpMessage
+    {
+    public:
+
+        HttpMessage() : 
+            mHeaderLen(0), 
+            mContentLen(0), 
+            mFrameLen(0)
+        {
+        }
+
+        ~HttpMessage()
+        {
+        }
+
+        bool parseHttpMessage(const char * pFrame, std::size_t bytesAvailable);
+
+        void getHttpStatus(std::string& httpStatus, std::string& httpStatusMsg);
+        void getHeaderValue(const std::string& headerName, std::string& headerValue);
+
+        typedef std::vector< std::pair< std::string, std::string > > HeaderList;
+        HeaderList                              mHeaderList;
+
+        std::size_t                             mHeaderLen;
+        std::size_t                             mContentLen;
+        std::size_t                             mFrameLen;
+        std::string                             mHttpMessageHeader;
+        std::vector<std::string>                mHeaderLines;
+        std::string                             mRequestLine;
+        std::string                             mResponseLine;
+
+
+    };
+
     class HttpFrameFilter : public Filter
     {
     public:
 
-        HttpFrameFilter();
-        HttpFrameFilter(const std::string serverAddr, int serverPort);
+        // Server-side constructor.
+        HttpFrameFilter(std::size_t maxMessageLength);
 
-        void resetState();
+        // Client-side constructor.
+        HttpFrameFilter(
+            const std::string       serverAddr, 
+            int                     serverPort);
+        
+        ~HttpFrameFilter();
 
-        void read(
-            const ByteBuffer &byteBuffer,
-            std::size_t bytesRequested);
+        void                    init();
+        void                    resetState();
 
-        void write(const std::vector<ByteBuffer> &byteBuffers);
+        void                    read(
+                                    const ByteBuffer &      byteBuffer,
+                                    std::size_t             bytesRequested);
 
-        void onReadCompleted(const ByteBuffer &byteBuffer);
+        void                    write(const std::vector<ByteBuffer> &byteBuffers);
 
-        void onWriteCompleted(std::size_t bytesTransferred);
+        void                    onReadCompleted(const ByteBuffer &byteBuffer);
 
-        int getFilterId() const;
+        void                    onWriteCompleted(std::size_t bytesTransferred);
 
-        virtual std::size_t getFrameSize();
+        int                     getFilterId() const;
+
+        virtual std::size_t     getFrameSize();
+
+        const std::string &     getHttpSessionId();
+        boost::uint32_t         getHttpSessionIndex();
+        const std::string &     getConnectionHeader();
+
+        void                    onError(const Exception& e);
+
+        // If these are set, then we are doing a HTTP response with chunked transfer encoding.
+        bool                    mChunkedResponseMode;
+        std::size_t             mChunkedResponseCounter;
+
+        void                    tryParseHttpHeader();
+        void                    tryParseHttpChunkHeader();
+
+
 
     private:
 
-        std::string mServerAddr;
-        int mServerPort;
+        void                    sendServerError(int error);
 
-        std::vector<ByteBuffer> mWriteBuffers;
-        std::size_t mWritePos;
+        void                    resizeReadBuffer(std::size_t newSize);
 
-        ByteBuffer mOrigReadBuffer;
-        std::size_t mOrigBytesRequested;
+        std::string                             mServerAddr;
+        int                                     mServerPort;
 
-        boost::shared_ptr< std::vector<char> > mReadVectorPtr;
-        std::size_t mBytesReceived;
-        std::size_t mReadPos;
+        bool                                    mClientSide;
+        std::string                             mHttpSessionId;
+        boost::uint32_t                         mHttpSessionIndex;
+        std::string                             mConnectionHeader;
+        std::string                             mTransferEncoding;
 
-        std::size_t mHeaderLen;
-        std::size_t mContentLen;
+        MemOstreamPtr                           mOsPtr;
+        std::vector<ByteBuffer>                 mWriteBuffers;
+        std::size_t                             mWritePos;
 
-        std::string mRequestLine;
-        std::string mResponseLine;
-        std::map<std::string, std::string> mHeaders;
+        ByteBuffer                              mOrigReadBuffer;
+        std::size_t                             mOrigBytesRequested;
+
+        ReallocBufferPtr                        mReadBufferPtr;
+        std::size_t                             mBytesReceived;
+        std::size_t                             mReadPos;
+
+        bool                                    mProtocolChecked;
+        std::size_t                             mChunkHeaderLen;
+        std::size_t                             mChunkLen;
+        std::size_t                             mMaxReadPos;
+        std::size_t                             mMaxMessageLength;
+
+        std::string                             mPrevHttpSessionId;
+        boost::uint32_t                         mPrevHttpSessionIndex;
+
+        HttpMessage                             mHttpMessage;
     };
 
 } // namespace RCF

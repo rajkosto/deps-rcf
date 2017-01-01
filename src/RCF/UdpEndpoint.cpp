@@ -110,7 +110,7 @@ namespace RCF {
     std::string UdpEndpoint::asString() const
     {
         MemOstream os;
-        os << "UDP endpoint " << mIp.string();
+        os << "udp://" << mIp.string() << ":" << getPort();
         return os.string();
     }
 

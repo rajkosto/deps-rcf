@@ -1,5 +1,5 @@
 
-Copyright (C) 2006-2012 Delta V Software. All rights reserved.
+Copyright (C) 2006-2014 Delta V Software. All rights reserved.
 
 RCF is distributed under a dual licensing model. For commercial licensing conditions, please see our website:
 

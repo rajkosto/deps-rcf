@@ -38,7 +38,7 @@ namespace RCF {
     class Filter;
     class Endpoint;
     class ClientTransport;
-    class SessionState;
+    class NetworkSession;
     class StubEntry;
     class RcfSession;
 
@@ -67,12 +67,12 @@ namespace RCF {
     class NoRemoteAddress : public RemoteAddress
     {};
    
-    class SessionState : public boost::enable_shared_from_this<SessionState>
+    class NetworkSession : public boost::enable_shared_from_this<NetworkSession>
     {
     public:
 
-        SessionState();
-        virtual ~SessionState();
+        NetworkSession();
+        virtual ~NetworkSession();
 
         virtual void        postRead() = 0;
         virtual ByteBuffer  getReadByteBuffer() = 0;
@@ -98,17 +98,21 @@ namespace RCF {
 
         RcfSessionPtr       getSessionPtr() const;
 
+        boost::uint32_t     getLastActivityTimestamp() const;
+        void                setLastActivityTimestamp();
+
     protected:
         bool                    mEnableReconnect;
         boost::uint64_t         mBytesReceivedCounter;
         boost::uint64_t         mBytesSentCounter;
+        boost::uint32_t         mLastActivityTimestampMs;
 
-        RcfSessionPtr           mSessionPtr;
+        RcfSessionPtr           mRcfSessionPtr;
 
     };
 
-    typedef boost::shared_ptr<SessionState>   SessionStatePtr;
-    typedef boost::weak_ptr<SessionState>     SessionStateWeakPtr;
+    typedef boost::shared_ptr<NetworkSession>   NetworkSessionPtr;
+    typedef boost::weak_ptr<NetworkSession>     NetworkSessionWeakPtr;
 
     class RcfSession;
     typedef boost::shared_ptr<RcfSession>       RcfSessionPtr;
@@ -197,8 +201,8 @@ namespace RCF {
 
     protected:
 
-        Mutex                           mSessionsMutex;
-        std::set<SessionStateWeakPtr>   mSessions;
+        Mutex                               mSessionsMutex;
+        std::set<NetworkSessionWeakPtr>     mSessions;
 
     public:
 
@@ -231,10 +235,6 @@ namespace RCF {
             createClientTransport(
                 SessionPtr sessionPtr) = 0;
        
-        virtual bool 
-            reflect(
-                const SessionPtr &sessionPtr1,
-                const SessionPtr &sessionPtr2) = 0;       
     };   
 
     RCF_EXPORT std::size_t  getDefaultMaxMessageLength();

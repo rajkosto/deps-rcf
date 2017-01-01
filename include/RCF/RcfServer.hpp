@@ -111,6 +111,9 @@ namespace RCF {
 
     class SspiFilter;
 
+    class HttpSession;
+    typedef boost::shared_ptr<HttpSession> HttpSessionPtr;
+
     typedef boost::function2<void, RcfSessionPtr, ClientTransportAutoPtr> OnCallbackConnectionCreated;
 
     class RCF_EXPORT RcfServer : boost::noncopyable
@@ -268,7 +271,7 @@ namespace RCF {
         void stopService(ServicePtr servicePtr) const;
         void resolveServiceThreadPools(ServicePtr servicePtr) const;
 
-        friend class AsioSessionState;
+        friend class AsioNetworkSession;
         FilterPtr createFilter(int filterId);
 
     private:
@@ -380,6 +383,9 @@ namespace RCF {
         void setSessionHarvestingIntervalMs(boost::uint32_t sessionHarvestingIntervalMs);
         boost::uint32_t getSessionHarvestingIntervalMs();
 
+        void setHttpSessionTimeoutMs(boost::uint32_t httpSessionTimeoutMs);
+        boost::uint32_t getHttpSessionTimeoutMs();
+
         void setOnCallbackConnectionCreated(OnCallbackConnectionCreated onCallbackConnectionCreated);
         OnCallbackConnectionCreated getOnCallbackConnectionCreated();
 
@@ -452,6 +458,8 @@ namespace RCF {
         boost::uint32_t                 mSessionTimeoutMs;
         boost::uint32_t                 mSessionHarvestingIntervalMs;
 
+        boost::uint32_t                 mHttpSessionTimeoutMs;
+
         OnCallbackConnectionCreated     mOnCallbackConnectionCreated;
 
         boost::uint32_t                 mOfsMaxNumberOfObjects;
@@ -503,6 +511,16 @@ namespace RCF {
 
         boost::uint32_t mServerObjectHarvestingIntervalS;
 
+        Mutex                                   mHttpSessionMapMutex;
+        std::map<std::string, HttpSessionPtr>   mHttpSessionMap;
+
+        friend class HttpSessionFilter;
+
+        HttpSessionPtr  attachHttpSession(const std::string & httpSessionId, bool allowCreate, ExceptionPtr & ePtr);
+        void            detachHttpSession(HttpSessionPtr httpSessionPtr);
+
+        friend class ServerObjectService;
+        void            harvestHttpSessions();
 
     public:
 
@@ -511,10 +529,9 @@ namespace RCF {
 
         template<typename T>
         boost::shared_ptr<T> queryServerObject(
-            const std::string & objectKey, 
-            boost::uint32_t timeoutMs)
+            const std::string & objectKey)
         {
-            return mServerObjectServicePtr->queryServerObject<T>(objectKey, timeoutMs);
+            return mServerObjectServicePtr->queryServerObject<T>(objectKey);
         }
 
         template<typename T>

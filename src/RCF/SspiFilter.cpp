@@ -20,6 +20,7 @@
 
 #include <boost/multi_index/detail/scope_guard.hpp>
 
+#include <RCF/AsioServerTransport.hpp>
 #include <RCF/ClientStub.hpp>
 #include <RCF/ClientTransport.hpp>
 #include <RCF/CurrentSession.hpp>
@@ -28,6 +29,7 @@
 #include <RCF/RcfSession.hpp>
 #include <RCF/Schannel.hpp>
 #include <RCF/ServerTransport.hpp>
+#include <RCF/ThreadLocalData.hpp>
 #include <RCF/Tools.hpp>
 #include <RCF/Win32Username.hpp>
 
@@ -343,6 +345,8 @@ namespace RCF {
         mContextState = AuthContinue;
         mEvent = ReadIssued;
 
+        mProtocolChecked = false;
+
         resizeReadBuffer(0);
         resizeWriteBuffer(0);
 
@@ -401,6 +405,7 @@ namespace RCF {
                 mReadByteBufferOrig = byteBuffer;
                 mBytesRequestedOrig = bytesRequested;
                 mPreState = Reading;
+
                 mpPostFilter->read(ByteBuffer(), 0);
             }
         }
@@ -429,14 +434,17 @@ namespace RCF {
         // TODO: can we pass multiple buffers through to lower layers, and still 
         // have them coalesced at the network send stage?
 
-        // If we are given multiple small buffers, copy them into a single larger
-        // buffer to improve network performance. 
+        // We used to have an upper limit here, but that doesn't work if there is a
+        // HTTP frame further down in the filter stack. The HTTP frame needs to get
+        // all the data in one go, otherwise we end up with multiple sends which
+        // breaks HTTP semantics.
+        // So now we merge the buffers, regardless of their sizes.
+        std::size_t MaxMergeBufferLen = lengthByteBuffers(byteBuffers);
 
-        std::size_t MaxMergeBufferLen = 1024*1024; // 1 MB
-
-        // SSL won't do more than ~16536 bytes in one message.
+        // Schannel SSL won't do more than ~16536 bytes in one message.
+        // So it can't be used above a HTTP frame filter.
         const std::size_t MaxSchannelLen = 16000;
-        if (mSchannel)
+        if ( mSchannel )
         {
             MaxMergeBufferLen = MaxSchannelLen;
         }
@@ -497,12 +505,25 @@ namespace RCF {
         else
         {
             RCF_ASSERT(
-                mReadBuffer + mReadBufferPos == byteBuffer.getPtr())
+                    byteBuffer.isEmpty()
+                ||  mReadBuffer + mReadBufferPos == byteBuffer.getPtr())
                 (mReadBuffer)(mReadBufferPos)(byteBuffer.getPtr());
 
             mReadBufferPos += byteBuffer.getLength();
 
             RCF_ASSERT_LTEQ(mReadBufferPos , mReadBufferLen);
+
+            if ( mSchannel && mServer && !mProtocolChecked && mReadBufferPos >= 1 )
+            {
+                // SSL 3.0 starts with \x16. SSL 2.0 starts with \x80.
+                unsigned char firstByte = mReadBuffer[0];
+                if ( firstByte != '\x16' && firstByte != (unsigned char) '\x80')
+                {
+                    Exception e(_RcfError_NotSslHandshake());
+                    RCF_THROW(e);
+                }
+                mProtocolChecked = true;
+            }
 
             const_cast<ByteBuffer &>(byteBuffer).clear();
             handleEvent(ReadCompleted);
@@ -956,7 +977,7 @@ namespace RCF {
         else
         {
             RCF_ASSERT_EQ(mQop , None);
-            RCF_ASSERT_LT(mWriteByteBufferOrig.getLength() , (1<<31));
+            RCF_ASSERT_LT(mWriteByteBufferOrig.getLength() , std::size_t(1) << 31 );
 
             resizeWriteBuffer(mWriteByteBufferOrig.getLength()+4);
             memcpy(
@@ -1280,11 +1301,22 @@ namespace RCF {
         else
         {
             // authorization failed, send a special block of our own to notify client
+
+            RCF_LOG_2() << "SSPI handshake failed. Error: " + RCF::getOsErrorString(status);
+
             mContextState = AuthFailed;
             resizeWriteBuffer(4+4+4);
             *(DWORD*) mWriteBuffer = 8;
             *(DWORD*) (mWriteBuffer+4) = RcfError_SspiAuthFailServer;
             *(DWORD*) (mWriteBuffer+8) = status;
+
+            RcfSession * pSession = getCurrentRcfSessionPtr();
+            if ( pSession )
+            {
+                NetworkSession& nwSession = pSession->getNetworkSession();
+                AsioNetworkSession& asioNwSession = static_cast<AsioNetworkSession&>(nwSession);
+                asioNwSession.setCloseAfterWrite();
+            }
         }
 
         return true;
@@ -1681,7 +1713,7 @@ namespace RCF {
         if (pRcfSession)
         {
             ServerTransport & serverTransport = 
-                pRcfSession->getSessionState().getServerTransport();
+                pRcfSession->getNetworkSession().getServerTransport();
 
             mMaxMessageLength = serverTransport.getMaxMessageLength();
         }

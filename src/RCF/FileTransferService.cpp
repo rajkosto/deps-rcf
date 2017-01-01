@@ -41,6 +41,8 @@
 
 namespace SF {
 
+#if RCF_FEATURE_SF==1
+
     void serialize(SF::Archive &ar, boost::filesystem::path &p)
     {
         if (ar.isWrite())
@@ -55,6 +57,8 @@ namespace SF {
             p = boost::filesystem::path(s);
         }
     }
+
+#endif
 
 }
 
@@ -229,8 +233,8 @@ namespace RCF {
 
         namespace fs = boost::filesystem;
 
-        SessionState & sessionState = getTlsRcfSession().getSessionState();
-        maxMessageLength = (boost::uint32_t) sessionState.getServerTransport().getMaxMessageLength();
+        NetworkSession & networkSession = getTlsRcfSession().getNetworkSession();
+        maxMessageLength = (boost::uint32_t) networkSession.getServerTransport().getMaxMessageLength();
 
         RCF::BandwidthQuotaPtr quotaPtr = mUploadQuotaCallback ? 
             mUploadQuotaCallback(RCF::getCurrentRcfSession()) : 
@@ -555,8 +559,8 @@ namespace RCF {
         RCF_UNUSED_VARIABLE(request);
         chunks.clear();
 
-        SessionState & sessionState = getTlsRcfSession().getSessionState();
-        maxMessageLength = (boost::uint32_t) sessionState.getServerTransport().getMaxMessageLength();
+        NetworkSession & networkSession = getTlsRcfSession().getNetworkSession();
+        maxMessageLength = (boost::uint32_t) networkSession.getServerTransport().getMaxMessageLength();
 
         if (mOnFileDownloadProgress)
         {

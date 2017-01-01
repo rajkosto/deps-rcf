@@ -84,7 +84,7 @@
 #define RCF_BEGIN_IMPL_INHERITED_0(InterfaceT, Name)                        \
     template<>                                                              \
     class RCF_EXPORT_INTERFACE RcfClient< InterfaceT > :                    \
-        public virtual ::RCF::I_RcfClient                                   \
+        public /*virtual*/ ::RCF::I_RcfClient                                   \
     {                                                                       \
     private:                                                                \
         template<typename DerefPtrT>                                        \
@@ -114,7 +114,7 @@
         RcfClient(                                                          \
             ::RCF::ServerBindingPtr         serverStubPtr,                  \
             DerefPtrT                       derefPtr,                       \
-            boost::mpl::true_ *             ) :                             \
+            RCF::TrueType *) :                                              \
                 I_RcfClient(                                                \
                     ::RCF::getInterfaceName( (InterfaceT *) NULL),          \
                     serverStubPtr)                                          \

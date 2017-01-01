@@ -86,11 +86,11 @@ namespace RCF {
 
 #if RCF_FEATURE_TCP==1
 
-    class TcpAsioTransportFactory : public I_TransportFactory
+    class TcpTransportFactory : public I_TransportFactory
     {
     public:
         
-        TcpAsioTransportFactory(IpAddress::Type type = IpAddress::V4);
+        TcpTransportFactory(IpAddress::Type type = IpAddress::V4);
         TransportPair createTransports();
         TransportPair createNonListeningTransports();
         bool isConnectionOriented();
@@ -102,7 +102,40 @@ namespace RCF {
         std::string mLoopback;
     };
 
-    typedef TcpAsioTransportFactory TcpTransportFactory;
+#endif
+
+#if RCF_FEATURE_HTTP==1
+
+    class HttpTransportFactory : public I_TransportFactory
+    {
+    public:
+
+        HttpTransportFactory();
+        TransportPair createTransports();
+        TransportPair createNonListeningTransports();
+        bool isConnectionOriented();
+        bool supportsTransportFilters();
+        std::string desc();
+
+    private:
+        std::string mLoopback;
+    };
+
+    class HttpsTransportFactory : public I_TransportFactory
+    {
+    public:
+
+        HttpsTransportFactory();
+        TransportPair createTransports();
+        TransportPair createNonListeningTransports();
+        bool isConnectionOriented();
+        bool supportsTransportFilters();
+        std::string desc();
+
+    private:
+        std::string mLoopback;
+    };
+
 
 #endif
 

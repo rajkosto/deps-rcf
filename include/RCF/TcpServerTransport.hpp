@@ -16,8 +16,8 @@
 //
 //******************************************************************************
 
-#ifndef INCLUDE_RCF_TCPASIOSERVERTRANSPORT_HPP
-#define INCLUDE_RCF_TCPASIOSERVERTRANSPORT_HPP
+#ifndef INCLUDE_RCF_TCPSERVERTRANSPORT_HPP
+#define INCLUDE_RCF_TCPSERVERTRANSPORT_HPP
 
 #include <RCF/AsioServerTransport.hpp>
 
@@ -25,14 +25,14 @@
 
 namespace RCF {
 
-    class TcpAsioServerTransport;
+    class TcpServerTransport;
 
-    class RCF_EXPORT TcpAsioSessionState : public AsioSessionState
+    class RCF_EXPORT TcpNetworkSession : public AsioNetworkSession
     {
     public:
 
-        TcpAsioSessionState(
-            TcpAsioServerTransport &transport,
+        TcpNetworkSession(
+            TcpServerTransport &transport,
             AsioIoService & ioService);
 
         const RemoteAddress & implGetRemoteAddress();
@@ -42,7 +42,7 @@ namespace RCF {
         void implWrite(const std::vector<ByteBuffer> & buffers);
 
         void implWrite(
-            AsioSessionState &toBeNotified, 
+            AsioNetworkSession &toBeNotified, 
             const char * buffer, 
             std::size_t bufferLen);
 
@@ -69,13 +69,13 @@ namespace RCF {
         int                         mWriteCounter;
     };
 
-    class RCF_EXPORT TcpAsioServerTransport : 
+    class RCF_EXPORT TcpServerTransport : 
         public AsioServerTransport,
         public IpServerTransport
     {
     public:
-        TcpAsioServerTransport(const IpAddress & ipAddress);
-        TcpAsioServerTransport(const std::string & ip, int port);
+        TcpServerTransport(const IpAddress & ipAddress);
+        TcpServerTransport(const std::string & ip, int port);
 
         TransportType getTransportType();
 
@@ -86,7 +86,7 @@ namespace RCF {
 
     private:
 
-        AsioSessionStatePtr     implCreateSessionState();
+        AsioNetworkSessionPtr     implCreateNetworkSession();
         void                    implOpen();
 
         void                    onServerStart(RcfServer & server);
@@ -102,4 +102,4 @@ namespace RCF {
 
 } // namespace RCF
 
-#endif // ! INCLUDE_RCF_TCPASIOSERVERTRANSPORT_HPP
+#endif // ! INCLUDE_RCF_TCPSERVERTRANSPORT_HPP

@@ -23,7 +23,7 @@
 #include <RCF/InitDeinit.hpp>
 #include <RCF/SerializationProtocol.hpp>
 
-#include <RCF/TcpAsioServerTransport.hpp>
+#include <RCF/TcpServerTransport.hpp>
 #include <RCF/TcpClientTransport.hpp>
 
 namespace RCF {
@@ -70,7 +70,7 @@ namespace RCF {
         {
             ip = "127.0.0.1";
         }
-        os << "TCP endpoint " << ip << ":" << getPort();
+        os << "tcp://" << ip << ":" << getPort();
         return os.string();
     }
 
@@ -82,7 +82,7 @@ namespace RCF {
     std::auto_ptr<ServerTransport> TcpEndpoint::createServerTransport() const
     {
         return std::auto_ptr<ServerTransport>(
-            new RCF::TcpAsioServerTransport(mIpAddress));
+            new RCF::TcpServerTransport(mIpAddress));
     }
 
     std::auto_ptr<ClientTransport> TcpEndpoint::createClientTransport() const

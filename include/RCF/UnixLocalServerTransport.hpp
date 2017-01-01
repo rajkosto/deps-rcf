@@ -38,10 +38,10 @@ namespace RCF {
 
     class UnixLocalServerTransport;
 
-    class RCF_EXPORT UnixLocalSessionState : public AsioSessionState
+    class RCF_EXPORT UnixLocalNetworkSession : public AsioNetworkSession
     {
     public:
-        UnixLocalSessionState(
+        UnixLocalNetworkSession(
             UnixLocalServerTransport & transport,
             AsioIoService & ioService);
 
@@ -50,11 +50,6 @@ namespace RCF {
         void implRead(char * buffer, std::size_t bufferLen);
 
         void implWrite(const std::vector<ByteBuffer> & buffers);
-
-        void implWrite(
-            AsioSessionState &toBeNotified, 
-            const char * buffer, 
-            std::size_t bufferLen);
 
         void implAccept();
 
@@ -89,7 +84,7 @@ namespace RCF {
 
         ServerTransportPtr clone();
 
-        AsioSessionStatePtr implCreateSessionState();
+        AsioNetworkSessionPtr implCreateNetworkSession();
         
         void implOpen();
 

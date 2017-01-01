@@ -87,7 +87,7 @@ namespace RCF {
         case RcfError_Ok                            :   return "No error.";
         //case RcfError_Unspecified                   :   return "Unknown error.";
         case RcfError_ServerMessageLength           :   return "Server-side message length error.";
-        case RcfError_ClientMessageLength           :   return "Client-side message length error. Incoming message length: %1. Max allowed message length: %2.";
+        case RcfError_ClientMessageLength           :   return "Client-side message length error.";
         case RcfError_Serialization                 :   return "Data serialization error. Type name: %1. Exception type: %2. Exception message: \"%3\".";
         case RcfError_Deserialization               :   return "Data deserialization error. Type name: %1. Exception type: %2. Exception message: \"%3\".";
         case RcfError_AppException                  :   return "Server-side application exception. Exception type: %1. Exception message: \"%2\".";
@@ -101,7 +101,7 @@ namespace RCF {
         case RcfError_PayloadFilterMismatch         :   return "Message filter mismatch.";
         case RcfError_OpenSslFilterInit             :   return "Failed to initialize OpenSSL filter. OpenSSL error: %1";
         case RcfError_OpenSslLoadCert               :   return "Failed to load OpenSSL certificate file. File: %1. OpenSSL error: %2";
-        case RcfError_UnknownPublisher              :   return "Unknown publisher name: %1.";
+        case RcfError_UnknownPublisher              :   return "Unknown publishing topic.";
         case RcfError_UnknownFilter                 :   return "Unknown filter type.";
         case RcfError_NoServerStub                  :   return "Server-side object not found. Service: %1. Interface: %2. Function id: %3.";
         case RcfError_Sspi                          :   return "SSPI error. Call to SSPI function %1 failed().";
@@ -199,8 +199,8 @@ namespace RCF {
         case RcfError_ThreadingError                :   return "Threading error. Call to %1 failed.";
         case RcfError_RcfNotInitialized             :   return "RCF has not been initialized. Use the RCF::RcfInitDenit class, or call RCF::init() directly.";
         case RcfError_InvalidHttpMessage            :   return "Invalid HTTP message.";
-        case RcfError_HttpRequestContentLength      :   return "HTTP request must contain Content-Length field. HTTP request: %1";
-        case RcfError_HttpResponseContentLength     :   return "HTTP response must contain Content-Length field. HTTP status: %1. HTTP response: %2";
+        case RcfError_HttpRequestContentLength      :   return "Unexpected HTTP request. Content-Length header was not present.";
+        case RcfError_HttpResponseContentLength     :   return "Unexpected HTTP response. Content-Length header was not present. HTTP status: %1. HTTP response: %2";
         case RcfError_InvalidOpenSslCertificate     :   return "Invalid certificate format. OpenSSL-based SSL implementation requires certificate to be in PEM format and loaded with the RCF::PemCertificate class.";
         case RcfError_InvalidSchannelCertificate    :   return "Invalid certificate format. Schannel-based SSL implementation requires certificate to be loaded with the RCF::PfxCertificate or RCF::StoreCertificate classes.";
         case RcfError_HttpConnectFailed             :   return "Failed to connect via HTTPS proxy. HTTP CONNECT request to proxy failed. HTTP status: %1. HTTP response: %2";
@@ -228,6 +228,25 @@ namespace RCF {
         case RcfError_ServerUnsupportedFeature      :   return "The server does not support this feature. Feature: %1.";
         case RcfError_SyncPublishError              :   return "Synchronous error while sending to subscriber. Error: %1.";
         case RcfError_DeserializeVectorBool         :   return "Bit count mismatch on deserialization of vector<bool>. Bit count: %1. Buffer size: %2.";
+        case RcfError_HttpTunnelError               :   return "HTTP tunnel error. %1";
+        case RcfError_HttpSessionTimeout            :   return "HTTP session has timed out.";
+        case RcfError_HttpRequestSessionIndex       :   return "HTTP session index mismatch on request. Expected index: %1 . Actual index: %2 .";
+        case RcfError_HttpResponseStatus            :   return "HTTP response error. HTTP response status: %1 . HTTP response: %2";
+        case RcfError_HttpResponseSessionIndex      :   return "HTTP session index mismatch on response. Expected index: %1 . Actual index: %2 .";
+        case RcfError_HttpResponseSessionId         :   return "HTTP session ID mismatch on response. Expected ID: %1 . Actual ID: %2 .";
+        case RcfError_NotHttpResponse               :   return "HTTP port received a non-HTTP response.";
+        case RcfError_NotHttpPostRequest            :   return "This HTTP port only supports HTTP POST requests.";
+        case RcfError_NotHttpRequest                :   return "HTTP port received a non-HTTP request.";
+        case RcfError_NotSslHandshake               :   return "Protocol mismatch. Expected SSL handshake.";
+        case RcfError_ClientStubParms               :   return "Unable to allocate client stub parameter structure.";
+        case RcfError_ServerStubParms               :   return "Unable to allocate server stub parameter structure";
+        case RcfError_SessionObjectNotCreated       :   return "Could not create session object.Session object type: %1";
+        case RcfError_MessageHeaderEncoding         :   return "Message header encoding error. Maximum length: %1 . Actual length: %2";
+        case RcfError_OnewayHttp                    :   return "Oneway calls are not supported over the HTTP and HTTPS transports.";
+        case RcfError_ProxyAuthRetry                :   return "Proxy authentication is required. Reconnecting to proxy.";
+        case RcfError_ProxyCredentialsNeeded        :   return "Proxy authentication is required. Please supply valid credentials.";
+        case RcfError_ProxyCredentialsInvalid       :   return "Unable to authenticate to proxy. Invalid credentials.";
+
 
         // Errors that are no longer in use.
         case RcfError_StubAssignment                :   return "Incompatible stub assignment.";
@@ -281,7 +300,8 @@ namespace RCF {
         mWhat(),
         mError(RcfError_Ok),
         mSubSystemError(),
-        mSubSystem()
+        mSubSystem(),
+        mShouldRetry(false)
     {}
 
     Exception::Exception(
@@ -292,7 +312,8 @@ namespace RCF {
             mContext(context),
             mError(RcfError_User),
             mSubSystemError(),
-            mSubSystem()
+            mSubSystem(),
+            mShouldRetry(false)
     {}
 
     Exception::Exception(
@@ -304,7 +325,8 @@ namespace RCF {
             mContext(context),
             mError(error),
             mSubSystemError(),
-            mSubSystem()
+            mSubSystem(),
+            mShouldRetry(false)
     {}
 
     Exception::Exception(
@@ -318,11 +340,18 @@ namespace RCF {
             mContext(context),
             mError(error),
             mSubSystemError(subSystemError),
-            mSubSystem(subSystem)
+            mSubSystem(subSystem),
+            mShouldRetry(false)
     {}
 
     Exception::~Exception() throw()
     {}
+
+    std::auto_ptr<Exception> Exception::clone() const
+    {
+        return std::auto_ptr<Exception>(
+            new Exception(*this));
+    }
 
     bool Exception::good() const
     {
@@ -424,6 +453,16 @@ namespace RCF {
         return mWhat;
     }
 
+    bool Exception::getShouldRetry() const
+    {
+        return mShouldRetry;
+    }
+
+    void Exception::setShouldRetry(bool shouldRetry)
+    {
+        mShouldRetry = shouldRetry;
+    }
+
     std::string Exception::translate() const
     {
         std::string osErr;
@@ -446,7 +485,7 @@ namespace RCF {
 
     void Exception::throwSelf() const
     {
-        // If your code traps here, check that you have overridden throwSelf() in 
+        // If your code traps on this assert, check that you have overridden throwSelf() in 
         // all classes derived from Exception.
 
         RCF_ASSERT(
@@ -494,8 +533,15 @@ namespace RCF {
 
     const char *RemoteException::what() const throw()
     {
-        mTranslatedWhat = "[Remote]" + translate();
-        return mTranslatedWhat.c_str();
+        try
+        {
+            mTranslatedWhat = "[Remote]" + translate();
+            return mTranslatedWhat.c_str();
+        }
+        catch ( ... )
+        {
+            return "Internal error. Unhandled exception in RemoteException::what().";
+        }
     }
 
     std::string RemoteException::getRemoteExceptionType() const

@@ -16,9 +16,12 @@
 //
 //******************************************************************************
 
-#ifndef INCLUDE_RCF_STORECERTIFICATE_HPP
-#define INCLUDE_RCF_STORECERTIFICATE_HPP
+#ifndef INCLUDE_RCF_BASE64_HPP
+#define INCLUDE_RCF_BASE64_HPP
 
-#include <RCF/Schannel.hpp>
+#include <string>
 
-#endif // ! INCLUDE_RCF_STORECERTIFICATE_HPP
+std::string base64_encode(unsigned char const*, unsigned int len);
+std::string base64_decode(std::string const& s);
+
+#endif // ! INCLUDE_RCF_BASE64_HPP

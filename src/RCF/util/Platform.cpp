@@ -63,7 +63,31 @@ namespace RCF {
 
 namespace RCF {
 
-    // TODO: any issues with monotonicity of gettimeofday()?
+
+#ifdef RCF_USE_CLOCK_MONOTONIC
+
+    boost::uint32_t getCurrentTimeMs()
+    {
+        static struct timespec start = {0};
+        static bool init = false;
+        if (!init)
+        {
+            init = true;
+            clock_gettime(CLOCK_MONOTONIC, &start);
+        }
+
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+
+        long seconds =  now.tv_sec - start.tv_sec;
+        long nanoseconds = now.tv_nsec - start.tv_nsec;
+        boost::uint64_t timeMs = boost::uint64_t(seconds)*1000 + nanoseconds/1000000;
+        timeMs = timeMs & 0xFFFFFFFF;
+        return static_cast<boost::uint32_t>(timeMs) - OffsetMs;
+    }
+    
+#else
+
     boost::uint32_t getCurrentTimeMs()
     {
         static struct timeval start = {0};
@@ -83,6 +107,8 @@ namespace RCF {
         timeMs = timeMs & 0xFFFFFFFF;
         return static_cast<boost::uint32_t>(timeMs) - OffsetMs;
     }
+    
+#endif
 
     ThreadId getCurrentThreadId() 
     { 

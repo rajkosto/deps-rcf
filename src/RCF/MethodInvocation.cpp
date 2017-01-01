@@ -762,9 +762,9 @@ namespace RCF {
             }
 
             // Encode the filter header.
-            const std::size_t VecLen = (5+10)*4;
-            char vec[VecLen];
-            ByteBuffer byteBuffer(&vec[0], VecLen);
+            const std::size_t BufferLen = (5+10)*4;
+            char buffer[BufferLen];
+            ByteBuffer byteBuffer(&buffer[0], BufferLen);
 
             std::size_t pos = 0;
 
@@ -797,17 +797,23 @@ namespace RCF {
             SF::encodeInt(len, byteBuffer, pos);
 
             // Copy the filter header into the left margin of the first buffer.
-            RCF_ASSERT_LTEQ(pos , VecLen);
             std::size_t headerLen = pos;
-                
+            
+            RCF_ASSERT_LTEQ(headerLen, BufferLen);
+            
             RCF_ASSERT(
                 !message.empty() &&
                 message.front().getLeftMargin() >= headerLen)
                 (message.front().getLeftMargin())(headerLen);
 
+            if ( headerLen > BufferLen )
+            {
+                RCF_THROW(_RcfError_MessageHeaderEncoding(BufferLen, headerLen));
+            }
+
             ByteBuffer &front = message.front();
             front.expandIntoLeftMargin(headerLen);
-            memcpy(front.getPtr(), &vec[0], headerLen);
+            memcpy(front.getPtr(), &buffer[0], headerLen);
         }
     }
 
@@ -842,6 +848,10 @@ namespace RCF {
         mMarshalingProtocol = Mp_Rcf;
 
         char * const pch = (char*) message.getPtr() ;
+        if ( message.getLength() == 0 )
+        {
+            return;
+        }
         if (pch[0] == Descriptor_FilteredPayload)
         {
             int descriptor = 0;

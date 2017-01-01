@@ -132,179 +132,125 @@ namespace RCF {
 
     static const boost::uint32_t DefaultBatchMaxMessageLimit = 1024*1024;
 
-    ClientStub::ClientStub(const std::string &interfaceName) :
-        mToken(),
-        mDefaultCallingSemantics(Twoway),
-        mProtocol(DefaultSerializationProtocol),
-        mMarshalingProtocol(DefaultMarshalingProtocol),
-        mEndpointName(),
-        mObjectName(),
-        mInterfaceName(interfaceName),
-        mRemoteCallTimeoutMs(gClientRemoteCallTimeoutMs),
-        mConnectTimeoutMs(gClientConnectTimeoutMs),
-        mAutoReconnect(true),
-        mConnected(),
-        mTries(),
-        mAutoVersioning(true),
-        mRuntimeVersion(RCF::getDefaultRuntimeVersion()),
-        mArchiveVersion(RCF::getDefaultArchiveVersion()),
-        mUseNativeWstringSerialization(RCF::getDefaultNativeWstringSerialization()),
-        mEnableSfPointerTracking(false),
-
-        mAsync(),
-        mAsyncOpType(None),
-        mEndTimeMs(),
-        mRetry(),
-        mRcs(Twoway),
-        mEncodedByteBuffer(),
-        mEncodedByteBuffers(),
-        mpParameters(),
-        mPingBackIntervalMs(),
-        mPingBackTimeStamp(),
-        mPingBackCount(),
-        mNextTimerCallbackMs(),
-        mNextPingBackCheckMs(),
-        mPingBackCheckIntervalMs(),
-        mTimerIntervalMs(),
-
-        mSignalled(),
-
-        mBatchMode(false),
-        mBatchMaxMessageLength(DefaultBatchMaxMessageLimit),
-        mBatchCount(0),
-        mBatchMessageCount(0),
-        mSetTransportProtocol(false),
-
-        mTransferWindowS(5),
-        mCallInProgress(false),
-
-        mHttpProxyPort(0),
-        mTransportProtocol(Tp_Clear),
-        mEnableCompression(false),
-
-        mSslImplementation(RCF::getDefaultSslImplementation())
+    ClientStub::ClientStub(const std::string &interfaceName)
     {
+        init(interfaceName, "");
     }
 
-    ClientStub::ClientStub(const std::string &interfaceName, const std::string &objectName) :
-        mToken(),
-        mDefaultCallingSemantics(Twoway),
-        mProtocol(DefaultSerializationProtocol),
-        mMarshalingProtocol(DefaultMarshalingProtocol),
-        mEndpointName(),
-        mObjectName(objectName),
-        mInterfaceName(interfaceName),
-        mRemoteCallTimeoutMs(gClientRemoteCallTimeoutMs),
-        mConnectTimeoutMs(gClientConnectTimeoutMs),
-        mAutoReconnect(true),
-        mConnected(),
-        mTries(),
-        mAutoVersioning(true),
-        mRuntimeVersion(RCF::getDefaultRuntimeVersion()),
-        mArchiveVersion(RCF::getDefaultArchiveVersion()),
-        mUseNativeWstringSerialization(RCF::getDefaultNativeWstringSerialization()),
-        mEnableSfPointerTracking(false),
-        
-        mAsync(),
-        mAsyncOpType(None),
-        mEndTimeMs(),
-        mRetry(),
-        mRcs(Twoway),
-        mEncodedByteBuffer(),
-        mEncodedByteBuffers(),
-        mpParameters(),
-        mPingBackIntervalMs(),
-        mPingBackTimeStamp(),
-        mPingBackCount(),
-        mNextTimerCallbackMs(),
-        mNextPingBackCheckMs(),
-        mPingBackCheckIntervalMs(),
-        mTimerIntervalMs(),
-
-        mSignalled(),
-
-        mBatchMode(false),
-        mBatchMaxMessageLength(DefaultBatchMaxMessageLimit),
-        mBatchCount(0),
-        mBatchMessageCount(0),
-        mSetTransportProtocol(false),
-
-        mTransferWindowS(5),
-        mCallInProgress(false),
-
-        mHttpProxyPort(0),
-        mTransportProtocol(Tp_Clear),
-        mEnableCompression(false),
-
-        mSslImplementation(RCF::getDefaultSslImplementation())
+    ClientStub::ClientStub(const std::string &interfaceName, const std::string &objectName)
     {
+        init(interfaceName, objectName);
     }
 
-    ClientStub::ClientStub(const ClientStub &rhs) :
-        mToken(rhs.mToken),
-        mDefaultCallingSemantics(rhs.mDefaultCallingSemantics),
-        mProtocol(rhs.mProtocol),
-        mMarshalingProtocol(DefaultMarshalingProtocol),
-        mEndpointName(rhs.mEndpointName),
-        mObjectName(rhs.mObjectName),
-        mInterfaceName(rhs.mInterfaceName),
-        mRemoteCallTimeoutMs(rhs.mRemoteCallTimeoutMs),
-        mConnectTimeoutMs(rhs.mConnectTimeoutMs),
-        mAutoReconnect(rhs.mAutoReconnect),
-        mConnected(),
-        mTries(),
-        mAutoVersioning(rhs.mAutoVersioning),
-        mRuntimeVersion(rhs.mRuntimeVersion),
-        mArchiveVersion(rhs.mArchiveVersion),
-        mUseNativeWstringSerialization(rhs.mUseNativeWstringSerialization),
-        mEnableSfPointerTracking(rhs.mEnableSfPointerTracking),
-        mUserData(rhs.mUserData),
-        
-        mAsync(),
-        mAsyncOpType(None),
-        mEndTimeMs(),
-        mRetry(),
-        mRcs(Twoway),
-        mEncodedByteBuffer(),
-        mEncodedByteBuffers(),
-        mpParameters(),
-        mPingBackIntervalMs(rhs.mPingBackIntervalMs),
-        mPingBackTimeStamp(),
-        mPingBackCount(),
-        mNextTimerCallbackMs(),
-        mNextPingBackCheckMs(),
-        mPingBackCheckIntervalMs(),
-        mTimerIntervalMs(),
+    ClientStub::ClientStub(const ClientStub &rhs)
+    {
+        init(rhs.mInterfaceName, rhs.mObjectName);
+        assign(rhs);
+    }
 
-        mSignalled(),
+    void ClientStub::init(const std::string & interfaceName, const std::string & objectName)
+    {
+        mDefaultCallingSemantics        = Twoway;
+        mProtocol                       = DefaultSerializationProtocol;
+        mMarshalingProtocol             = DefaultMarshalingProtocol;
+        mObjectName                     = objectName;
+        mInterfaceName                  = interfaceName;
+        mRemoteCallTimeoutMs            = gClientRemoteCallTimeoutMs;
+        mConnectTimeoutMs               = gClientConnectTimeoutMs;
+        mAutoReconnect                  = true;
+        mConnected                      = false;
+        mTries                          = 0;
+        mAutoVersioning                 = true;
+        mRuntimeVersion                 = RCF::getDefaultRuntimeVersion();
+        mArchiveVersion                 = RCF::getDefaultArchiveVersion();
+        mUseNativeWstringSerialization  = RCF::getDefaultNativeWstringSerialization();
+        mEnableSfPointerTracking        = false;
 
-        mBatchMode(false),
-        mBatchMaxMessageLength(DefaultBatchMaxMessageLimit),
-        mBatchCount(0),
-        mBatchMessageCount(0),
-        mSetTransportProtocol(false),        
+        mAsync                          = false;
+        mAsyncOpType                    = None;
+        mEndTimeMs                      = 0;
+        mRetry                          = false;
+        mRcs                            = Twoway;
+        mpParameters                    = NULL;
+        mPingBackIntervalMs             = 0;
+        mPingBackTimeStamp              = 0;
+        mPingBackCount                  = 0;
+        mNextTimerCallbackMs            = 0;
+        mNextPingBackCheckMs            = 0;
+        mPingBackCheckIntervalMs        = 0;
+        mTimerIntervalMs                = 0;
+
+        mSignalled                      = false;
+
+        mBatchMode                      = false;
+        mBatchMaxMessageLength          = DefaultBatchMaxMessageLimit;
+        mBatchCount                     = 0;
+        mBatchMessageCount              = 0;
+        mSetTransportProtocol           = false;
+
+        mTransferWindowS                = 5;
+        mCallInProgress                 = false;
+
+        mHttpProxyPort                  = 0;
+        mTransportProtocol              = Tp_Clear;
+        mEnableCompression              = false;
+
+        mSslImplementation              = RCF::getDefaultSslImplementation();
+
+    }
+
+    void ClientStub::assign(const ClientStub & rhs)
+    {
+        if (&rhs != this)
+        {
+            mInterfaceName                  = rhs.mInterfaceName;
+            mToken                          = rhs.mToken;
+            mDefaultCallingSemantics        = rhs.mDefaultCallingSemantics;
+            mProtocol                       = rhs.mProtocol;
+            mMarshalingProtocol             = rhs.mMarshalingProtocol;
+            mEndpointName                   = rhs.mEndpointName;
+            mObjectName                     = rhs.mObjectName;
+            mRemoteCallTimeoutMs            = rhs.mRemoteCallTimeoutMs;
+            mConnectTimeoutMs               = rhs.mConnectTimeoutMs;
+            mAutoReconnect                  = rhs.mAutoReconnect;
+            mConnected                      = false;
+            mAutoVersioning                 = rhs.mAutoVersioning;
+            mRuntimeVersion                 = rhs.mRuntimeVersion;
+            mArchiveVersion                 = rhs.mArchiveVersion;
+            mUseNativeWstringSerialization  = rhs.mUseNativeWstringSerialization;
+            mEnableSfPointerTracking        = rhs.mEnableSfPointerTracking;
+            mUserData                       = rhs.mUserData;
+            mPingBackIntervalMs             = rhs.mPingBackIntervalMs;
+            mSignalled                      = false;
+
+            setEndpoint(rhs.getEndpoint());
+
+            mClientProgressPtr              = rhs.mClientProgressPtr;
 
 #if RCF_FEATURE_FILETRANSFER==1
-        mFileProgressCb(rhs.mFileProgressCb),
+            mFileProgressCb                 = rhs.mFileProgressCb;
+            mTransferWindowS                = rhs.mTransferWindowS;
 #endif
-        mTransferWindowS(rhs.mTransferWindowS),
-        mCallInProgress(false),
 
-        mHttpProxy(rhs.mHttpProxy),
-        mHttpProxyPort(rhs.mHttpProxyPort),
-        mTransportProtocol(rhs.mTransportProtocol),
-        mUsername(rhs.mUsername),
-        mPassword(rhs.mPassword),
-        mKerberosSpn(rhs.mKerberosSpn),
-        mEnableCompression(rhs.mEnableCompression),
+            mHttpProxy                      = rhs.mHttpProxy;
+            mHttpProxyPort                  = rhs.mHttpProxyPort;
+            mTransportProtocol              = rhs.mTransportProtocol;
+            mUsername                       = rhs.mUsername;
+            mPassword                       = rhs.mPassword;
+            mKerberosSpn                    = rhs.mKerberosSpn;
+            mEnableCompression              = rhs.mEnableCompression;
 
-        mSslImplementation(rhs.mSslImplementation)
-    {
-        setEndpoint( rhs.getEndpoint() );
-        if (rhs.mClientProgressPtr)
-        {
-            mClientProgressPtr.reset(
-                new ClientProgress(*rhs.mClientProgressPtr));
+            mCertificatePtr                 = rhs.mCertificatePtr;
+            mCaCertificatePtr               = rhs.mCaCertificatePtr;
+            mCertificateValidationCb        = rhs.mCertificateValidationCb;
+            mSchannelCertificateValidation  = rhs.mSchannelCertificateValidation;
+            mOpenSslCipherSuite             = rhs.mOpenSslCipherSuite;
+
+            mSslImplementation              = rhs.mSslImplementation;
+
+            mHttpProxyPassword              = rhs.mHttpProxyPassword;
+            mHttpProxyUsername              = rhs.mHttpProxyUsername;
+            mHttpProxyRealm                 = rhs.mHttpProxyRealm;      
         }
     }
 
@@ -326,49 +272,7 @@ namespace RCF {
 
     ClientStub &ClientStub::operator=( const ClientStub &rhs )
     {
-        if (&rhs != this)
-        {
-            mInterfaceName              = rhs.mInterfaceName;
-            mToken                      = rhs.mToken;
-            mDefaultCallingSemantics    = rhs.mDefaultCallingSemantics;
-            mProtocol                   = rhs.mProtocol;
-            mMarshalingProtocol         = rhs.mMarshalingProtocol;
-            mEndpointName               = rhs.mEndpointName;
-            mObjectName                 = rhs.mObjectName;
-            mRemoteCallTimeoutMs        = rhs.mRemoteCallTimeoutMs;
-            mConnectTimeoutMs           = rhs.mConnectTimeoutMs;
-            mAutoReconnect              = rhs.mAutoReconnect;
-            mConnected                  = false;
-            mAutoVersioning             = rhs.mAutoVersioning;
-            mRuntimeVersion             = rhs.mRuntimeVersion;
-            mArchiveVersion             = rhs.mArchiveVersion;
-            mUseNativeWstringSerialization = rhs.mUseNativeWstringSerialization;
-            mEnableSfPointerTracking    = rhs.mEnableSfPointerTracking;
-            mUserData                   = rhs.mUserData;
-            mPingBackIntervalMs         = rhs.mPingBackIntervalMs;
-            mSignalled                  = false;
-
-            setEndpoint( rhs.getEndpoint());
-
-            if (rhs.mClientProgressPtr)
-            {
-                mClientProgressPtr.reset(
-                    new ClientProgress(*rhs.mClientProgressPtr));
-            }
-
-#if RCF_FEATURE_FILETRANSFER==1
-            mFileProgressCb = rhs.mFileProgressCb;
-            mTransferWindowS = rhs.mTransferWindowS;
-#endif
-            mHttpProxy = rhs.mHttpProxy;
-            mHttpProxyPort = rhs.mHttpProxyPort;
-            mTransportProtocol = rhs.mTransportProtocol;
-            mUsername = rhs.mUsername;
-            mPassword = rhs.mPassword;
-            mKerberosSpn = rhs.mKerberosSpn;
-            mEnableCompression = rhs.mEnableCompression;
-            mSslImplementation = rhs.mSslImplementation;
-        }
+        assign(rhs);
         return *this;
     }
 
@@ -655,28 +559,54 @@ namespace RCF {
 
     CurrentClientStubSentry::CurrentClientStubSentry(ClientStub & clientStub)
     {
+        mEnabled = true;
         pushTlsClientStub(&clientStub);
+    }
+
+    CurrentClientStubSentry::CurrentClientStubSentry(ClientStub * pClientStub)
+    {
+        mEnabled = false;
+        if (pClientStub)
+        {
+            mEnabled = true;
+            pushTlsClientStub(pClientStub);
+        }
     }
 
     CurrentClientStubSentry::~CurrentClientStubSentry()
     {
-        popTlsClientStub();
+        if (mEnabled)
+        {
+            popTlsClientStub();
+        }
     }
 
     void ClientStub::onError(const std::exception &e)
     {
+        const RemoteException *pRcfRE =
+            dynamic_cast<const RemoteException *>(&e);
+
+        const Exception *pRcfE =
+            dynamic_cast<const Exception *>(&e);
+
+        if ( pRcfE && pRcfE->getShouldRetry() )
+        {
+            // Disconnect automatically clears the async callback, so we need to
+            // stash the callback and then restore it.
+            boost::function0<void> cb = mAsyncCallback;
+            disconnect();
+            setAsyncCallback(cb);
+
+            call(mRcs);
+            return;
+        }
+
         if (mAsync)
         {
             scheduleAmiNotification();
         }
 
         mAsyncOpType = None;
-
-        const RemoteException *pRcfRE = 
-            dynamic_cast<const RemoteException *>(&e);
-
-        const Exception *pRcfE = 
-            dynamic_cast<const Exception *>(&e);
 
         if (pRcfRE)
         {
@@ -1041,7 +971,7 @@ namespace RCF {
             int ret = msg.mResponseError; 
             if (ret != RcfError_Ok)
             {
-                std::auto_ptr<Exception> ePtr( new RemoteException(Error(ret)) );
+                ePtr.reset( new RemoteException(Error(ret)) );
                 clientStubOrig.setAsyncException(ePtr);
             }
             else
@@ -1230,7 +1160,7 @@ namespace RCF {
         }
     }
 
-    std::string ClientStub::getHttpProxy()
+    std::string ClientStub::getHttpProxy() const
     {
         return mHttpProxy;
     }
@@ -1244,9 +1174,19 @@ namespace RCF {
         }
     }
 
-    int ClientStub::getHttpProxyPort()
+    int ClientStub::getHttpProxyPort() const
     {
         return mHttpProxyPort;
+    }
+
+    void ClientStub::setHttpProxyRealm(const tstring & proxyRealm)
+    {
+        mHttpProxyRealm = proxyRealm;
+    }
+
+    tstring ClientStub::getHttpProxyRealm() const
+    {
+        return mHttpProxyRealm;
     }
 
     void ClientStub::setTransportProtocol(TransportProtocol protocol)
@@ -1254,21 +1194,24 @@ namespace RCF {
         if (mTransportProtocol != protocol)
         {
             mTransportProtocol = protocol;
-            RcfSessionWeakPtr sessionWeakPtr = getTransport().getRcfSession();
-            bool isRegularConnection = (sessionWeakPtr == RcfSessionWeakPtr());
-            if (isRegularConnection)
+            if ( mTransport.get() )
             {
-                disconnect();
-                clearTransportFilters();
-            }
-            else
-            {
-                mSetTransportProtocol = true;
+                RcfSessionWeakPtr sessionWeakPtr = getTransport().getRcfSession();
+                bool isRegularConnection = (sessionWeakPtr == RcfSessionWeakPtr());
+                if ( isRegularConnection )
+                {
+                    disconnect();
+                    clearTransportFilters();
+                }
+                else
+                {
+                    mSetTransportProtocol = true;
+                }
             }
         }
     }
 
-    TransportProtocol ClientStub::getTransportProtocol()
+    TransportProtocol ClientStub::getTransportProtocol() const
     {
         return mTransportProtocol;
     }
@@ -1284,7 +1227,7 @@ namespace RCF {
         mUsername = username;
     }
 
-    tstring ClientStub::getUsername()
+    tstring ClientStub::getUsername() const
     {
         return mUsername;
     }
@@ -1294,17 +1237,38 @@ namespace RCF {
         mPassword = password;
     }
 
-    tstring ClientStub::getPassword()
+    tstring ClientStub::getPassword() const
     {
         return mPassword;
     }
+
+    void ClientStub::setHttpProxyUsername(const tstring & username)
+    {
+        mHttpProxyUsername = username;
+    }
+
+    tstring ClientStub::getHttpProxyUsername() const
+    {
+        return mHttpProxyUsername;
+    }
+
+    void ClientStub::setHttpProxyPassword(const tstring & password)
+    {
+        mHttpProxyPassword = password;
+    }
+
+    tstring ClientStub::getHttpProxyPassword() const
+    {
+        return mHttpProxyPassword;
+    }
+
 
     void ClientStub::setKerberosSpn(const tstring & kerberosSpn)
     {
         mKerberosSpn = kerberosSpn;
     }
 
-    tstring ClientStub::getKerberosSpn()
+    tstring ClientStub::getKerberosSpn() const
     {
         return mKerberosSpn;
     }
@@ -1319,7 +1283,7 @@ namespace RCF {
         }
     }
 
-    bool ClientStub::getEnableCompression()
+    bool ClientStub::getEnableCompression() const
     {
         return mEnableCompression;
     }
@@ -1329,7 +1293,7 @@ namespace RCF {
         mCertificatePtr = certificatePtr;
     }
 
-    CertificatePtr ClientStub::getCertificate()
+    CertificatePtr ClientStub::getCertificate() const
     {
         return mCertificatePtr;
     }
@@ -1342,7 +1306,7 @@ namespace RCF {
         mSchannelCertificateValidation.clear();
     }
 
-    CertificatePtr ClientStub::getCaCertificate()
+    CertificatePtr ClientStub::getCaCertificate() const
     {
         return mCaCertificatePtr;
     }

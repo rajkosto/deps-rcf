@@ -190,7 +190,11 @@
 
 // JSON feature
 #ifndef RCF_FEATURE_JSON
+#ifdef RCF_USE_JSON
+#define RCF_FEATURE_JSON            1
+#else
 #define RCF_FEATURE_JSON            0
+#endif
 #endif
 
 // IPv6 feature
@@ -218,29 +222,24 @@
 
 
 // RCF_FEATURE_SF / RCF_FEATURE_BOOST_SERIALIZATION.
-// Need to be able to interpret older macros RCF_USE_SF_SERIALIZATION / RCF_USE_BOOST_SERIALIZATION.
+// For backward compatibility we need to interpret RCF_USE_SF_SERIALIZATION / RCF_USE_BOOST_SERIALIZATION correctly.
 
-// If nothing defined, then enable SF.
-#if !defined(RCF_USE_SF_SERIALIZATION) && !defined(RCF_USE_BOOST_SERIALIZATION) && !defined(RCF_FEATURE_SF) && !defined(RCF_FEATURE_BOOST_SERIALIZATION)
-#define RCF_FEATURE_SF                      1
-#endif
-
-#if RCF_FEATURE_SF==1
-#define RCF_FEATURE_SF                      1
-#endif
-
-#if RCF_FEATURE_BOOST_SERIALIZATION==1
-#define RCF_FEATURE_BOOST_SERIALIZATION     1
-#endif
-
-// SF feature
 #ifndef RCF_FEATURE_SF
+#ifdef RCF_USE_SF_SERIALIZATION
+#define RCF_FEATURE_SF                      1
+#elif !defined(RCF_USE_SF_SERIALIZATION) && defined(RCF_USE_BOOST_SERIALIZATION)
+#define RCF_FEATURE_SF                      0
+#else
 #define RCF_FEATURE_SF                      1
 #endif
+#endif
 
-// Boost.Serialization feature.
 #ifndef RCF_FEATURE_BOOST_SERIALIZATION
+#ifdef RCF_USE_BOOST_SERIALIZATION
+#define RCF_FEATURE_BOOST_SERIALIZATION     1
+#else
 #define RCF_FEATURE_BOOST_SERIALIZATION     0
+#endif
 #endif
 
 //------------------------------------------------------------------------------

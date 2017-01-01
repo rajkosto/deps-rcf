@@ -69,10 +69,10 @@ namespace RCF {
 
         for (std::size_t i=0; i<mSessionsTemp.size(); ++i)
         {
-            SessionStatePtr sessionStatePtr = mSessionsTemp[i].lock();
-            if (sessionStatePtr)
+            NetworkSessionPtr networkSessionPtr = mSessionsTemp[i].lock();
+            if (networkSessionPtr)
             {
-                RcfSessionPtr rcfSessionPtr = sessionStatePtr->getSessionPtr();
+                RcfSessionPtr rcfSessionPtr = networkSessionPtr->getSessionPtr();
                 if (rcfSessionPtr)
                 {
                     boost::uint32_t lastTouched = rcfSessionPtr->getTouchTimestamp();
@@ -82,6 +82,20 @@ namespace RCF {
                         if (lastTouchedTimer.elapsed(mSessionTimeoutMs))
                         {
                             rcfSessionPtr->disconnect();
+                        }
+                    }
+                }
+                else
+                {
+                    // Network session without a RCF session. Typically related to a HTTP connection.
+                    boost::uint32_t lastTouched = networkSessionPtr->getLastActivityTimestamp();
+                    if ( lastTouched )
+                    {
+                        RCF::Timer lastTouchedTimer(lastTouched);
+                        if ( lastTouchedTimer.elapsed(mSessionTimeoutMs) )
+                        {
+                            networkSessionPtr->setEnableReconnect(false);
+                            networkSessionPtr->postClose();
                         }
                     }
                 }

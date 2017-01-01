@@ -23,7 +23,7 @@
 namespace RCF {
 
     HttpsServerTransport::HttpsServerTransport(const HttpsEndpoint & httpsEndpoint) : 
-        TcpAsioServerTransport(httpsEndpoint.getIp(), httpsEndpoint.getPort())
+        TcpServerTransport(httpsEndpoint.getIp(), httpsEndpoint.getPort())
     {
         mWireProtocol = Wp_Https;
     }

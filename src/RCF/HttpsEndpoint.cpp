@@ -41,7 +41,7 @@ namespace RCF {
         {
             ip = "127.0.0.1";
         }
-        os << "HTTPS endpoint " << ip << ":" << getPort();
+        os << "https://" << ip << ":" << getPort();
         return os.string();
     }
 

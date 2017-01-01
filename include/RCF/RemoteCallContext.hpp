@@ -19,7 +19,7 @@
 #ifndef INCLUDE_RCF_REMOTECALLCONTEXT_HPP
 #define INCLUDE_RCF_REMOTECALLCONTEXT_HPP
 
-#include <RCF/AsioServerTransport.hpp>
+//#include <RCF/AsioServerTransport.hpp>
 #include <RCF/Export.hpp>
 #include <RCF/RcfSession.hpp>
 #include <RCF/ThreadLocalData.hpp>
@@ -27,83 +27,25 @@
 namespace RCF {
 
     class I_Parameters;
+    class RcfSession;
+    class AsioNetworkSession;
+
+    typedef boost::shared_ptr<RcfSession> RcfSessionPtr;
+    typedef boost::shared_ptr<AsioNetworkSession> AsioNetworkSessionPtr;
 
     class RCF_EXPORT RemoteCallContextImpl
     {
     public:
 
-        RemoteCallContextImpl(RCF::RcfSession & session) : mCommitted(false)
-        {
-            mRcfSessionPtr = session.shared_from_this();
-            mRcfSessionPtr->mAutoSend = false;
-            
-            mpParametersUntyped = mRcfSessionPtr->mpParameters;
+        RemoteCallContextImpl(RCF::RcfSession & session);
 
-            AsioSessionState & sessionState = 
-                dynamic_cast<AsioSessionState &>(
-                    mRcfSessionPtr->getSessionState());
-
-            mSessionStatePtr = sessionState.sharedFromThis();
-        }
-
-        void commit()
-        {
-            RCF_ASSERT(!mCommitted);
-
-            if (mRcfSessionPtr->mRequest.getOneway())
-            {
-                RCF_LOG_3()(this) << "RcfServer - suppressing response to oneway call.";
-                mRcfSessionPtr->mIn.clearByteBuffer();
-                mRcfSessionPtr->clearParameters();
-                setTlsRcfSessionPtr();
-                mRcfSessionPtr->onWriteCompleted();
-            }
-            else
-            {
-                mRcfSessionPtr->sendResponse();
-            }
-
-            mpParametersUntyped = NULL;
-            mRcfSessionPtr.reset();
-
-            mSessionStatePtr.reset();
-
-            mCommitted = true;
-        }
-
-        void commit(const std::exception &e)
-        {
-            RCF_ASSERT(!mCommitted);
-
-            if (mRcfSessionPtr->mRequest.getOneway())
-            {
-                RCF_LOG_3()(this) << "RcfServer - suppressing response to oneway call.";
-                mRcfSessionPtr->mIn.clearByteBuffer();
-                mRcfSessionPtr->clearParameters();
-                setTlsRcfSessionPtr();
-                mRcfSessionPtr->onWriteCompleted();
-            }
-            else
-            {
-                mRcfSessionPtr->sendResponseException(e);
-            }
-            
-            mpParametersUntyped = NULL;
-            mRcfSessionPtr.reset();
-
-            mSessionStatePtr.reset();
-
-            mCommitted = true;
-        }
-
-        bool isCommitted() const
-        {
-            return mCommitted;
-        }
+        void commit();
+        void commit(const std::exception &e);
+        bool isCommitted() const;
 
     private:
         RcfSessionPtr       mRcfSessionPtr;
-        AsioSessionStatePtr mSessionStatePtr;
+        AsioNetworkSessionPtr mNetworkSessionPtr;
         bool                mCommitted;
 
     protected:

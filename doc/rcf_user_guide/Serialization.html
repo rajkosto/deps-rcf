@@ -156,6 +156,18 @@
 <tr>
 <td>
                 <p>
+                  <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">bitset</span><span class="special">&lt;&gt;</span></code>
+                </p>
+              </td>
+<td>
+                <p>
+                  <code class="computeroutput"><span class="preprocessor">#include</span> <span class="special">&lt;</span><span class="identifier">SF</span><span class="special">/</span><span class="identifier">bitset</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span></code>
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">auto_ptr</span><span class="special">&lt;&gt;</span></code>
                 </p>
               </td>
@@ -391,6 +403,37 @@
         In general, for a standard C++ type defined in <code class="computeroutput"><span class="special">&lt;</span><span class="identifier">xyz</span><span class="special">&gt;</span></code>,
         or a Boost type defined in <code class="computeroutput"><span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">xyz</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span></code>, the corresponding serialization definitions
         are located in <code class="computeroutput"><span class="special">&lt;</span><span class="identifier">SF</span><span class="special">/</span><span class="identifier">xyz</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span></code>
+        .
+      </p>
+<p>
+        C++ enums are serialized automatically, as integers. Serialization of C++11
+        enum classes requires the use of a helper macro:
+      </p>
+<p>
+        
+</p>
+<pre class="programlisting"><span class="comment">// Legacy C++ enum. Automatically serialized as 'int'.
+</span><span class="keyword">enum</span> <span class="identifier">Suit</span>
+<span class="special">{</span>
+    <span class="identifier">Heart</span> <span class="special">=</span> <span class="number">1</span><span class="special">,</span>
+    <span class="identifier">Diamond</span> <span class="special">=</span> <span class="number">2</span><span class="special">,</span>
+    <span class="identifier">Club</span> <span class="special">=</span> <span class="number">2</span><span class="special">,</span>
+    <span class="identifier">Spade</span> <span class="special">=</span> <span class="number">2</span>
+<span class="special">};</span>
+
+<span class="comment">// C++11 enum class with custom base type (8 bit integer).
+</span><span class="keyword">enum</span> <span class="keyword">class</span> <span class="identifier">Colors</span> <span class="special">:</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">int8_t</span> 
+<span class="special">{</span> 
+    <span class="identifier">Red</span> <span class="special">=</span> <span class="number">1</span><span class="special">,</span> 
+    <span class="identifier">Green</span> <span class="special">=</span> <span class="number">2</span><span class="special">,</span> 
+    <span class="identifier">Blue</span> <span class="special">=</span> <span class="number">3</span> 
+<span class="special">};</span>
+
+<span class="comment">// Use SF_SERIALIZE_ENUM_CLASS() to specify the base type of the enum class.
+</span><span class="identifier">SF_SERIALIZE_ENUM_CLASS</span><span class="special">(</span><span class="identifier">Colors</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">int8_t</span><span class="special">)</span>
+
+</pre>
+<p>
       </p>
 <p>
         By composing containers, you can build up structures of considerable complexity
@@ -716,7 +759,7 @@
         provides a number of useful typedefs, including the following.
       </p>
 <div class="table">
-<a name="id955658"></a><p class="title"><b>Table&#160;1.&#160;Portable integral types</b></p>
+<a name="id934798"></a><p class="title"><b>Table&#160;1.&#160;Portable integral types</b></p>
 <div class="table-contents"><table class="table" summary="Portable integral types">
 <colgroup>
 <col>
@@ -869,7 +912,7 @@
 </div>
 <table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
 <td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright &#169; 2005 - 2013 Delta V Software</div></td>
+<td align="right"><div class="copyright-footer">Copyright &#169; 2005 - 2016 Delta V Software</div></td>
 </tr></table>
 <hr>
 <div class="spirit-nav">

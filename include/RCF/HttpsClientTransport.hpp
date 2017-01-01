@@ -26,7 +26,7 @@
 
 namespace RCF {
 
-    class HttpsClientTransport : public TcpClientTransport
+    class RCF_EXPORT HttpsClientTransport : public TcpClientTransport
     {
     public:
         HttpsClientTransport(const HttpsEndpoint & httpsEndpoint);

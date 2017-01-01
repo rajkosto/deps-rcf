@@ -271,7 +271,7 @@ namespace RCF {
                 ret == -1 &&
                 err == Platform::OS::BsdSockets::ERR_EWOULDBLOCK)
             {
-                int ret = pollingFunctor(fd, err, true);
+                ret = pollingFunctor(fd, err, true);
                 if (ret  != 0)
                 {
                     clientTransport.onTimedRecvCompleted(ret, err);
@@ -313,7 +313,7 @@ namespace RCF {
                 const int length = 1;
                 char buffer[length];
 
-                int ret = Platform::OS::BsdSockets::recv(
+                ret = Platform::OS::BsdSockets::recv(
                     fd,
                     buffer,
                     length,

@@ -25,11 +25,16 @@ namespace RCF {
 
     class HttpEndpoint;
 
-    class HttpClientTransport : public TcpClientTransport
+    class RCF_EXPORT HttpClientTransport : public TcpClientTransport
     {
     public:
+        HttpClientTransport(const HttpClientTransport & rhs);
         HttpClientTransport(const HttpEndpoint & httpEndpoint);
         TransportType getTransportType();
+        EndpointPtr getEndpointPtr() const;
+
+        std::auto_ptr<ClientTransport> clone() const;
+
     };
 
 } // namespace RCF

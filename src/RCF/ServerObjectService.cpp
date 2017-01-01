@@ -54,29 +54,33 @@ namespace RCF {
     void ServerObjectService::onServerStop(RcfServer & server)
     {
         RCF_UNUSED_VARIABLE(server);
-        mpRcfServer = NULL;
         mPeriodicTimer.stop();
     }
 
     void ServerObjectService::onTimer()
     {
         boost::uint32_t nowMs = getCurrentTimeMs();
-        Lock lock(mMutex);
-        ServerObjectMap::iterator iter = mServerObjectMap.begin();
-        while (iter != mServerObjectMap.end())
         {
-            ServerObjectHolder & holder = iter->second;
-            if (    holder.mUseCount == 0 
-                &&  (nowMs - holder.mLastTouchMs > holder.mTimeoutMs))
+            Lock lock(mMutex);
+            ServerObjectMap::iterator iter = mServerObjectMap.begin();
+            while ( iter != mServerObjectMap.end() )
             {
-                mServerObjectMap.erase(iter++);
+                ServerObjectHolder & holder = iter->second;
+                if ( holder.mUseCount == 0
+                    && (nowMs - holder.mLastTouchMs > holder.mTimeoutMs) )
+                {
+                    mServerObjectMap.erase(iter++);
+                }
+                else
+                {
+                    iter++;
+                }
             }
-            else
-            {
-                iter++;
-            }
+            mLastHarvestMs = nowMs;
         }
-        mLastHarvestMs = nowMs;
+
+        // Clean up HTTP sessions as well.
+        mpRcfServer->harvestHttpSessions();
     }
 
     void ServerObjectService::customDeleter(const std::string & objectKey, void * pt)
@@ -87,10 +91,13 @@ namespace RCF {
 
         ServerObjectMap::iterator iter = mServerObjectMap.find(objectKey);
         RCF_ASSERT(iter != mServerObjectMap.end());
-        ServerObjectHolder & holder = iter->second;
-        RCF_ASSERT(holder.mUseCount > 0);
-        --holder.mUseCount;
-        holder.mLastTouchMs = getCurrentTimeMs();
+        if ( iter != mServerObjectMap.end() )
+        {
+            ServerObjectHolder & holder = iter->second;
+            RCF_ASSERT(holder.mUseCount > 0);
+            --holder.mUseCount;
+            holder.mLastTouchMs = getCurrentTimeMs();
+        }
     }
 
     void ServerObjectService::deleteServerObject(const std::string & objectKey)
@@ -102,6 +109,5 @@ namespace RCF {
             mServerObjectMap.erase(iter);
         }
     }
-
 
 } // namespace RCF

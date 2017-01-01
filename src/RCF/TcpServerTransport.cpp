@@ -16,7 +16,7 @@
 //
 //******************************************************************************
 
-#include <RCF/TcpAsioServerTransport.hpp>
+#include <RCF/TcpServerTransport.hpp>
 
 #include <RCF/Asio.hpp>
 #include <RCF/IpAddress.hpp>
@@ -62,10 +62,10 @@ namespace RCF {
         return ipAddress;
     }
 
-    class TcpAsioAcceptor : public AsioAcceptor
+    class TcpAcceptor : public AsioAcceptor
     {
     public:
-        TcpAsioAcceptor(
+        TcpAcceptor(
             AsioIoService & ioService, 
             ASIO_NS::ip::tcp::acceptor::protocol_type protocolType, 
             int acceptorFd) : 
@@ -75,36 +75,48 @@ namespace RCF {
         ASIO_NS::ip::tcp::acceptor mAcceptor;
     };
 
-    // TcpAsioSessionState
+    // TcpNetworkSession
 
-    TcpAsioSessionState::TcpAsioSessionState(
-        TcpAsioServerTransport &transport,
+    TcpNetworkSession::TcpNetworkSession(
+        TcpServerTransport &transport,
         AsioIoService & ioService) :
-            AsioSessionState(transport, ioService),
+            AsioNetworkSession(transport, ioService),
             mSocketPtr(new AsioSocket(ioService)),
             mWriteCounter(0)
     {
     }
 
-    const RemoteAddress & TcpAsioSessionState::implGetRemoteAddress()
+    const RemoteAddress & TcpNetworkSession::implGetRemoteAddress()
     {
         return mIpAddress;
     }
 
-    void TcpAsioSessionState::implRead(char * buffer, std::size_t bufferLen)
+    void TcpNetworkSession::implRead(char * buffer, std::size_t bufferLen)
     {
+        if ( !mSocketPtr )
+        {
+            RCF_LOG_4() << "TcpNetworkSession - connection has been closed.";
+            return;
+        }
+
         mWriteCounter = 0;
 
         RCF_LOG_4()(bufferLen) 
-            << "TcpAsioSessionState - calling async_read_some().";
+            << "TcpNetworkSession - calling async_read_some().";
 
         mSocketPtr->async_read_some(
             ASIO_NS::buffer( buffer, bufferLen),
             ReadHandler(sharedFromThis()));
     }
 
-    void TcpAsioSessionState::implWrite(const std::vector<ByteBuffer> & buffers)
+    void TcpNetworkSession::implWrite(const std::vector<ByteBuffer> & buffers)
     {
+        if ( !mSocketPtr )
+        {
+            RCF_LOG_4() << "TcpNetworkSession - connection has been closed.";
+            return;
+        }
+
         ++mWriteCounter;
 
         if (mWriteCounter > 1)
@@ -114,7 +126,7 @@ namespace RCF {
         }
 
         RCF_LOG_4()(RCF::lengthByteBuffers(buffers))
-            << "TcpAsioSessionState - calling async_write_some().";
+            << "TcpNetworkSession - calling async_write_some().";
 
         mBufs.mVecPtr->resize(0);
         for (std::size_t i=0; i<buffers.size(); ++i)
@@ -130,8 +142,8 @@ namespace RCF {
             WriteHandler(sharedFromThis()));
     }
 
-    void TcpAsioSessionState::implWrite(
-        AsioSessionState &toBeNotified, 
+    void TcpNetworkSession::implWrite(
+        AsioNetworkSession &toBeNotified, 
         const char * buffer, 
         std::size_t bufferLen)
     {
@@ -141,31 +153,31 @@ namespace RCF {
             WriteHandler(toBeNotified.sharedFromThis()));
     }
 
-    void TcpAsioSessionState::implAccept()
+    void TcpNetworkSession::implAccept()
     {
         RCF_LOG_4()
-            << "TcpAsioSessionState - calling async_accept().";
+            << "TcpNetworkSession - calling async_accept().";
 
-        TcpAsioAcceptor & tcpAsioAcceptor = 
-            static_cast<TcpAsioAcceptor &>(mTransport.getAcceptor());
+        TcpAcceptor & tcpAcceptor = 
+            static_cast<TcpAcceptor &>(mTransport.getAcceptor());
 
-        tcpAsioAcceptor.mAcceptor.async_accept(
+        tcpAcceptor.mAcceptor.async_accept(
             *mSocketPtr,
             boost::bind(
-                &AsioSessionState::onAcceptCompleted,
+                &AsioNetworkSession::onAcceptCompleted,
                 sharedFromThis(),
                 ASIO_NS::placeholders::error));
     }
 
-    bool TcpAsioSessionState::implOnAccept()
+    bool TcpNetworkSession::implOnAccept()
     {
         ASIO_NS::ip::tcp::endpoint endpoint = 
             mSocketPtr->remote_endpoint();
 
         mIpAddress = boostToRcfIpAdress(endpoint);
 
-        TcpAsioServerTransport & transport = 
-            static_cast<TcpAsioServerTransport &>(mTransport);
+        TcpServerTransport & transport = 
+            static_cast<TcpServerTransport &>(mTransport);
 
         bool ipAllowed = transport.isIpAllowed(mIpAddress);
         if (!ipAllowed)
@@ -177,12 +189,12 @@ namespace RCF {
         return ipAllowed;
     }
 
-    void TcpAsioSessionState::implClose()
+    void TcpNetworkSession::implClose()
     {
         mSocketPtr.reset();
     }
 
-    void TcpAsioSessionState::implCloseAfterWrite()
+    void TcpNetworkSession::implCloseAfterWrite()
     {
         int fd = static_cast<int>(mSocketPtr->native());
         const int BufferSize = 8*1024;
@@ -198,13 +210,13 @@ namespace RCF {
         postRead();
     }
 
-    bool TcpAsioSessionState::implIsConnected()
+    bool TcpNetworkSession::implIsConnected()
     {
         int fd = static_cast<int>(mSocketPtr->native());
         return isFdConnected(fd);
     }
 
-    ClientTransportAutoPtr TcpAsioSessionState::implCreateClientTransport()
+    ClientTransportAutoPtr TcpNetworkSession::implCreateClientTransport()
     {
         std::auto_ptr<TcpClientTransport> tcpClientTransportPtr(
             new TcpClientTransport(mSocketPtr));
@@ -218,7 +230,7 @@ namespace RCF {
         return ClientTransportAutoPtr(tcpClientTransportPtr.release());
     }
 
-    void TcpAsioSessionState::implTransferNativeFrom(ClientTransport & clientTransport)
+    void TcpNetworkSession::implTransferNativeFrom(ClientTransport & clientTransport)
     {
         TcpClientTransport *pTcpClientTransport =
             dynamic_cast<TcpClientTransport *>(&clientTransport);
@@ -236,21 +248,21 @@ namespace RCF {
         mSocketPtr = tcpClientTransport.releaseTcpSocket();
     }
 
-    int TcpAsioSessionState::getNativeHandle()
+    int TcpNetworkSession::getNativeHandle()
     {
         return static_cast<int>(mSocketPtr->native());
     }
 
-    // TcpAsioServerTransport
+    // TcpServerTransport
 
-    TcpAsioServerTransport::TcpAsioServerTransport(
+    TcpServerTransport::TcpServerTransport(
         const IpAddress & ipAddress) :
             mIpAddress(ipAddress),
             mAcceptorFd(-1)
     {
     }
 
-    TcpAsioServerTransport::TcpAsioServerTransport(
+    TcpServerTransport::TcpServerTransport(
         const std::string & ip, 
         int port) :
             mIpAddress(ip, port),
@@ -258,27 +270,27 @@ namespace RCF {
     {
     }
 
-    TransportType TcpAsioServerTransport::getTransportType()
+    TransportType TcpServerTransport::getTransportType()
     {
         return Tt_Tcp;
     }
 
-    ServerTransportPtr TcpAsioServerTransport::clone()
+    ServerTransportPtr TcpServerTransport::clone()
     {
-        return ServerTransportPtr(new TcpAsioServerTransport(mIpAddress));
+        return ServerTransportPtr(new TcpServerTransport(mIpAddress));
     }
 
-    AsioSessionStatePtr TcpAsioServerTransport::implCreateSessionState()
+    AsioNetworkSessionPtr TcpServerTransport::implCreateNetworkSession()
     {
-        return AsioSessionStatePtr( new TcpAsioSessionState(*this, getIoService()) );
+        return AsioNetworkSessionPtr( new TcpNetworkSession(*this, getIoService()) );
     }
 
-    int TcpAsioServerTransport::getPort() const
+    int TcpServerTransport::getPort() const
     {
         return mIpAddress.getPort();
     }
 
-    void TcpAsioServerTransport::implOpen()
+    void TcpServerTransport::implOpen()
     {
         // We open the port manually, without asio. Then later, when we know
         // which io_service to use, we attach the socket to a regular tcp::acceptor.
@@ -314,8 +326,8 @@ namespace RCF {
             {
                 // Set SO_REUSEADDR socket option.
                 int enable = 1;
-                int ret = setsockopt(mAcceptorFd, SOL_SOCKET, SO_REUSEADDR, (char *) &enable, sizeof(enable));
-                int err = Platform::OS::BsdSockets::GetLastError();
+                ret = setsockopt(mAcceptorFd, SOL_SOCKET, SO_REUSEADDR, (char *) &enable, sizeof(enable));
+                err = Platform::OS::BsdSockets::GetLastError();
             
                 RCF_VERIFY(
                     ret ==  0,
@@ -350,7 +362,7 @@ namespace RCF {
 
             if (ret < 0)
             {
-                int err = Platform::OS::BsdSockets::GetLastError();
+                err = Platform::OS::BsdSockets::GetLastError();
                 Exception e(_RcfError_Socket("listen()"), err, RcfSubsystem_Os);
                 RCF_THROW(e);
             }
@@ -362,11 +374,11 @@ namespace RCF {
                 mIpAddress.setPort(ip.getPort());
             }
 
-            RCF_LOG_2() << "TcpAsioServerTransport - listening on port " << mIpAddress.getPort() << ".";
+            RCF_LOG_2() << "TcpServerTransport - listening on port " << mIpAddress.getPort() << ".";
         }
     }
 
-    void TcpAsioServerTransport::onServerStart(RcfServer & server)
+    void TcpServerTransport::onServerStart(RcfServer & server)
     {
         AsioServerTransport::onServerStart(server);
 
@@ -383,7 +395,7 @@ namespace RCF {
             }
 
             mAcceptorPtr.reset(
-                new TcpAsioAcceptor(*mpIoService, protocolType, mAcceptorFd));
+                new TcpAcceptor(*mpIoService, protocolType, mAcceptorFd));
 
             mAcceptorFd = -1;
 
@@ -391,7 +403,7 @@ namespace RCF {
         }
     }
 
-    ClientTransportAutoPtr TcpAsioServerTransport::implCreateClientTransport(
+    ClientTransportAutoPtr TcpServerTransport::implCreateClientTransport(
         const Endpoint &endpoint)
     {
         const TcpEndpoint &tcpEndpoint = 

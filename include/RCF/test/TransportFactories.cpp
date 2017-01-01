@@ -33,7 +33,7 @@
 #include <RCF/InitDeinit.hpp>
 #include <RCF/ThreadLibrary.hpp>
 
-#include <RCF/TcpAsioServerTransport.hpp>
+#include <RCF/TcpServerTransport.hpp>
 #include <RCF/Asio.hpp>
 #include <RCF/Config.hpp>
 
@@ -46,6 +46,16 @@
 #include <RCF/Win32NamedPipeClientTransport.hpp>
 #include <RCF/Win32NamedPipeEndpoint.hpp>
 #include <RCF/Win32NamedPipeServerTransport.hpp>
+#endif
+
+#if RCF_FEATURE_HTTP==1
+#include <RCF/HttpClientTransport.hpp>
+#include <RCF/HttpServerTransport.hpp>
+#include <RCF/HttpEndpoint.hpp>
+
+#include <RCF/HttpsClientTransport.hpp>
+#include <RCF/HttpsServerTransport.hpp>
+#include <RCF/HttpsEndpoint.hpp>
 #endif
 
 #include <RCF/TcpClientTransport.hpp>
@@ -121,7 +131,7 @@ namespace RCF {
 
 #if RCF_FEATURE_TCP==1
        
-    TcpAsioTransportFactory::TcpAsioTransportFactory(IpAddress::Type type)
+    TcpTransportFactory::TcpTransportFactory(IpAddress::Type type)
     {
         switch (type)
         {
@@ -131,11 +141,11 @@ namespace RCF {
         }
     }
 
-    TransportPair TcpAsioTransportFactory::createTransports()
+    TransportPair TcpTransportFactory::createTransports()
     {
-        typedef boost::shared_ptr<TcpAsioServerTransport> TcpAsioServerTransportPtr;
-        TcpAsioServerTransportPtr tcpServerTransportPtr(
-            new TcpAsioServerTransport( IpAddress(mLoopback, 0)));
+        typedef boost::shared_ptr<TcpServerTransport> TcpServerTransportPtr;
+        TcpServerTransportPtr tcpServerTransportPtr(
+            new TcpServerTransport( IpAddress(mLoopback, 0)));
 
         tcpServerTransportPtr->open();
         int port = tcpServerTransportPtr->getPort();
@@ -149,26 +159,118 @@ namespace RCF {
             clientTransportAutoPtrPtr);
     }
 
-    TransportPair TcpAsioTransportFactory::createNonListeningTransports()
+    TransportPair TcpTransportFactory::createNonListeningTransports()
     {
         return std::make_pair(
-            ServerTransportPtr( new TcpAsioServerTransport( IpAddress(mLoopback, 0)) ),
+            ServerTransportPtr( new TcpServerTransport( IpAddress(mLoopback, 0)) ),
             ClientTransportAutoPtrPtr());
     }
 
-    bool TcpAsioTransportFactory::isConnectionOriented()
+    bool TcpTransportFactory::isConnectionOriented()
     {
         return true;
     }
 
-    bool TcpAsioTransportFactory::supportsTransportFilters()
+    bool TcpTransportFactory::supportsTransportFilters()
     {
         return true;
     }
 
-    std::string TcpAsioTransportFactory::desc()
+    std::string TcpTransportFactory::desc()
     {
-        return "TcpAsioTransportFactory (" + mLoopback + ")";
+        return "TcpTransportFactory (" + mLoopback + ")";
+    }
+
+#endif
+
+#if RCF_FEATURE_HTTP==1
+
+    HttpTransportFactory::HttpTransportFactory()
+    {
+        mLoopback = loopBackV4;
+    }
+
+    TransportPair HttpTransportFactory::createTransports()
+    {
+        typedef boost::shared_ptr<HttpServerTransport> HttpServerTransportPtr;
+        HttpServerTransportPtr serverTransportPtr(
+            new HttpServerTransport( HttpEndpoint(mLoopback, 0)));
+
+        serverTransportPtr->open();
+        int port = serverTransportPtr->getPort();
+
+        ClientTransportAutoPtrPtr clientTransportAutoPtrPtr( new ClientTransportAutoPtr(
+                new HttpClientTransport(HttpEndpoint(mLoopback, port))));
+
+        return std::make_pair(
+            ServerTransportPtr(serverTransportPtr),
+            clientTransportAutoPtrPtr);
+    }
+
+    TransportPair HttpTransportFactory::createNonListeningTransports()
+    {
+        return std::make_pair(
+            ServerTransportPtr(new HttpServerTransport( HttpEndpoint(mLoopback, 0))),
+            ClientTransportAutoPtrPtr());
+    }
+
+    bool HttpTransportFactory::isConnectionOriented()
+    {
+        return true;
+    }
+
+    bool HttpTransportFactory::supportsTransportFilters()
+    {
+        return true;
+    }
+
+    std::string HttpTransportFactory::desc()
+    {
+        return "HttpTransportFactory (" + mLoopback + ")";
+    }
+
+    HttpsTransportFactory::HttpsTransportFactory()
+    {
+        mLoopback = loopBackV4;
+    }
+
+    TransportPair HttpsTransportFactory::createTransports()
+    {
+        typedef boost::shared_ptr<HttpServerTransport> HttpServerTransportPtr;
+        HttpServerTransportPtr serverTransportPtr(
+            new HttpServerTransport(HttpEndpoint(mLoopback, 0)));
+
+        serverTransportPtr->open();
+        int port = serverTransportPtr->getPort();
+
+        ClientTransportAutoPtrPtr clientTransportAutoPtrPtr(new ClientTransportAutoPtr(
+            new HttpClientTransport(HttpEndpoint(mLoopback, port))));
+
+        return std::make_pair(
+            ServerTransportPtr(serverTransportPtr),
+            clientTransportAutoPtrPtr);
+    }
+
+    TransportPair HttpsTransportFactory::createNonListeningTransports()
+    {
+        return std::make_pair(
+            ServerTransportPtr(new HttpServerTransport(HttpEndpoint(mLoopback, 0))),
+            ClientTransportAutoPtrPtr());
+    }
+
+    bool HttpsTransportFactory::isConnectionOriented()
+    {
+        return true;
+    }
+
+    bool HttpsTransportFactory::supportsTransportFilters()
+    {
+        return true;
+    }
+
+    std::string HttpsTransportFactory::desc()
+    {
+        return "HttpsTransportFactory (" + mLoopback + ")";
     }
 
 #endif
@@ -322,19 +424,35 @@ namespace RCF {
 #if RCF_FEATURE_TCP==1
 
         getTransportFactories().push_back(
-            TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V4)));
+            TransportFactoryPtr( new TcpTransportFactory(IpAddress::V4)));
 
         getIpTransportFactories().push_back(
-            TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V4)));
+            TransportFactoryPtr( new TcpTransportFactory(IpAddress::V4)));
 
         if (compileTimeIpv6 && runTimeIpv6)
         {
             getTransportFactories().push_back(
-                TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V6)));
+                TransportFactoryPtr( new TcpTransportFactory(IpAddress::V6)));
 
             getIpTransportFactories().push_back(
-                TransportFactoryPtr( new TcpAsioTransportFactory(IpAddress::V6)));
+                TransportFactoryPtr( new TcpTransportFactory(IpAddress::V6)));
         }
+
+#endif
+
+#if RCF_FEATURE_HTTP==1
+
+        getTransportFactories().push_back(
+            TransportFactoryPtr(new HttpTransportFactory()));
+
+        getIpTransportFactories().push_back(
+            TransportFactoryPtr(new HttpTransportFactory()));
+
+        getTransportFactories().push_back(
+            TransportFactoryPtr(new HttpsTransportFactory()));
+
+        getIpTransportFactories().push_back(
+            TransportFactoryPtr(new HttpsTransportFactory()));
 
 #endif
 

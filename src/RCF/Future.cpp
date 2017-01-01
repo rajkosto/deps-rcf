@@ -105,30 +105,43 @@ namespace RCF {
         RCF_LOG_3()(mpClientStub)(mpClientStub->mRequest) 
             << "RcfClient - sending synchronous request.";
 
-        try
+        bool shouldRetry = true;
+        while ( shouldRetry )
         {
-            mpClientStub->call(mRcs);
-        }
-        catch(const RCF::RemoteException & e)
-        {
-            mpClientStub->mEncodedByteBuffers.resize(0);
-            if (shouldDisconnectOnRemoteError( e.getError() ))
+            shouldRetry = false;
+            try
+            {
+                mpClientStub->call(mRcs);
+            }
+            catch ( const RCF::RemoteException & e )
+            {
+                mpClientStub->mEncodedByteBuffers.resize(0);
+                if ( shouldDisconnectOnRemoteError(e.getError()) )
+                {
+                    mpClientStub->disconnect();
+                }
+                throw;
+            }
+            catch ( const RCF::Exception & e )
             {
                 mpClientStub->disconnect();
+                if ( e.getShouldRetry() )
+                {
+                    shouldRetry = true;
+                }
+                else
+                {
+                    mpClientStub->mEncodedByteBuffers.resize(0);
+                    mpClientStub->disconnect();
+                    throw;
+                }
             }
-            throw; 
-        }
-        catch(const RCF::Exception &)
-        {
-            mpClientStub->mEncodedByteBuffers.resize(0);
-            mpClientStub->disconnect();
-            throw;
-        }
-        catch(...)
-        {
-            mpClientStub->mEncodedByteBuffers.resize(0);
-            mpClientStub->disconnect();
-            throw;
+            catch ( ... )
+            {
+                mpClientStub->mEncodedByteBuffers.resize(0);
+                mpClientStub->disconnect();
+                throw;
+            }
         }
     }
 

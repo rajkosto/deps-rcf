@@ -23,6 +23,7 @@
 #include <boost/bind.hpp>
 
 #include <RCF/CallbackConnectionService.hpp>
+#include <RCF/Config.hpp>
 #include <RCF/Filter.hpp>
 #include <RCF/CurrentSession.hpp>
 #include <RCF/Endpoint.hpp>
@@ -40,6 +41,9 @@
 #include <RCF/ThreadLocalData.hpp>
 #include <RCF/Token.hpp>
 #include <RCF/Tools.hpp>
+#include <RCF/UdpServerTransport.hpp>
+
+#include <RCF/HttpSessionFilter.hpp>
 
 #include <RCF/Version.hpp>
 
@@ -177,6 +181,8 @@ namespace RCF {
     {
         mSessionTimeoutMs = 0;
         mSessionHarvestingIntervalMs = 30*1000;
+
+        mHttpSessionTimeoutMs = 5*60*1000;
 
         mServerObjectHarvestingIntervalS = 60;
 
@@ -333,6 +339,18 @@ namespace RCF {
             if (taskEntry.mMuxerType == Mt_None && !taskEntry.mLocalThreadPoolPtr)
             {
                 taskEntry.mLocalThreadPoolPtr.reset( new ThreadPool(1) );
+
+                if ( mThreadPoolPtr && boost::dynamic_pointer_cast<UdpServerTransport>(servicePtr) )
+                {
+                    for ( std::size_t i = 0; i < mThreadPoolPtr->mThreadInitFunctors.size(); ++i )
+                    {
+                        taskEntry.mLocalThreadPoolPtr->addThreadInitFunctor(mThreadPoolPtr->mThreadInitFunctors[i]);
+                    }
+                    for ( std::size_t i = 0; i < mThreadPoolPtr->mThreadDeinitFunctors.size(); ++i )
+                    {
+                        taskEntry.mLocalThreadPoolPtr->addThreadDeinitFunctor(mThreadPoolPtr->mThreadDeinitFunctors[i]);
+                    }
+                }
             }
 
             if (taskEntry.mLocalThreadPoolPtr)
@@ -509,7 +527,7 @@ namespace RCF {
         Lock lock(mStopCallInProgressMutex);
         if (!mStopCallInProgress)
         {
-            ServerTransport & transport = mpSessionState->getServerTransport();
+            ServerTransport & transport = mpNetworkSession->getServerTransport();
 
             // If this is the first call on a Win32 pipe transport, impersonate the client
             // and get their username.
@@ -534,7 +552,7 @@ namespace RCF {
                 return;
             }
 
-            ByteBuffer readByteBuffer = getSessionState().getReadByteBuffer();
+            ByteBuffer readByteBuffer = getNetworkSession().getReadByteBuffer();
 
             RCF_LOG_3()(this)(readByteBuffer.getLength()) 
                 << "RcfServer - received packet from transport.";
@@ -583,14 +601,14 @@ namespace RCF {
                         mRcfServer.getRuntimeVersion(),
                         mRcfServer.getArchiveVersion());
 
-                    getSessionState().postWrite(byteBuffers);
+                    getNetworkSession().postWrite(byteBuffers);
                 }
             }
             else
             {
                 if (mRequest.getClose()) 
                 {
-                    getSessionState().postClose();
+                    getNetworkSession().postClose();
                 }
                 else
                 {
@@ -626,7 +644,7 @@ namespace RCF {
                 if (!queuedBuffers.empty())
                 {
                     lock.unlock();
-                    getSessionState().postWrite(queuedBuffers);
+                    getNetworkSession().postWrite(queuedBuffers);
                     RCF_ASSERT(queuedBuffers.empty());
                 }
 
@@ -652,7 +670,7 @@ namespace RCF {
 
         if (!mCloseSessionAfterWrite)
         {
-            getSessionState().postRead();
+            getNetworkSession().postRead();
         }        
     }
 
@@ -699,7 +717,7 @@ namespace RCF {
 
         if (okToWrite)
         {
-            getSessionState().postWrite(encodedByteBuffers);
+            getNetworkSession().postWrite(encodedByteBuffers);
             RCF_ASSERT(encodedByteBuffers.empty());
             RCF_ASSERT(byteBuffers.empty());
         }
@@ -824,25 +842,25 @@ namespace RCF {
             {
                 encodeRemoteException(mOut, *pRE);
             }
-            catch(const RCF::Exception &e)
+            catch(const RCF::Exception &exc)
             {
                 encodeRemoteException(
                     mOut,
                     RemoteException(
-                        _RcfError_Serialization(typeid(*pRE).name(), typeid(e).name(), e.getError().getErrorString()),
-                        e.getWhat(),
-                        e.getContext(),
-                        typeid(e).name()));
+                        _RcfError_Serialization(typeid(*pRE).name(), typeid(exc).name(), exc.getError().getErrorString()),
+                        exc.getWhat(),
+                        exc.getContext(),
+                        typeid(exc).name()));
             }
-            catch(const std::exception &e)
+            catch(const std::exception &exc)
             {
                 encodeRemoteException(
                     mOut,
                     RemoteException(
-                        _RcfError_Serialization(typeid(*pRE).name(), typeid(e).name(), e.what()),
-                        e.what(),
+                        _RcfError_Serialization(typeid(*pRE).name(), typeid(exc).name(), exc.what()),
+                        exc.what(),
                         "",
-                        typeid(e).name()));
+                        typeid(exc).name()));
             }
         }
         else if (pE)
@@ -917,7 +935,7 @@ namespace RCF {
 
     void RcfSession::processJsonRpcRequest()
     {
-        ByteBuffer readByteBuffer = getSessionState().getReadByteBuffer();
+        ByteBuffer readByteBuffer = getNetworkSession().getReadByteBuffer();
 
         RCF_LOG_3()(this)(readByteBuffer.getLength()) 
             << "RcfServer - received JSON-RPC packet from transport.";
@@ -1003,7 +1021,7 @@ namespace RCF {
             ThreadLocalCached< std::vector<ByteBuffer> > tlcByteBuffers;
             std::vector<ByteBuffer> & buffers = tlcByteBuffers.get();
             buffers.push_back(buffer);
-            getSessionState().postWrite(buffers);
+            getNetworkSession().postWrite(buffers);
         }
     }
 
@@ -1017,7 +1035,7 @@ namespace RCF {
         ByteBuffer buffer(jsonErrorResponse);
         std::vector<ByteBuffer> buffers;
         buffers.push_back(buffer);
-        getSessionState().postWrite(buffers);
+        getNetworkSession().postWrite(buffers);
     }
 
 #endif
@@ -1049,7 +1067,7 @@ namespace RCF {
             {
                 if (mRequest.mOneway)
                 {
-                    RCF_LOG_3()(this) << "RcfServer - suppressing response to oneway call.";
+                    RCF_LOG_2()(this) << "RcfServer - suppressing response to oneway call.";
                     mIn.clearByteBuffer();
                     clearParameters();
                     setTlsRcfSessionPtr();
@@ -1087,7 +1105,7 @@ namespace RCF {
         std::vector<TransportProtocol> protocols;
 
         // Transport protocols can be set on either the server transport or the server.
-        protocols = mpSessionState->getServerTransport().getSupportedProtocols();
+        protocols = mpNetworkSession->getServerTransport().getSupportedProtocols();
         if (protocols.empty())
         {
             protocols = mRcfServer.mSupportedProtocols;
@@ -1443,63 +1461,31 @@ namespace RCF {
         return *transportPtr;
     }
 
-} // namespace RCF
-
-#include <RCF/Config.hpp>
-
-#if RCF_FEATURE_NAMEDPIPE==1
-#include <RCF/Win32NamedPipeClientTransport.hpp>
-#include <RCF/Win32NamedPipeServerTransport.hpp>
-#endif
-
-#include <RCF/TcpAsioServerTransport.hpp>
-
-#if defined(RCF_HAS_LOCAL_SOCKETS)
-#include <RCF/UnixLocalServerTransport.hpp>
-#include <RCF/UnixLocalClientTransport.hpp>
-#endif
-
-namespace RCF {
-
     ServerTransport & RcfServer::findTransportCompatibleWith(
         ClientTransport & clientTransport)
     {
-        std::string ti = typeid(clientTransport).name();
-        std::vector<std::string> serverTypeids;
-        if (ti == typeid(TcpClientTransport).name())
+        TransportType clientTransportType = clientTransport.getTransportType();
+        for ( std::size_t i = 0; i < mServerTransports.size(); ++i )
         {
-            serverTypeids.push_back( typeid(TcpAsioServerTransport).name() );
-        }
-
-#if RCF_FEATURE_NAMEDPIPE==1
-        else if (ti == typeid(Win32NamedPipeClientTransport).name())
-        {
-            serverTypeids.push_back( typeid(Win32NamedPipeServerTransport).name() );
-        }
-#endif
-
-#ifdef RCF_HAS_LOCAL_SOCKETS
-        else if (ti == typeid(UnixLocalClientTransport).name())
-        {
-            serverTypeids.push_back( typeid(UnixLocalServerTransport).name() );
-        }
-#endif
-
-        for (std::size_t i=0; i<mServerTransports.size(); ++i)
-        {
-            for (std::size_t j=0; j<serverTypeids.size(); ++j)
+            ServerTransport& serverTransport = * mServerTransports[i];
+            RCF::TransportType serverTransportType = serverTransport.getTransportType();
+            if ( clientTransportType == serverTransportType )
             {
-                if (typeid(*mServerTransports[i]).name() == serverTypeids[j])
+                return serverTransport;
+            }
+            else if (   clientTransportType == Tt_Http
+                    ||  clientTransportType == Tt_Https )
+            {
+                if ( serverTransportType == Tt_Tcp )
                 {
-                    // Got one.
-                    return *mServerTransports[i];
+                    return serverTransport;
                 }
             }
         }
 
         RCF_THROW(Exception("No corresponding server transport."));
-        
-        return * (ServerTransport *) NULL;
+
+        return *(ServerTransport *)NULL;
     }
 
     void RcfServer::setSupportedTransportProtocols(
@@ -1621,6 +1607,17 @@ namespace RCF {
     boost::uint32_t RcfServer::getSessionHarvestingIntervalMs()
     {
         return mSessionHarvestingIntervalMs;
+    }
+
+    void RcfServer::setHttpSessionTimeoutMs(boost::uint32_t httpSessionTimeoutMs)
+    {
+        RCF_ASSERT(!mStarted);
+        mHttpSessionTimeoutMs = httpSessionTimeoutMs;
+    }
+
+    boost::uint32_t RcfServer::getHttpSessionTimeoutMs()
+    {
+        return mHttpSessionTimeoutMs;
     }
 
     void RcfServer::setOnCallbackConnectionCreated(OnCallbackConnectionCreated onCallbackConnectionCreated)
@@ -1758,6 +1755,88 @@ namespace RCF {
         RCF_ASSERT(0 && "This RCF build does not support server objects.");
 #endif
 
+    }
+
+    HttpSessionPtr RcfServer::attachHttpSession(
+        const std::string &     httpSessionId, 
+        bool                    allowCreate,
+        ExceptionPtr &          ePtr)
+    {
+        HttpSessionPtr httpSessionPtr;
+        {
+            Lock lock(mHttpSessionMapMutex);
+            
+            std::map<std::string, HttpSessionPtr>::iterator iter =
+                mHttpSessionMap.find(httpSessionId);
+
+            if ( iter == mHttpSessionMap.end() )
+            {
+                
+                if ( !allowCreate )
+                {
+                    ePtr.reset( new Exception(_RcfError_HttpSessionTimeout()) );
+                    return HttpSessionPtr();
+                }
+
+                httpSessionPtr.reset(new HttpSession(httpSessionId));
+                httpSessionPtr->mRcfSessionPtr = createSession();
+                mHttpSessionMap[httpSessionId] = httpSessionPtr;
+            }
+            else
+            {
+                httpSessionPtr = iter->second;
+            }
+            RCF_ASSERT(!httpSessionPtr->mRequestInProgress);
+            httpSessionPtr->mRequestInProgress = true;
+            httpSessionPtr->mLastTouchMs = getCurrentTimeMs();
+        }
+        return httpSessionPtr;
+    }
+
+    void RcfServer::detachHttpSession(HttpSessionPtr httpSessionPtr)
+    {
+        Lock lock(mHttpSessionMapMutex);
+        RCF_ASSERT(httpSessionPtr->mRequestInProgress);
+        httpSessionPtr->mRequestInProgress = false;
+        httpSessionPtr->mLastTouchMs = getCurrentTimeMs();
+
+//#ifndef NDEBUG
+//      Lock lock(mHttpSessionMapMutex);
+//      std::map<std::string, HttpSessionPtr>::iterator iter = mHttpSessionMap.find(httpSessionPtr->mHttpSessionId);
+//      RCF_ASSERT(iter != mHttpSessionMap.end());
+//      RCF_ASSERT(iter != mHttpSessionMap.end() && iter->second == httpSessionPtr);
+//#endif
+
+    }
+
+    void RcfServer::harvestHttpSessions()
+    {
+        boost::uint32_t nowMs = getCurrentTimeMs();
+
+        Lock lock(mHttpSessionMapMutex);
+        
+        RCF_LOG_3()(mHttpSessionMap.size()) << "RcfServer::harvestHttpSessions() - entry.";
+
+        std::map<std::string, HttpSessionPtr>::iterator iter = mHttpSessionMap.begin();
+        while (iter != mHttpSessionMap.end())
+        {
+            HttpSessionPtr httpSessionPtr = iter->second;
+            boost::uint32_t idleDurationMs = nowMs - httpSessionPtr->mLastTouchMs;
+            if (    !httpSessionPtr->mRequestInProgress 
+                &&  idleDurationMs > mHttpSessionTimeoutMs )
+            {
+                RCF_LOG_3()(idleDurationMs)(httpSessionPtr->mHttpSessionId)(httpSessionPtr->mHttpSessionId)(httpSessionPtr->mHttpSessionIndex)
+                    << "RcfServer::harvestHttpSessions() - destroying HTTP session.";
+
+                mHttpSessionMap.erase(iter++);
+            }
+            else
+            {
+                iter++;
+            }
+        }
+
+        RCF_LOG_3()(mHttpSessionMap.size()) << "RcfServer::harvestHttpSessions() - exit.";
     }
 
 }

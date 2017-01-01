@@ -35,20 +35,20 @@
 namespace RCF {
    
     class UdpServerTransport;
-    class UdpSessionState;
+    class UdpNetworkSession;
 
     typedef boost::shared_ptr<UdpServerTransport>   UdpServerTransportPtr;
-    typedef boost::shared_ptr<UdpSessionState>      UdpSessionStatePtr;
+    typedef boost::shared_ptr<UdpNetworkSession>      UdpNetworkSessionPtr;
 
-    class UdpSessionState : public SessionState
+    class UdpNetworkSession : public NetworkSession
     {
     public:
 
-        UdpSessionState(UdpServerTransport & transport);
+        UdpNetworkSession(UdpServerTransport & transport);
 
         int                        getNativeHandle() const;
 
-        typedef UdpSessionStatePtr SessionStatePtr;
+        typedef UdpNetworkSessionPtr NetworkSessionPtr;
 
     private:
 
@@ -56,13 +56,13 @@ namespace RCF {
         ReallocBufferPtr                            mWriteVecPtr;
         IpAddress                                   mRemoteAddress;
         UdpServerTransport &                        mTransport;
-        SessionPtr                                  mSessionPtr;
+        SessionPtr                                  mRcfSessionPtr;
 
         friend class UdpServerTransport;
 
     private:
 
-        // I_SessionState
+        // I_NetworkSession
         const RemoteAddress & getRemoteAddress() const;
         ServerTransport &     getServerTransport();
         const RemoteAddress & getRemoteAddress();
@@ -92,8 +92,8 @@ namespace RCF {
     {
     private:
 
-        typedef UdpSessionState SessionState;
-        typedef UdpSessionStatePtr SessionStatePtr;
+        typedef UdpNetworkSession NetworkSession;
+        typedef UdpNetworkSessionPtr NetworkSessionPtr;
 
     public:
 
@@ -115,7 +115,7 @@ namespace RCF {
         void        close();
         void        cycle(int timeoutMs);
 
-        void        tryReadMessage(SessionStatePtr sessionStatePtr);
+        void        tryReadMessage(NetworkSessionPtr networkSessionPtr);
 
         void        cycleTransportAndServer(int timeoutMs);
 
@@ -135,7 +135,7 @@ namespace RCF {
         unsigned int        mPollingDelayMs;
         bool                mEnableSharedAddressBinding;
 
-        friend class UdpSessionState;
+        friend class UdpNetworkSession;
 
     };
 

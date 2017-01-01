@@ -33,7 +33,7 @@
 
 namespace RCF {
 
-    class ConnectionOrientedClientTransport;
+    class ConnectedClientTransport;
 
     class ClientFilterProxy;
 
@@ -44,15 +44,15 @@ namespace RCF {
     class OverlappedAmi;
     typedef boost::shared_ptr<OverlappedAmi> OverlappedAmiPtr;
 
-    class RCF_EXPORT ConnectionOrientedClientTransport : 
+    class RCF_EXPORT ConnectedClientTransport : 
         public ClientTransport, 
         public WithProgressCallback
     {
     public:
 
-        ConnectionOrientedClientTransport(const ConnectionOrientedClientTransport &rhs);
-        ConnectionOrientedClientTransport();
-        ~ConnectionOrientedClientTransport();
+        ConnectedClientTransport(const ConnectedClientTransport &rhs);
+        ConnectedClientTransport();
+        ~ConnectedClientTransport();
 
         void                    close();
         void                    setMaxSendSize(std::size_t maxSendSize);
@@ -79,6 +79,9 @@ namespace RCF {
         void                    onReadCompleted(const ByteBuffer &byteBuffer);
         void                    onWriteCompleted(std::size_t bytes);
 
+        friend class HttpServerTransport;
+        friend class AsioServerTransport;
+        friend class PublishingService;
         void                    setWireFilters(const std::vector<FilterPtr> & wireFilters);
 
         bool                                    mOwn;

@@ -106,11 +106,7 @@ namespace RCF {
         {
             if (rhs.mClientStubPtr)
             {
-                const std::string &targetName = mInterfaceName;
                 ClientStubPtr clientStubPtr( new ClientStub(rhs.getClientStub()));
-                clientStubPtr->setInterfaceName(mInterfaceName);
-                clientStubPtr->setTargetName(targetName);
-                clientStubPtr->setTargetToken(::RCF::Token());
                 setClientStubPtr(clientStubPtr);
             }
             else

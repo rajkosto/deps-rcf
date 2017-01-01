@@ -159,13 +159,13 @@ namespace SF {
     }
 
     template<typename C, typename T, typename A>
-    inline void serializeEncodedStringOrNot(SF::Archive & ar, std::basic_string<C, T, A> & t, boost::mpl::true_ *)
+    inline void serializeEncodedStringOrNot(SF::Archive & ar, std::basic_string<C, T, A> & t, RCF::TrueType *)
     {
         serializeEncodedString(ar, t);
     }
 
     template<typename C, typename T, typename A>
-    inline void serializeEncodedStringOrNot(SF::Archive & ar, std::basic_string<C, T, A> & t, boost::mpl::false_ *)
+    inline void serializeEncodedStringOrNot(SF::Archive & ar, std::basic_string<C, T, A> & t, RCF::FalseType *)
     {
         serializeString(ar, t);
     }

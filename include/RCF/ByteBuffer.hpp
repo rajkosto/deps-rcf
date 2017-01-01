@@ -32,6 +32,7 @@
 namespace RCF {
 
     class MemOstream;
+    typedef boost::shared_ptr<MemOstream> MemOstreamPtr;
 
     // ByteBuffer class for facilitating zero-copy transmission and reception
 
@@ -60,6 +61,11 @@ namespace RCF {
         explicit
         ByteBuffer(
             ReallocBufferPtr sprb,
+            bool readOnly = false);
+
+        explicit
+        ByteBuffer(
+            MemOstreamPtr spos,
             bool readOnly = false);
 
         ByteBuffer(

@@ -135,40 +135,51 @@ namespace RCF {
         gDefaultMaxMessageLength = maxMessageLength;
     }
 
-    SessionState::SessionState() :
+    NetworkSession::NetworkSession() :
         mEnableReconnect(true),
         mBytesReceivedCounter(0),
-        mBytesSentCounter(0)
+        mBytesSentCounter(0),
+        mLastActivityTimestampMs(0)
     {
     }
 
-    SessionState::~SessionState()
+    NetworkSession::~NetworkSession()
     {
     }
 
-    void SessionState::setEnableReconnect(bool enableReconnect)
+    void NetworkSession::setEnableReconnect(bool enableReconnect)
     {
         mEnableReconnect = enableReconnect;
     }
 
-    bool SessionState::getEnableReconnect()
+    bool NetworkSession::getEnableReconnect()
     {
         return mEnableReconnect;
     }
 
-    boost::uint64_t SessionState::getTotalBytesReceived() const
+    boost::uint64_t NetworkSession::getTotalBytesReceived() const
     {
         return mBytesReceivedCounter;
     }
 
-    boost::uint64_t SessionState::getTotalBytesSent() const
+    boost::uint64_t NetworkSession::getTotalBytesSent() const
     {
         return mBytesSentCounter;
     }
 
-    SessionPtr SessionState::getSessionPtr() const
+    SessionPtr NetworkSession::getSessionPtr() const
     {
-        return mSessionPtr;
+        return mRcfSessionPtr;
+    }
+
+    boost::uint32_t NetworkSession::getLastActivityTimestamp() const
+    {
+        return mLastActivityTimestampMs;
+    }
+
+    void NetworkSession::setLastActivityTimestamp()
+    {
+        mLastActivityTimestampMs = RCF::getCurrentTimeMs();
     }
 
 } // namespace RCF

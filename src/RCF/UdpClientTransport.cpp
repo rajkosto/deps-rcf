@@ -151,9 +151,9 @@ namespace RCF {
             if (mDestIp.isBroadcast())
             {
                 // set socket option to allow transmission of broadcast messages
-                int enable = 1;
-                int ret = setsockopt(mSock, SOL_SOCKET, SO_BROADCAST, (char *) &enable, sizeof(enable));
-                int err = Platform::OS::BsdSockets::GetLastError();
+                int nEnable = 1;
+                ret = setsockopt(mSock, SOL_SOCKET, SO_BROADCAST, (char *)&nEnable, sizeof(nEnable));
+                err = Platform::OS::BsdSockets::GetLastError();
 
                 RCF_VERIFY(
                     ret ==  0,
@@ -171,8 +171,8 @@ namespace RCF {
 #else
                 int hops = 16;
 #endif
-                int ret = setsockopt(mSock, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &hops, sizeof (hops));
-                int err = Platform::OS::BsdSockets::GetLastError();
+                ret = setsockopt(mSock, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &hops, sizeof (hops));
+                err = Platform::OS::BsdSockets::GetLastError();
 
                 RCF_VERIFY(
                     ret ==  0,
@@ -240,15 +240,15 @@ namespace RCF {
     int UdpClientTransport::receive(
         ClientTransportCallback &clientStub, 
         ByteBuffer &byteBuffer,
-        unsigned int timeoutMs)
+        unsigned int totalTimeoutMs)
     {
         // try to receive a UDP message from server, within the current timeout
-        RCF_LOG_4()(mSock)(mDestIp.string())(timeoutMs) << "UdpClientTransport - receiving data from socket.";
+        RCF_LOG_4()(mSock)(mDestIp.string())(totalTimeoutMs) << "UdpClientTransport - receiving data from socket.";
 
         RCF_ASSERT(!mAsync);
 
         unsigned int startTimeMs = getCurrentTimeMs();
-        unsigned int endTimeMs = startTimeMs + timeoutMs;
+        unsigned int endTimeMs = startTimeMs + totalTimeoutMs;
 
         while (true)
         {
@@ -327,7 +327,7 @@ namespace RCF {
                     {
                         RCF_VERIFY(
                             0 < dataLength && dataLength <= getMaxMessageLength(),
-                            Exception(_RcfError_ClientMessageLength(dataLength, getMaxMessageLength())));
+                            Exception(_RcfError_ClientMessageLength()));
                     }
 
                     buffer.resize(4+dataLength);
@@ -403,6 +403,7 @@ namespace RCF {
     void UdpClientTransport::disconnect(unsigned int timeoutMs)
     {
         RCF_UNUSED_VARIABLE(timeoutMs);
+        close();
     }
 
     void UdpClientTransport::setTransportFilters(

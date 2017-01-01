@@ -40,7 +40,7 @@ namespace RCF {
     class ClientStub;
     class RcfSession;
     class ThreadInfo;
-    class UdpSessionState;
+    class UdpNetworkSession;
     class I_Future;
     class AmiNotification;
     class OverlappedAmi;
@@ -51,7 +51,7 @@ namespace RCF {
     typedef boost::shared_ptr<ClientStub>       ClientStubPtr;
     typedef boost::shared_ptr<RcfSession>       RcfSessionPtr;
     typedef boost::shared_ptr<ThreadInfo>       ThreadInfoPtr;
-    typedef boost::shared_ptr<UdpSessionState>  UdpSessionStatePtr;   
+    typedef boost::shared_ptr<UdpNetworkSession>  UdpNetworkSessionPtr;   
     typedef boost::shared_ptr<OverlappedAmi>    OverlappedAmiPtr;
     typedef boost::shared_ptr<LogBuffers>       LogBuffersPtr;
     typedef boost::function1<void, RcfSession&> RcfSessionCallback;
@@ -79,15 +79,17 @@ namespace RCF {
     RCF_EXPORT void                 setTlsRcfSessionPtr(
                                         RcfSession * pRcfSession = NULL);
 
+    RCF_EXPORT std::vector<RcfSession*>& getRcfSessionSentryStack();
+
     RCF_EXPORT ThreadInfoPtr        getTlsThreadInfoPtr();
 
     RCF_EXPORT void                 setTlsThreadInfoPtr(
                                         ThreadInfoPtr threadInfoPtr);
 
-    RCF_EXPORT UdpSessionStatePtr   getTlsUdpSessionStatePtr();
+    RCF_EXPORT UdpNetworkSessionPtr   getTlsUdpNetworkSessionPtr();
 
-    RCF_EXPORT void                 setTlsUdpSessionStatePtr(
-                                        UdpSessionStatePtr udpSessionStatePtr);
+    RCF_EXPORT void                 setTlsUdpNetworkSessionPtr(
+                                        UdpNetworkSessionPtr udpNetworkSessionPtr);
 
     RCF_EXPORT RcfSession &         getCurrentRcfSession();
     RCF_EXPORT RcfSession &         getTlsRcfSession();

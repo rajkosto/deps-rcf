@@ -138,6 +138,7 @@ namespace RCF {
         ~MemOstream();
 
         char * str();
+        std::size_t length();
         std::string string();
 
         std::size_t capacity();

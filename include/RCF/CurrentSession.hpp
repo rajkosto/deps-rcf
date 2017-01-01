@@ -27,18 +27,36 @@
 
 namespace RCF {
 
+    
+
     class CurrentRcfSessionSentry
     {
     public:
         CurrentRcfSessionSentry(RcfSession & session)
         {
+            RcfSession * pPrev = getTlsRcfSessionPtr();
+            getRcfSessionSentryStack().push_back(pPrev);
+
             setTlsRcfSessionPtr(& session);
+        }
+
+        CurrentRcfSessionSentry(RcfSessionPtr sessionPtr)
+        {
+            RcfSession * pPrev = getTlsRcfSessionPtr();
+            getRcfSessionSentryStack().push_back(pPrev);
+
+            RcfSession * pSession = sessionPtr.get();
+            setTlsRcfSessionPtr(pSession);
         }
 
         ~CurrentRcfSessionSentry()
         {
-            setTlsRcfSessionPtr();
+            RcfSession * pPrev = getRcfSessionSentryStack().back();
+            getRcfSessionSentryStack().pop_back();
+            setTlsRcfSessionPtr(pPrev);
         }
+
+        
     };
 
 } // namespace RCF

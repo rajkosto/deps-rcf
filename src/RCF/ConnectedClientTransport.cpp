@@ -16,8 +16,9 @@
 //
 //******************************************************************************
 
-#include <RCF/ConnectionOrientedClientTransport.hpp>
+#include <RCF/ConnectedClientTransport.hpp>
 
+#include <RCF/ClientStub.hpp>
 #include <RCF/Exception.hpp>
 #include <RCF/OverlappedAmi.hpp>
 #include <RCF/RcfSession.hpp>
@@ -29,7 +30,7 @@ namespace RCF {
     {
     public:
         ClientFilterProxy(
-            ConnectionOrientedClientTransport & transport, 
+            ConnectedClientTransport & transport, 
             Filter & filter, 
             bool top) :
                 mTransport(transport),
@@ -72,13 +73,22 @@ namespace RCF {
             return RcfFilter_Unknown;
         }
 
-        ConnectionOrientedClientTransport &mTransport;
+        ConnectedClientTransport &mTransport;
         Filter &mFilter;
         bool mTop;
     };
 
-    void ConnectionOrientedClientTransport::onCompletion(int bytesTransferred)
+    void ConnectedClientTransport::onCompletion(int bytesTransferred)
     {
+        
+        ClientStub * pStub = NULL;
+        if (mpClientStub->isClientStub())
+        {
+            pStub = static_cast<ClientStub *>(mpClientStub);
+        }
+
+        CurrentClientStubSentry sentry(pStub);
+
         switch (mPostState)
         {
         case Connecting:
@@ -104,7 +114,7 @@ namespace RCF {
 #pragma warning( disable : 4355 ) 
 #endif
 
-    ConnectionOrientedClientTransport::ConnectionOrientedClientTransport() :
+    ConnectedClientTransport::ConnectedClientTransport() :
         mOwn(true),
         mClosed(true),
         mMaxSendSize(1024*1024*10),
@@ -131,8 +141,8 @@ namespace RCF {
         setTransportFilters( std::vector<FilterPtr>() );
     }
 
-    ConnectionOrientedClientTransport::ConnectionOrientedClientTransport(
-        const ConnectionOrientedClientTransport &rhs) :
+    ConnectedClientTransport::ConnectedClientTransport(
+        const ConnectedClientTransport &rhs) :
             ClientTransport(rhs),        
             mOwn(true),
             mClosed(true),
@@ -165,7 +175,7 @@ namespace RCF {
 #pragma warning( pop )
 #endif
 
-    ConnectionOrientedClientTransport::~ConnectionOrientedClientTransport()
+    ConnectedClientTransport::~ConnectedClientTransport()
     {
         RCF_DTOR_BEGIN
             
@@ -174,7 +184,7 @@ namespace RCF {
         RCF_DTOR_END
     }
 
-    void ConnectionOrientedClientTransport::connect(
+    void ConnectedClientTransport::connect(
         ClientTransportCallback &clientStub, 
         unsigned int timeoutMs)
     {
@@ -195,13 +205,13 @@ namespace RCF {
         }
     }
 
-    void ConnectionOrientedClientTransport::onConnectCompleted(int err)
+    void ConnectedClientTransport::onConnectCompleted(int err)
     {
         RCF_UNUSED_VARIABLE(err);
         mpClientStub->onConnectCompleted();
     }
 
-    void ConnectionOrientedClientTransport::disconnect(unsigned int timeoutMs)
+    void ConnectedClientTransport::disconnect(unsigned int timeoutMs)
     {
         RCF_UNUSED_VARIABLE(timeoutMs);
 
@@ -213,7 +223,7 @@ namespace RCF {
         close();
     }
 
-    void ConnectionOrientedClientTransport::read(
+    void ConnectedClientTransport::read(
         const ByteBuffer &byteBuffer_, 
         std::size_t bytesRequested)
     {
@@ -250,7 +260,7 @@ namespace RCF {
         }
     }
 
-    void ConnectionOrientedClientTransport::onTimedRecvCompleted(int ret, int err)
+    void ConnectedClientTransport::onTimedRecvCompleted(int ret, int err)
     {
         switch (ret)
         {
@@ -295,7 +305,7 @@ namespace RCF {
 
     }
 
-    void ConnectionOrientedClientTransport::onTimedSendCompleted(int ret, int err)
+    void ConnectedClientTransport::onTimedSendCompleted(int ret, int err)
     {
         mLastRequestSize += ret;
         mRunningTotalBytesSent += ret;
@@ -306,7 +316,7 @@ namespace RCF {
             mTransportFilters.back()->onWriteCompleted(ret);
     }
 
-    void ConnectionOrientedClientTransport::write(
+    void ConnectedClientTransport::write(
         const std::vector<ByteBuffer> &byteBuffers)
     {
         mPostState = Writing;
@@ -331,20 +341,20 @@ namespace RCF {
         byteBuffers.resize(0);
     }
 
-    void ConnectionOrientedClientTransport::onReadCompleted(
+    void ConnectedClientTransport::onReadCompleted(
         const ByteBuffer &byteBuffer)
     {
         onTransitionCompleted(byteBuffer.getLength());
     }
 
-    void ConnectionOrientedClientTransport::onWriteCompleted(
+    void ConnectedClientTransport::onWriteCompleted(
         std::size_t bytesTransferred)
     {
         onTransitionCompleted(bytesTransferred);
     }
 
 
-    int ConnectionOrientedClientTransport::send(
+    int ConnectedClientTransport::send(
         ClientTransportCallback &clientStub, 
         const std::vector<ByteBuffer> &data,
         unsigned int totalTimeoutMs)
@@ -363,7 +373,6 @@ namespace RCF {
         }
         else
         {
-            RCF_ASSERT(mAsync);
             mEndTimeMs = 0;
             mNoTimeout = true;
         }
@@ -379,7 +388,7 @@ namespace RCF {
         return 1;
     }
 
-    std::size_t ConnectionOrientedClientTransport::timedSend(const std::vector<ByteBuffer> &data)
+    std::size_t ConnectedClientTransport::timedSend(const std::vector<ByteBuffer> &data)
     {
         std::size_t bytesRequested = lengthByteBuffers(data);
         std::size_t bytesToWrite = bytesRequested;
@@ -431,7 +440,7 @@ namespace RCF {
     }
 
     // return bufferLen
-    std::size_t ConnectionOrientedClientTransport::timedReceive(
+    std::size_t ConnectedClientTransport::timedReceive(
         ByteBuffer &byteBuffer,
         std::size_t bytesRequested)
     {
@@ -478,7 +487,7 @@ namespace RCF {
         }
     }
 
-    int ConnectionOrientedClientTransport::receive(
+    int ConnectedClientTransport::receive(
         ClientTransportCallback &clientStub, 
         ByteBuffer &byteBuffer,
         unsigned int timeoutMs)
@@ -493,7 +502,6 @@ namespace RCF {
         }
         else
         {
-            RCF_ASSERT(mAsync);
             mEndTimeMs = 0;
             mNoTimeout = true;
         }
@@ -509,7 +517,7 @@ namespace RCF {
         return 1;
     }
 
-    void ConnectionOrientedClientTransport::close()
+    void ConnectedClientTransport::close()
     {
         {
             RecursiveLock lock(mOverlappedPtr->mMutex);
@@ -519,20 +527,12 @@ namespace RCF {
         if (!mClosed)
         {
             mpClientStub = NULL;
-
-            RcfSessionPtr sessionPtr = getRcfSession().lock();
-            if (sessionPtr)
-            {
-                sessionPtr->disableIo();
-            }
-
             implClose();
-
             mClosed = true;
         }
     }
 
-    void ConnectionOrientedClientTransport::setTransportFilters(
+    void ConnectedClientTransport::setTransportFilters(
         const std::vector<FilterPtr> &filters)
     {
         std::vector<FilterPtr> filtersTemp(filters);
@@ -563,7 +563,7 @@ namespace RCF {
         }
     }
 
-    void ConnectionOrientedClientTransport::getTransportFilters(
+    void ConnectedClientTransport::getTransportFilters(
         std::vector<FilterPtr> &filters)
     {
         // TODO: keep the adapter filters out of mTransportFilters?
@@ -585,7 +585,7 @@ namespace RCF {
         filters.assign(iter0, iter1);
     }
 
-    void ConnectionOrientedClientTransport::setWireFilters(const std::vector<FilterPtr> & wireFilters)
+    void ConnectedClientTransport::setWireFilters(const std::vector<FilterPtr> & wireFilters)
     {
         std::vector<FilterPtr> currentFilters;
         getTransportFilters(currentFilters);
@@ -593,17 +593,17 @@ namespace RCF {
         setTransportFilters(currentFilters);
     }
 
-    void ConnectionOrientedClientTransport::setMaxSendSize(std::size_t maxSendSize)
+    void ConnectedClientTransport::setMaxSendSize(std::size_t maxSendSize)
     {
         mMaxSendSize = maxSendSize;
     }
 
-    std::size_t ConnectionOrientedClientTransport::getMaxSendSize()
+    std::size_t ConnectedClientTransport::getMaxSendSize()
     {
         return mMaxSendSize;
     }
 
-    void ConnectionOrientedClientTransport::issueRead(
+    void ConnectedClientTransport::issueRead(
         const ByteBuffer &buffer, 
         std::size_t bytesToRead)
     {
@@ -614,7 +614,7 @@ namespace RCF {
             mTransportFilters.front()->read(buffer, bytesToRead);
     }
 
-    void ConnectionOrientedClientTransport::issueWrite(const std::vector<ByteBuffer> &byteBuffers)
+    void ConnectedClientTransport::issueWrite(const std::vector<ByteBuffer> &byteBuffers)
     {
         RCF_LOG_4()(lengthByteBuffers(byteBuffers)) << "ConnectionOrientedClientTransport - initiating write.";
 
@@ -623,7 +623,7 @@ namespace RCF {
             mTransportFilters.front()->write(byteBuffers);
     }
 
-    void ConnectionOrientedClientTransport::transition()
+    void ConnectedClientTransport::transition()
     {
         switch (mPreState)
         {
@@ -654,7 +654,7 @@ namespace RCF {
                 {
                     RCF_VERIFY(
                         0 < length && length <= getMaxMessageLength(),
-                        Exception(_RcfError_ClientMessageLength(length, getMaxMessageLength())));
+                        Exception(_RcfError_ClientMessageLength()));
                 }
 
                 mReadBufferPtr->resize(4+length);
@@ -710,7 +710,7 @@ namespace RCF {
         }
     }
 
-    void ConnectionOrientedClientTransport::cancel()
+    void ConnectedClientTransport::cancel()
     {
         RecursiveLock lock(mOverlappedPtr->mMutex);
         ++mOverlappedPtr->mIndex;
@@ -722,7 +722,7 @@ namespace RCF {
         }
     }
 
-    void ConnectionOrientedClientTransport::setTimer(
+    void ConnectedClientTransport::setTimer(
         boost::uint32_t timeoutMs,
         ClientTransportCallback *pClientStub)
     {
@@ -741,7 +741,7 @@ namespace RCF {
             _1));
     }
 
-    void ConnectionOrientedClientTransport::onTimerExpired()
+    void ConnectedClientTransport::onTimerExpired()
     {
         try
         {                
@@ -753,7 +753,7 @@ namespace RCF {
         }
     }
 
-    void ConnectionOrientedClientTransport::onTransitionCompleted(
+    void ConnectedClientTransport::onTransitionCompleted(
         std::size_t bytesTransferred)
     {
         if (mAsync)
@@ -764,13 +764,13 @@ namespace RCF {
         {
             applyRecursionLimiter(
                 mRecursionState,
-                &ConnectionOrientedClientTransport::onTransitionCompleted_,
+                &ConnectedClientTransport::onTransitionCompleted_,
                 *this,
                 bytesTransferred);
         }
     }
 
-    void ConnectionOrientedClientTransport::onTransitionCompleted_(std::size_t bytesTransferred)
+    void ConnectedClientTransport::onTransitionCompleted_(std::size_t bytesTransferred)
     {
         if (mPreState == Reading)
         {
@@ -819,7 +819,7 @@ namespace RCF {
         transition();
     }
 
-    void ConnectionOrientedClientTransport::setSocketOpsMutex(MutexPtr mutexPtr)
+    void ConnectedClientTransport::setSocketOpsMutex(MutexPtr mutexPtr)
     {
         mSocketOpsMutexPtr = mutexPtr;
     }

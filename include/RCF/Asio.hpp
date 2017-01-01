@@ -19,6 +19,12 @@
 #ifndef INCLUDE_RCF_ASIO_HPP
 #define INCLUDE_RCF_ASIO_HPP
 
+// VS 2013 Update 3 - a number of WinSock functions have been deprecated.
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4996) // error C4996: 'WSAAddressToStringA': Use WSAAddressToStringW() instead or define _WINSOCK_DEPRECATED_NO_WARNINGS to disable deprecated API warnings
+#endif
+
 #include <RCF/Config.hpp>
 
 // Turn off auto-linking for Boost Date Time lib. Asio headers include some boost/date_time/ headers.
@@ -95,6 +101,8 @@ namespace RCF {
 
 } // namespace RCF
 
-
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #endif // ! INCLUDE_RCF_ASIO_HPP

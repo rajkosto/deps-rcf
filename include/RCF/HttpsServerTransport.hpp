@@ -19,13 +19,13 @@
 #ifndef INCLUDE_RCF_HTTPSSERVERTRANSPORT_HPP
 #define INCLUDE_RCF_HTTPSSERVERTRANSPORT_HPP
 
-#include <RCF/TcpAsioServerTransport.hpp>
+#include <RCF/TcpServerTransport.hpp>
 
 namespace RCF {
 
     class HttpsEndpoint;
 
-    class HttpsServerTransport : public TcpAsioServerTransport
+    class RCF_EXPORT HttpsServerTransport : public TcpServerTransport
     {
     public:
         HttpsServerTransport(const HttpsEndpoint & httpsEndpoint);

@@ -335,15 +335,15 @@ namespace RCF {
         if (pCertAttr)
         {
             DWORD cbLen = CertRDNValueToStr(pCertAttr->dwValueType, &pCertAttr->Value, NULL, 0);
-            std::vector<TCHAR> vec(cbLen);
+            std::vector<TCHAR> vecAttr(cbLen);
 
             CertRDNValueToStr(
                 pCertAttr->dwValueType, 
                 &pCertAttr->Value, 
-                &vec[0], 
-                static_cast<DWORD>(vec.size()));
+                &vecAttr[0],
+                static_cast<DWORD>(vecAttr.size()));
 
-            tstring attr(&vec[0]);
+            tstring attr(&vecAttr[0]);
             return attr;
         }
         

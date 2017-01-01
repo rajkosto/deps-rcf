@@ -100,6 +100,15 @@ public:
   {
       BOOST_ASSERT(lock.locked());
 
+
+      
+#ifdef RCF_USE_CLOCK_MONOTONIC
+
+      struct timespec ts = {0};
+      clock_gettime(CLOCK_MONOTONIC, &ts);
+      
+#else
+
       struct timeval tp = {0};
       gettimeofday(&tp, NULL);
 
@@ -107,6 +116,8 @@ public:
       struct timespec ts = {0};
       ts.tv_sec  = tp.tv_sec;
       ts.tv_nsec = tp.tv_usec * 1000;
+      
+#endif
 
       // Add waitMs to current time.
       ts.tv_sec += (waitMs / 1000);
@@ -141,6 +152,7 @@ public:
 
 protected:
   ::pthread_cond_t cond_;
+  ::pthread_condattr_t condattr_;
 };
 
 } // namespace detail

@@ -440,7 +440,7 @@ namespace RCF {
         return RcfClientPtr( new RcfClientT(
             ServerBindingPtr(new ServerBinding()),
             px,
-            (boost::mpl::true_ *) NULL));
+            (TrueType *)NULL));
     }
     
 } // namespace RCF

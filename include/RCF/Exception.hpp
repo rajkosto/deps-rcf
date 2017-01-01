@@ -278,6 +278,24 @@ namespace RCF {
     static const int RcfError_ServerUnsupportedFeature          = 156;
     static const int RcfError_SyncPublishError                  = 157;
     static const int RcfError_DeserializeVectorBool             = 158;
+    static const int RcfError_HttpTunnelError                   = 159;
+    static const int RcfError_HttpSessionTimeout                = 160;
+    static const int RcfError_HttpRequestSessionIndex           = 161;
+    static const int RcfError_HttpResponseStatus                = 162;
+    static const int RcfError_HttpResponseSessionIndex          = 163;
+    static const int RcfError_HttpResponseSessionId             = 164;
+    static const int RcfError_NotHttpResponse                   = 165;
+    static const int RcfError_NotHttpPostRequest                = 166;
+    static const int RcfError_NotHttpRequest                    = 167;
+    static const int RcfError_NotSslHandshake                   = 168;
+    static const int RcfError_ClientStubParms                   = 169;
+    static const int RcfError_ServerStubParms                   = 170;
+    static const int RcfError_SessionObjectNotCreated           = 171;
+    static const int RcfError_MessageHeaderEncoding             = 172;
+    static const int RcfError_OnewayHttp                        = 173;
+    static const int RcfError_ProxyAuthRetry                    = 174;
+    static const int RcfError_ProxyCredentialsNeeded            = 175;
+    static const int RcfError_ProxyCredentialsInvalid           = 176;
 
 
     static const int RcfError_User                              = 1001;
@@ -312,9 +330,7 @@ namespace RCF {
     //inline Error _RcfError_Unspecified()                    { return Error(RcfError_Unspecified); }
     inline Error _RcfError_ServerMessageLength()            { return Error(RcfError_ServerMessageLength); }
 
-    inline Error _RcfError_ClientMessageLength(
-        boost::uint32_t length,
-        std::size_t maxLength)                              { return Error(RcfError_ClientMessageLength, numberToString(length), numberToString(maxLength)); }
+    inline Error _RcfError_ClientMessageLength()            { return Error(RcfError_ClientMessageLength); }
 
     inline Error _RcfError_Serialization(
         const std::string & typeName, 
@@ -585,8 +601,7 @@ namespace RCF {
 
     inline Error _RcfError_InvalidHttpMessage()             { return Error(RcfError_InvalidHttpMessage); }
 
-    inline Error _RcfError_HttpRequestContentLength(
-        const std::string & httpRequest)                    { return Error(RcfError_HttpRequestContentLength, httpRequest); }
+    inline Error _RcfError_HttpRequestContentLength()       { return Error(RcfError_HttpRequestContentLength); }
 
     inline Error _RcfError_HttpResponseContentLength(
         const std::string & httpStatus,
@@ -671,6 +686,47 @@ namespace RCF {
         boost::uint32_t bitCount,
         boost::uint32_t bufferSize)                         { return Error(RcfError_DeserializeVectorBool, numberToString(bitCount), numberToString(bufferSize)); }
 
+    inline Error _RcfError_HttpTunnelError(
+        const std::string & errorMsg)                       { return Error(RcfError_HttpTunnelError, errorMsg); }
+
+    inline Error _RcfError_HttpSessionTimeout()             { return Error(RcfError_HttpSessionTimeout); }
+
+    inline Error _RcfError_HttpRequestSessionIndex(
+        int expectedIndex,
+        int actualIndex)                                    { return Error(RcfError_HttpRequestSessionIndex, numberToString(expectedIndex), numberToString(actualIndex)); }
+
+    inline Error _RcfError_HttpResponseStatus(
+        const std::string & responseLine,
+        const std::string & responseMessage)                { return Error(RcfError_HttpResponseStatus, responseLine, responseMessage); }
+
+    inline Error _RcfError_HttpResponseSessionIndex(
+        int expectedIndex,
+        int actualIndex)                                    { return Error(RcfError_HttpResponseSessionIndex, numberToString(expectedIndex), numberToString(actualIndex)); }
+
+    inline Error _RcfError_HttpResponseSessionId(
+        const std::string & expectedId,
+        const std::string & actualId)                       { return Error(RcfError_HttpResponseSessionId, expectedId, actualId); }
+
+    inline Error _RcfError_NotHttpResponse()                { return Error(RcfError_NotHttpResponse); }
+    inline Error _RcfError_NotHttpPostRequest()             { return Error(RcfError_NotHttpPostRequest); }
+    inline Error _RcfError_NotHttpRequest()                 { return Error(RcfError_NotHttpRequest); }
+    inline Error _RcfError_NotSslHandshake()                { return Error(RcfError_NotSslHandshake); }
+    inline Error _RcfError_ClientStubParms()                { return Error(RcfError_ClientStubParms); }
+    inline Error _RcfError_ServerStubParms()                { return Error(RcfError_ServerStubParms); }
+
+    inline Error _RcfError_SessionObjectNotCreated(
+        const std::string & objectType)                     { return Error(RcfError_SessionObjectNotCreated, objectType); }
+
+    inline Error _RcfError_MessageHeaderEncoding(
+        std::size_t maxLen,
+        std::size_t actualLen)                              { return Error(RcfError_MessageHeaderEncoding, numberToString(maxLen), numberToString(actualLen)); }
+
+    inline Error _RcfError_OnewayHttp()                     { return Error(RcfError_OnewayHttp); }
+
+    inline Error _RcfError_ProxyAuthRetry()                 { return Error(RcfError_ProxyAuthRetry); }
+    inline Error _RcfError_ProxyCredentialsNeeded()         { return Error(RcfError_ProxyCredentialsNeeded); }
+    inline Error _RcfError_ProxyCredentialsInvalid()        { return Error(RcfError_ProxyCredentialsInvalid); }
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -713,11 +769,7 @@ namespace RCF {
 
         ~Exception() throw();
 
-        virtual std::auto_ptr<Exception> clone() const
-        {
-            return std::auto_ptr<Exception>(
-                new Exception(*this));
-        }
+        virtual std::auto_ptr<Exception> clone() const;
 
         bool            good() const;
         bool            bad() const;
@@ -732,9 +784,11 @@ namespace RCF {
         std::string     getSubSystemName()      const;
         std::string     getContext()            const;
         std::string     getWhat()               const;
+        bool            getShouldRetry()        const;
 
         void            setContext(const std::string &context);
         void            setWhat(const std::string &what);
+        void            setShouldRetry(bool shouldRetry);
 
         virtual void    throwSelf() const;
 
@@ -750,6 +804,8 @@ namespace RCF {
         Error                   mError;
         int                     mSubSystemError;
         int                     mSubSystem;
+
+        bool                    mShouldRetry;
 
         mutable std::string     mTranslatedWhat;
     };
