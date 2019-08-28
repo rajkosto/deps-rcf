@@ -33,11 +33,13 @@
 #include <RCF/Timer.hpp>
 #include <RCF/Tools.hpp>
 
+#ifdef RCF_USE_BOOST_ASIO
 namespace boost {
     namespace asio {
         class io_service;
     }
 }
+#endif
 
 namespace RCF {
 
