@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RCF", "RCF_v120.vcxproj", "{35750EC3-25FA-4536-8883-46EDDE9C4984}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RCF", "RCF.vcxproj", "{35750EC3-25FA-4536-8883-46EDDE9C4984}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
