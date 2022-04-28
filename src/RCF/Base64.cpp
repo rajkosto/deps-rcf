@@ -2,7 +2,7 @@
 //******************************************************************************
 // RCF - Remote Call Framework
 //
-// Copyright (c) 2005 - 2019, Delta V Software. All rights reserved.
+// Copyright (c) 2005 - 2020, Delta V Software. All rights reserved.
 // http://www.deltavsoft.com
 //
 // RCF is distributed under dual licenses - closed source or GPL.
@@ -11,7 +11,7 @@
 // If you have not purchased a commercial license, you are using RCF 
 // under GPL terms.
 //
-// Version: 3.1
+// Version: 3.2
 // Contact: support <at> deltavsoft.com 
 //
 //******************************************************************************
@@ -19,7 +19,7 @@
 /*
 base64.cpp and base64.h
 
-Copyright (C) 2004-2008 René Nyffenegger
+Copyright (C) 2004-2008 RenÃ© Nyffenegger
 
 This source code is provided 'as-is', without any express or implied
 warranty. In no event will the author be held liable for any damages
@@ -39,7 +39,7 @@ misrepresented as being the original source code.
 
 3. This notice may not be removed or altered from any source distribution.
 
-René Nyffenegger rene.nyffenegger@adp-gmbh.ch
+RenÃ© Nyffenegger rene.nyffenegger@adp-gmbh.ch
 
 */
 
