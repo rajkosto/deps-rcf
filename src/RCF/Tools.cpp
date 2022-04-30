@@ -134,7 +134,7 @@ namespace RCF {
 
     void rcfDtorCatchHandler(const std::exception & e)
     {
-        if (!std::uncaught_exception())
+        if (!std::uncaught_exceptions())
         {
             throw;
         }

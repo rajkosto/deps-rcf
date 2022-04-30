@@ -43,7 +43,7 @@ namespace RCF {
             mhEvent(INVALID_HANDLE_VALUE),
             mpSec(),
             mAsyncMode(false),
-            mpIoService(false)
+            mpIoService(nullptr)
     {
         HANDLE hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
         DWORD dwErr = GetLastError();
@@ -60,7 +60,7 @@ namespace RCF {
             mhEvent(INVALID_HANDLE_VALUE),
             mpSec(),
             mAsyncMode(false),
-            mpIoService(false)
+            mpIoService(nullptr)
     {
         if (pipeName.at(0) == RCF_T('\\'))
         {

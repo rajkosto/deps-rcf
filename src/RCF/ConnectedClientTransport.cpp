@@ -230,7 +230,7 @@ namespace RCF {
 
         if (byteBuffer_.getLength() == 0)
         {
-            if (mReadBuffer2Ptr.get() == NULL || !mReadBuffer2Ptr.unique())
+            if (mReadBuffer2Ptr.get() == NULL || mReadBuffer2Ptr.use_count() != 1)
             {
                 mReadBuffer2Ptr.reset( new ReallocBuffer() );
             }
@@ -553,7 +553,7 @@ namespace RCF {
             {
                 fireProgressEvent();
 
-                if (mReadBufferPtr.get() == NULL || !mReadBufferPtr.unique())
+                if (mReadBufferPtr.get() == NULL || mReadBufferPtr.use_count() != 1)
                 {
                     mReadBufferPtr.reset( new ReallocBuffer() );
                 }

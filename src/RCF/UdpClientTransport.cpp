@@ -192,7 +192,7 @@ namespace RCF {
 
         // TODO: optimize for case of single byte buffer with left margin
 
-        if (mWriteVecPtr.get() == NULL || !mWriteVecPtr.unique())
+        if (mWriteVecPtr.get() == NULL || mWriteVecPtr.use_count() != 1)
         {
             mWriteVecPtr.reset( new ReallocBuffer());
         }
@@ -272,7 +272,7 @@ namespace RCF {
             }
             RCF_ASSERT(ret == 1);
 
-            if (mReadVecPtr.get() == NULL || !mReadVecPtr.unique())
+            if (mReadVecPtr.get() == NULL || mReadVecPtr.use_count() != 1)
             {
                 mReadVecPtr.reset( new ReallocBuffer());
             }

@@ -350,7 +350,7 @@ namespace RCF {
     {
         if (byteBuffer.getLength() == 0 && bytesRequested > 0)
         {
-            if (!mNetworkReadBufferPtr || mNetworkReadBufferPtr.unique())
+            if (!mNetworkReadBufferPtr || mNetworkReadBufferPtr.use_count() == 1)
             {
                 mNetworkReadBufferPtr = getObjectPool().getReallocBufferPtr();
             }
@@ -421,7 +421,7 @@ namespace RCF {
             if (bytesTransferred == 0 && mIssueZeroByteRead)
             {
                 // TCP framing.
-                if (!mAppReadBufferPtr || !mAppReadBufferPtr.unique())
+                if (!mAppReadBufferPtr || mAppReadBufferPtr.use_count() != 1)
                 {
                     mAppReadBufferPtr = getObjectPool().getReallocBufferPtr();
                 }
@@ -652,7 +652,7 @@ namespace RCF {
         }
         else if (mReadBufferRemaining == 0 && mIssueZeroByteRead)
         {
-            if (!mAppReadBufferPtr || !mAppReadBufferPtr.unique())
+            if (!mAppReadBufferPtr || mAppReadBufferPtr.use_count() != 1)
             {
                 mAppReadBufferPtr = getObjectPool().getReallocBufferPtr();
             }
@@ -707,7 +707,7 @@ namespace RCF {
         }
         else if (mReadBufferRemaining == 0 && mIssueZeroByteRead)
         {
-            if (!mAppReadBufferPtr || !mAppReadBufferPtr.unique())
+            if (!mAppReadBufferPtr || mAppReadBufferPtr.use_count() != 1)
             {
                 mAppReadBufferPtr = getObjectPool().getReallocBufferPtr();
             }

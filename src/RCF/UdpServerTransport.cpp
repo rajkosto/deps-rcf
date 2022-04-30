@@ -337,7 +337,7 @@ namespace RCF {
 
         ReallocBufferPtr &writeVecPtr = mWriteVecPtr;
 
-        if (writeVecPtr.get() == NULL || !writeVecPtr.unique())
+        if (writeVecPtr.get() == NULL || writeVecPtr.use_count() != 1)
         {
             writeVecPtr.reset( new ReallocBuffer());
         }
@@ -428,7 +428,7 @@ namespace RCF {
         ReallocBufferPtr &readVecPtr =
         networkSessionPtr->mReadVecPtr;
 
-        if (readVecPtr.get() == NULL || !readVecPtr.unique())
+        if (readVecPtr.get() == NULL || readVecPtr.use_count() != 1)
         {
             readVecPtr.reset(new ReallocBuffer());
         }

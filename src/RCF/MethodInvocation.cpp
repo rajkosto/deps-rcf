@@ -345,7 +345,7 @@ namespace RCF {
     {
         bool isException = pRe ? true : false;
 
-        RCF_ASSERT(!mVecPtr || mVecPtr.unique());
+        RCF_ASSERT(!mVecPtr || mVecPtr.use_count() == 1);
         if (!mVecPtr)
         {
             mVecPtr.reset(new std::vector<char>(50));
@@ -405,7 +405,7 @@ namespace RCF {
 
     ByteBuffer MethodInvocationRequest::encodeRequestHeader()
     {
-        RCF_ASSERT(!mVecPtr || mVecPtr.unique());
+        RCF_ASSERT(!mVecPtr || mVecPtr.use_count() == 1);
         if (!mVecPtr)
         {
             mVecPtr.reset(new std::vector<char>(50));

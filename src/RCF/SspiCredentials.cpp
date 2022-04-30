@@ -235,7 +235,7 @@ namespace RCF {
 
         SECURITY_STATUS status = getSft()->AcquireCredentialsHandle(
             NULL,
-            UNISP_NAME,
+            const_cast<SECURITY_PSTR>(UNISP_NAME),
             (mSspiRole == Sr_Server) ? SECPKG_CRED_INBOUND : SECPKG_CRED_OUTBOUND,
             NULL,
             &schannelCred,
