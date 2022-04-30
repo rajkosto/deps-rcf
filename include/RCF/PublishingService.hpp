@@ -26,6 +26,7 @@
 #include <RCF/Export.hpp>
 #include <RCF/PeriodicTimer.hpp>
 #include <RCF/RcfClient.hpp>
+#include <RCF/ClientStub.hpp>
 #include <RCF/RcfFwd.hpp>
 #include <RCF/Service.hpp>
 #include <RCF/ThreadLibrary.hpp>

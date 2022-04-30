@@ -75,7 +75,7 @@ namespace RCF {
 
         pointer allocate(
             size_type cnt, 
-            typename std::allocator<void>::const_pointer = 0)
+            const void* = 0)
         {
             static_assert( sizeof(T) <= CbSize, "Invalid type T." );
             RCF_ASSERT(cnt == 1);
