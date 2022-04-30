@@ -350,7 +350,7 @@ namespace RCF {
     {
         if (byteBuffer.getLength() == 0 && bytesRequested > 0)
         {
-            if (!mNetworkReadBufferPtr || mNetworkReadBufferPtr.use_count() == 1)
+            if (!mNetworkReadBufferPtr || mNetworkReadBufferPtr.use_count() != 1)
             {
                 mNetworkReadBufferPtr = getObjectPool().getReallocBufferPtr();
             }
